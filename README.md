@@ -1,5 +1,5 @@
 # Galactico--Github-Integrated-Project-Management-Tool
-Autotrack - GitHub Integrated Project & Team Management Tool Autotrack is a web-based application with a dedicated VS Code extension that helps development teams manage projects, track contributions, and streamline GitHub workflows. It simplifies task tracking, automates Git operations, and provides tools for team leads to review and approve contributions before merging.
+Galactico - GitHub Integrated Project & Team Management Tool Autotrack is a web-based application with a dedicated VS Code extension that helps development teams manage projects, track contributions, and streamline GitHub workflows. It simplifies task tracking, automates Git operations, and provides tools for team leads to review and approve contributions before merging.
 
 Key Features Automated Git operations for consistent and simplified commits
 
