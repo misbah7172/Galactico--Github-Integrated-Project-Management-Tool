@@ -1,0 +1,59 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Update Maven dependencies
+      run: |
+        mvn versions:use-latest-versions -DallowSnapshots=false
+        mvn versions:update-properties
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '16'
+        cache: 'npm'
+        cache-dependency-path: Extension/package-lock.json
+
+    - name: Update npm dependencies
+      working-directory: ./Extension
+      run: |
+        npm update
+        npm audit fix
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies'
+        title: 'Automated Dependency Updates'
+        body: |
+          This PR contains automated dependency updates:
+          
+          - Updated Maven dependencies to latest versions
+          - Updated npm dependencies in VS Code extension
+          - Applied security fixes where available
+          
+          Please review the changes before merging.
+        branch: dependency-updates
+        delete-branch: true
