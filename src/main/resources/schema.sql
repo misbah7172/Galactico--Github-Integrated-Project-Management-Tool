@@ -137,3 +137,38 @@ CREATE TABLE message_reactions (
     FOREIGN KEY (user_id) REFERENCES users(id),
     UNIQUE(message_id, user_id, emoji)
 );
+
+-- Table structure for table `team_member_removals`
+CREATE TABLE `team_member_removals` (
+  `id` bigint(20) NOT NULL,
+  `contributions_removed` bit(1) NOT NULL,
+  `removal_reason` text DEFAULT NULL,
+  `removal_type` enum('KICKED','LEFT','TEAM_DELETED') NOT NULL,
+  `removed_at` datetime(6) NOT NULL,
+  `removed_by_id` bigint(20) NOT NULL,
+  `team_id` bigint(20) NOT NULL,
+  `user_id` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `project_team_history`
+CREATE TABLE `project_team_history` (
+  `id` bigint(20) NOT NULL,
+  `change_reason` varchar(255) DEFAULT NULL,
+  `changed_at` datetime(6) NOT NULL,
+  `changed_by_id` bigint(20) NOT NULL,
+  `new_team_id` bigint(20) NOT NULL,
+  `previous_team_id` bigint(20) DEFAULT NULL,
+  `project_id` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `project_secrets`
+CREATE TABLE `project_secrets` (
+  `id` bigint(20) NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `description` text DEFAULT NULL,
+  `secret_name` varchar(100) NOT NULL,
+  `secret_value` text NOT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `created_by_id` bigint(20) NOT NULL,
+  `project_id` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
