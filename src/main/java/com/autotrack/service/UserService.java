@@ -1,5 +1,6 @@
 package com.autotrack.service;
 
+import com.autotrack.model.Role;
 import com.autotrack.model.User;
 import com.autotrack.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

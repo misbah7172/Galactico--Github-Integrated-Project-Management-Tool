@@ -22,14 +22,6 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final UserService userService;
-    private final ExtensionOAuthSuccessHandler extensionOAuthSuccessHandler;
-
-    @Autowired
-    public SecurityConfig(UserService userService, ExtensionOAuthSuccessHandler extensionOAuthSuccessHandler) {
-        this.userService = userService;
-        this.extensionOAuthSuccessHandler = extensionOAuthSuccessHandler;
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
@@ -49,13 +41,6 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/h2-console/**"),
                             new AntPathRequestMatcher("/api/**")).permitAll() // H2 Console access
                         .anyRequest().authenticated()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(userService)
-                        )
-                        .successHandler(extensionOAuthSuccessHandler)
                 )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/")

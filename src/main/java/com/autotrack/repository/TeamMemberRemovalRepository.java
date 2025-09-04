@@ -1,6 +1,7 @@
 package com.autotrack.repository;
 
 import com.autotrack.model.Team;
+import com.autotrack.model.TeamMemberRemoval;
 import com.autotrack.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

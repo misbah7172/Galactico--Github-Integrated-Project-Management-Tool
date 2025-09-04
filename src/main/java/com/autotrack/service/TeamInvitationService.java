@@ -19,16 +19,13 @@ import java.util.stream.Collectors;
 public class TeamInvitationService {    private final TeamInvitationRepository teamInvitationRepository;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
 
     public TeamInvitationService(TeamInvitationRepository teamInvitationRepository,
                                TeamRepository teamRepository,
-                               UserRepository userRepository,
-                               NotificationService notificationService) {
+                               UserRepository userRepository) {
         this.teamInvitationRepository = teamInvitationRepository;
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.notificationService = notificationService;
     }
 
     /**
@@ -61,8 +58,6 @@ public class TeamInvitationService {    private final TeamInvitationRepository t
         Optional<User> existingUser = findUserByGithubUrl(normalizedGithubUrl);
         if (existingUser.isPresent()) {
             invitation.setInvitee(existingUser.get());
-            // Create notification for the user
-            notificationService.createTeamInvitationNotification(existingUser.get(), invitation);
         }
 
         invitation = teamInvitationRepository.save(invitation);
@@ -112,10 +107,6 @@ public class TeamInvitationService {    private final TeamInvitationRepository t
 
         invitation = teamInvitationRepository.save(invitation);
 
-        // Create notification for team owner
-        notificationService.createInvitationResponseNotification(
-                invitation.getInviter(), invitation, true);
-
         return new TeamInvitationDTO(invitation);
     }
 
@@ -140,10 +131,6 @@ public class TeamInvitationService {    private final TeamInvitationRepository t
         invitation.setInvitee(user);
 
         invitation = teamInvitationRepository.save(invitation);
-
-        // Create notification for team owner
-        notificationService.createInvitationResponseNotification(
-                invitation.getInviter(), invitation, false);
 
         return new TeamInvitationDTO(invitation);
     }
@@ -194,9 +181,6 @@ public class TeamInvitationService {    private final TeamInvitationRepository t
         for (TeamInvitation invitation : pendingInvitations) {
             invitation.setInvitee(user);
             teamInvitationRepository.save(invitation);
-            
-            // Create notification for the newly registered user
-            notificationService.createTeamInvitationNotification(user, invitation);
         }
     }
 

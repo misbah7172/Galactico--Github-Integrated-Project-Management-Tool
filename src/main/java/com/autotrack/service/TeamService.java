@@ -19,24 +19,15 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
-    private final EmailService emailService;
     private final TeamMemberRemovalRepository teamMemberRemovalRepository;
     private final ProjectRepository projectRepository;
-    private final TaskRepository taskRepository;
-    private final CommitRepository commitRepository;
-    private final NotificationService notificationService;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository, EmailService emailService,
-                      TeamMemberRemovalRepository teamMemberRemovalRepository, ProjectRepository projectRepository,
-                      TaskRepository taskRepository, CommitRepository commitRepository, NotificationService notificationService) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository,
+                      TeamMemberRemovalRepository teamMemberRemovalRepository, ProjectRepository projectRepository) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.emailService = emailService;
         this.teamMemberRemovalRepository = teamMemberRemovalRepository;
         this.projectRepository = projectRepository;
-        this.taskRepository = taskRepository;
-        this.commitRepository = commitRepository;
-        this.notificationService = notificationService;
     }
 
     /**
@@ -180,9 +171,6 @@ public class TeamService {
         if (!team.getMembers().contains(member)) {
             team.getMembers().add(member);
             teamRepository.save(team);
-            
-            // Send welcome email to the new member
-            emailService.sendWelcomeEmail(member, team);
         }
     }
 
@@ -194,17 +182,6 @@ public class TeamService {
         if (!team.getMembers().contains(member)) {
             team.getMembers().add(member);
             teamRepository.save(team);
-            
-            // Send invitation email if email is provided and different from member's email
-            if (email != null && !email.isEmpty() && 
-                (member.getEmail() == null || !email.equals(member.getEmail()))) {
-                emailService.sendTeamInvitationEmail(email, team, invitedBy);
-            }
-            
-            // Send welcome email to the new member if they have an email
-            if (member.getEmail() != null && !member.getEmail().isEmpty()) {
-                emailService.sendWelcomeEmail(member, team);
-            }
         }
     }
 
@@ -247,30 +224,6 @@ public class TeamService {
             projectRepository.save(project);
         }
         
-        // Notify all team members about team deletion before removing them
-        for (User member : team.getMembers()) {
-            if (!member.equals(currentUser)) {
-                notificationService.createNotification(
-                    member,
-                    "Team Deleted",
-                    "The team '" + team.getName() + "' has been deleted by the team owner.",
-                    "/teams"
-                );
-            }
-        }
-        
-        // Log removal for each team member
-        for (User member : team.getMembers()) {
-            TeamMemberRemoval removal = new TeamMemberRemoval();
-            removal.setTeam(team);
-            removal.setUser(member);
-            removal.setRemovedBy(currentUser);
-            removal.setRemovalType(RemovalType.TEAM_DELETED);
-            removal.setRemovedAt(LocalDateTime.now());
-            removal.setRemovalReason("Team deleted by owner");
-            teamMemberRemovalRepository.save(removal);
-        }
-        
         // Clear team members before soft deletion
         team.getMembers().clear();
         teamRepository.save(team);
@@ -310,24 +263,6 @@ public class TeamService {
             project.setDeletedBy(currentUser);
             projectRepository.save(project);
         }
-        
-        // Notify team leader about member leaving
-        notificationService.createNotification(
-            team.getLeader(),
-            "Member Left Team",
-            currentUser.getFullName() + " has left the team '" + team.getName() + "'.",
-            "/teams/" + teamId
-        );
-        
-        // Log the removal
-        TeamMemberRemoval removal = new TeamMemberRemoval();
-        removal.setTeam(team);
-        removal.setUser(currentUser);
-        removal.setRemovedBy(currentUser);
-        removal.setRemovalType(RemovalType.LEFT);
-        removal.setRemovedAt(LocalDateTime.now());
-        removal.setRemovalReason("Member left voluntarily");
-        teamMemberRemovalRepository.save(removal);
     }
     
     /**
@@ -356,28 +291,6 @@ public class TeamService {
         // Remove member from team
         team.getMembers().remove(memberToKick);
         teamRepository.save(team);
-        
-        // Note: We keep their projects and contributions for now
-        // They can be explicitly removed later if needed
-        
-        // Notify the kicked member
-        notificationService.createNotification(
-            memberToKick,
-            "Removed from Team",
-            "You have been removed from the team '" + team.getName() + "'" + 
-            (reason != null && !reason.trim().isEmpty() ? ". Reason: " + reason : "."),
-            "/teams"
-        );
-        
-        // Log the removal
-        TeamMemberRemoval removal = new TeamMemberRemoval();
-        removal.setTeam(team);
-        removal.setUser(memberToKick);
-        removal.setRemovedBy(currentUser);
-        removal.setRemovalType(RemovalType.KICKED);
-        removal.setRemovedAt(LocalDateTime.now());
-        removal.setRemovalReason(reason != null ? reason : "No reason provided");
-        teamMemberRemovalRepository.save(removal);
     }
     
     /**
@@ -402,26 +315,6 @@ public class TeamService {
         User previousLeader = team.getLeader();
         team.setLeader(newLeader);
         teamRepository.save(team);
-        
-        // Notify new leader
-        notificationService.createNotification(
-            newLeader,
-            "Team Leadership Transferred",
-            "You are now the leader of team '" + team.getName() + "'.",
-            "/teams/" + teamId
-        );
-        
-        // Notify all other team members
-        for (User member : team.getMembers()) {
-            if (!member.equals(newLeader) && !member.equals(previousLeader)) {
-                notificationService.createNotification(
-                    member,
-                    "Team Leadership Changed",
-                    newLeader.getFullName() + " is now the leader of team '" + team.getName() + "'.",
-                    "/teams/" + teamId
-                );
-            }
-        }
     }
     
     /**
@@ -463,19 +356,5 @@ public class TeamService {
         projectRepository.save(project);
         
         System.out.println("DEBUG: Project marked as deleted");
-        
-        // Notify team members about project deletion
-        if (team != null) {
-            for (User member : team.getMembers()) {
-                if (!member.equals(currentUser)) {
-                    notificationService.createNotification(
-                        member,
-                        "Project Deleted",
-                        "The project '" + project.getName() + "' has been deleted.",
-                        "/teams/" + team.getId()
-                    );
-                }
-            }
-        }
     }
 }
