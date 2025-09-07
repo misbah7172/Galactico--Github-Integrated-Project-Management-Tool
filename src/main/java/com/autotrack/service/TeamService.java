@@ -19,14 +19,11 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
-    private final TeamMemberRemovalRepository teamMemberRemovalRepository;
     private final ProjectRepository projectRepository;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository,
-                      TeamMemberRemovalRepository teamMemberRemovalRepository, ProjectRepository projectRepository) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, ProjectRepository projectRepository) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.teamMemberRemovalRepository = teamMemberRemovalRepository;
         this.projectRepository = projectRepository;
     }
 
