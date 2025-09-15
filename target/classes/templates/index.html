@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactico - Automated Task Tracking through GitHub Commits</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <main class="homepage-container">
+        <!-- Hero Section with Modern Card Design -->
+        <section class="hero-section">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <i class="fas fa-rocket"></i>
+                        <span>Transform Your Development Workflow</span>
+                    </div>
+                    <h1 class="hero-title">Automate Task Tracking Through GitHub Commits</h1>
+                    <p class="hero-description">
+                        Turn your Git commits into organized project insights with beautiful Kanban boards, 
+                        team collaboration tools, and intelligent task management.
+                    </p>
+                    
+                    <div class="hero-actions">
+                        <div sec:authorize="isAnonymous()">
+                            <a th:href="@{/login}" class="btn btn-hero-primary">
+                                <i class="fab fa-github"></i>
+                                <span>Get Started with GitHub</span>
+                            </a>
+                            <a href="#features" class="btn btn-hero-secondary">
+                                <i class="fas fa-play"></i>
+                                <span>Watch Demo</span>
+                            </a>
+                        </div>
+                        
+                        <div sec:authorize="isAuthenticated()">
+                            <a th:href="@{/dashboard}" class="btn btn-hero-primary">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Open Dashboard</span>
+                            </a>
+                            <a th:href="@{/projects}" class="btn btn-hero-secondary">
+                                <i class="fas fa-folder-open"></i>
+                                <span>View Projects</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hero-visual">
+                    <div class="hero-card-demo">
+                        <div class="demo-window">
+                            <div class="demo-header">
+                                <div class="demo-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="demo-title">Galactico Dashboard</div>
+                            </div>
+                            <div class="demo-content">
+                                <div class="demo-kanban">
+                                    <div class="demo-column">
+                                        <div class="demo-column-header">To Do</div>
+                                        <div class="demo-task">Feature01: Login UI</div>
+                                        <div class="demo-task">Feature02: Database</div>
+                                    </div>
+                                    <div class="demo-column">
+                                        <div class="demo-column-header">In Progress</div>
+                                        <div class="demo-task">Feature03: API</div>
+                                    </div>
+                                    <div class="demo-column">
+                                        <div class="demo-column-header">Done</div>
+                                        <div class="demo-task">Feature04: Auth</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid with Beautiful Cards -->
+        <section id="features" class="features-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Powerful Features for Modern Development</h2>
+                    <p>Everything you need to streamline your development workflow</p>
+                </div>
+                
+                <div class="features-grid">
+                    <!-- Smart Commit Tracking Card -->
+                    <div class="feature-card">
+                        <div class="feature-icon primary">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <h3>Smart Commit Tracking</h3>
+                        <p>Automatically create and update tasks based on your commit messages using simple formatting conventions.</p>
+                        <div class="feature-link">
+                            <a href="#how-it-works">Learn more <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <!-- Visual Kanban Card -->
+                    <div class="feature-card">
+                        <div class="feature-icon success">
+                            <i class="fas fa-columns"></i>
+                        </div>
+                        <h3>Visual Kanban Boards</h3>
+                        <p>Beautiful, interactive Kanban boards that automatically update as your team commits code and track progress in real-time.</p>
+                        <div class="feature-link">
+                            <a href="#demo">View demo <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Collaboration Card -->
+                    <div class="feature-card">
+                        <div class="feature-icon warning">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>Team Collaboration</h3>
+                        <p>Create teams, assign roles, invite members, and track everyone's contributions with detailed analytics.</p>
+                        <div class="feature-link">
+                            <a href="#teams">Explore teams <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <!-- GitHub Integration Card -->
+                    <div class="feature-card">
+                        <div class="feature-icon info">
+                            <i class="fab fa-github"></i>
+                        </div>
+                        <h3>GitHub Integration</h3>
+                        <p>Seamless integration with GitHub repositories. Connect your repos and start tracking immediately with webhook support.</p>
+                        <div class="feature-link">
+                            <a href="#integration">Set up webhooks <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics Card -->
+                    <div class="feature-card">
+                        <div class="feature-icon purple">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Progress Analytics</h3>
+                        <p>Detailed insights into project progress, team performance, and task completion rates. Make data-driven decisions.</p>
+                        <div class="feature-link">
+                            <a href="#analytics">View analytics <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications Card -->
+                    <div class="feature-card">
+                        <div class="feature-icon danger">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h3>Smart Notifications</h3>
+                        <p>Stay updated with intelligent notifications about task changes, team activities, and project milestones.</p>
+                        <div class="feature-link">
+                            <a href="#notifications">Configure alerts <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="how-it-works-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>How Galactico Works</h2>
+                    <p>Get started in just 3 simple steps</p>
+                </div>
+                
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Connect Repository</h3>
+                            <p>Link your GitHub repository to Galactico and set up webhook integration for real-time updates.</p>
+                            <div class="step-icon">
+                                <i class="fab fa-github"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Format Commits</h3>
+                            <p>Use simple commit message formatting:<br><code>Feature01: description -> assignee -> status</code></p>
+                            <div class="step-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Track Progress</h3>
+                            <p>Watch as tasks automatically appear on your Kanban board and update based on your commits.</p>
+                            <div class="step-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Example Commits Section -->
+        <section class="examples-section">
+            <div class="container">
+                <div class="examples-card">
+                    <div class="examples-header">
+                        <h2>
+                            <i class="fas fa-terminal"></i>
+                            Example Commit Messages
+                        </h2>
+                        <p>See how easy it is to create and manage tasks</p>
+                    </div>
+                    
+                    <div class="code-examples">
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-title">Creating New Tasks</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="code-content">
+                                <pre><code><span class="comment"># Create new tasks</span>
+Feature01: authentication page -> Rakib -> todo
+Feature02: homepage frontend -> Mahi -> todo
+Feature03: database setup -> Alex -> todo</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-title">Updating Progress</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="code-content">
+                                <pre><code><span class="comment"># Update to in progress (automatic)</span>
+Rakib: Started working on login UI
+Mahi: Designed homepage layout</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="code-title">Completing Tasks</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="code-content">
+                                <pre><code><span class="comment"># Mark as completed</span>
+Rakib: Completed login authentication -> done
+Alex: Database migration setup -> done</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number">1000+</div>
+                        <div class="stat-label">Active Developers</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="stat-number">5000+</div>
+                        <div class="stat-label">Projects Managed</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <div class="stat-number">50K+</div>
+                        <div class="stat-label">Commits Tracked</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-number">80%</div>
+                        <div class="stat-label">Time Saved</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block').querySelector('code');
+            const text = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const icon = button.querySelector('i');
+                icon.className = 'fas fa-check';
+                button.style.color = 'var(--success-500)';
+                
+                setTimeout(() => {
+                    icon.className = 'fas fa-copy';
+                    button.style.color = '';
+                }, 2000);
+            });
+        }
+
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+                        <line x1="17.01" y1="12" x2="22.96" y2="12"></line>
+                    </svg>
+                </div>
+                <h3>Smart Commit Tracking</h3>
+                <p>Automatically create and update tasks based on your commit messages. Use simple formatting and let Galactico handle the rest.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <rect x="7" y="7" width="3" height="9"></rect>
+                        <rect x="14" y="7" width="3" height="5"></rect>
+                    </svg>
+                </div>
+                <h3>Visual Kanban Boards</h3>
+                <p>Beautiful, interactive Kanban boards that automatically update as your team commits code. Track progress in real-time.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <h3>Team Collaboration</h3>
+                <p>Create teams, assign roles, and collaborate seamlessly. Invite members and track everyone's contributions.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                    </svg>
+                </div>
+                <h3>GitHub Integration</h3>
+                <p>Seamless integration with GitHub repositories. Connect your repos and start tracking immediately with webhook support.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <h3>Progress Analytics</h3>
+                <p>Detailed insights into project progress, team performance, and task completion rates. Make data-driven decisions.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                </div>
+                <h3>Smart Notifications</h3>
+                <p>Stay updated with intelligent notifications about task changes, team activities, and project milestones.</p>
+            </div>
+        </section>
+        
+        <!-- How It Works Section -->
+        <section class="card slide-up">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    How Galactico Works
+                </h2>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-6);">
+                    <div style="text-align: center; padding: var(--space-4);">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-500), var(--primary-600)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4); color: white; font-weight: 700; font-size: var(--text-xl);">1</div>
+                        <h4>Connect Repository</h4>
+                        <p>Link your GitHub repository to Galactico and set up webhook integration for real-time updates.</p>
+                    </div>
+                    <div style="text-align: center; padding: var(--space-4);">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--success-500), var(--success-600)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4); color: white; font-weight: 700; font-size: var(--text-xl);">2</div>
+                        <h4>Format Commits</h4>
+                        <p>Use simple commit message formatting: <code>Feature01: description -> assignee -> status</code></p>
+                    </div>
+                    <div style="text-align: center; padding: var(--space-4);">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--warning-500), var(--warning-600)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4); color: white; font-weight: 700; font-size: var(--text-xl);">3</div>
+                        <h4>Track Progress</h4>
+                        <p>Watch as tasks automatically appear on your Kanban board and update based on your commits.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Example Commit Messages -->
+        <section class="card slide-up">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    Example Commit Messages
+                </h2>
+            </div>
+            <div class="card-body">
+                <div style="background: var(--gray-900); color: var(--gray-100); padding: var(--space-6); border-radius: var(--radius-lg); font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;">
+                    <div style="margin-bottom: var(--space-4);">
+                        <div style="color: var(--success-400); margin-bottom: var(--space-2);"># Create new tasks</div>
+                        <div>Feature01: authentication page -> Rakib -> todo</div>
+                        <div>Feature02: homepage frontend -> Mahi -> todo</div>
+                        <div>Feature03: database setup -> Alex -> todo</div>
+                    </div>
+                    
+                    <div style="margin-bottom: var(--space-4);">
+                        <div style="color: var(--warning-400); margin-bottom: var(--space-2);"># Update to in progress (automatic)</div>
+                        <div>Rakib: Started working on login UI</div>
+                        <div>Mahi: Designed homepage layout</div>
+                    </div>
+                    
+                    <div>
+                        <div style="color: var(--primary-400); margin-bottom: var(--space-2);"># Mark as completed</div>
+                        <div>Rakib: Completed login authentication -> done</div>
+                        <div>Alex: Database migration setup -> done</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Galactico. Streamline your development workflow with intelligent task tracking.</p>
+        </div>
+    </footer>
+</body>
+</html>
+                
+                <div style="flex: 1; min-width: 300px;">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trello"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>
+                        Kanban Board
+                    </h3>
+                    <p>Visualize your project progress with a Kanban board that automatically updates as tasks move through different stages.</p>
+                </div>
+                
+                <div style="flex: 1; min-width: 300px;">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-users"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        Team Collaboration
+                    </h3>
+                    <p>Create teams, assign tasks, and track progress together. Perfect for collaborative projects.</p>
+                </div>
+                
+                <div style="flex: 1; min-width: 300px;">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                        Tagging and Milestones
+                    </h3>
+                    <p>Organize tasks with tags and group them into milestones for better project management.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- How It Works Section -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">How It Works</h2>
+            </div>
+            <div class="card-body">
+                <ol style="list-style-position: inside; padding-left: 0;">
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Connect Your GitHub Repository</strong> - Link your GitHub repo to Galactico through OAuth.
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Format Your Commit Messages</strong> - Use the special format:
+                        <pre style="background: #f5f5f5; padding: 0.5rem; border-radius: 0.25rem; margin: 0.5rem 0;">Feature01 : Create login page -> Mahi -> todo</pre>
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Galactico Does the Rest</strong> - Tasks are automatically created and updated based on your commits.
+                    </li>
+                    <li>
+                        <strong>Visualize and Manage</strong> - Use the Kanban board to get a clear overview of your project's progress.
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
