@@ -65,16 +65,20 @@ public class Task {
     // Sprint relationship
     @ManyToOne
     @JoinColumn(name = "sprint_id")
+    private Sprint sprint;
     
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Commit> commits = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Notification> notifications = new ArrayList<>();
 
     // Constructors
     public Task() {}
 
     public Task(Long id, String featureCode, String title, TaskStatus status, User assignee, String tagsString,
                 String milestone, String gitHubIssueUrl, LocalDateTime createdAt, LocalDateTime updatedAt,
-                Project project) {
+                Project project, Sprint sprint, List<Commit> commits, List<Notification> notifications) {
         this.id = id;
         this.featureCode = featureCode;
         this.title = title;
@@ -86,7 +90,9 @@ public class Task {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.project = project;
+        this.sprint = sprint;
         this.commits = commits != null ? commits : new ArrayList<>();
+        this.notifications = notifications != null ? notifications : new ArrayList<>();
     }
 
     // Getters and Setters
@@ -123,6 +129,14 @@ public class Task {
     public Project getProject() { return project; }
     public void setProject(Project project) { this.project = project; }
 
+    public Sprint getSprint() { return sprint; }
+    public void setSprint(Sprint sprint) { this.sprint = sprint; }
+
+    public List<Commit> getCommits() { return commits; }
+    public void setCommits(List<Commit> commits) { this.commits = commits; }
+
+    public List<Notification> getNotifications() { return notifications; }
+    public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
     // Decline-related getters and setters
     public User getDeclinedBy() { return declinedBy; }
     public void setDeclinedBy(User declinedBy) { this.declinedBy = declinedBy; }
@@ -155,7 +169,9 @@ public class Task {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private Project project;
+        private Sprint sprint;
         private List<Commit> commits = new ArrayList<>();
+        private List<Notification> notifications = new ArrayList<>();
 
         public TaskBuilder id(Long id) { this.id = id; return this; }
         public TaskBuilder featureCode(String featureCode) { this.featureCode = featureCode; return this; }
@@ -168,6 +184,14 @@ public class Task {
         public TaskBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public TaskBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public TaskBuilder project(Project project) { this.project = project; return this; }
+        public TaskBuilder sprint(Sprint sprint) { this.sprint = sprint; return this; }
+        public TaskBuilder commits(List<Commit> commits) { this.commits = commits; return this; }
+        public TaskBuilder notifications(List<Notification> notifications) { this.notifications = notifications; return this; }
+
+        public Task build() {
+            return new Task(id, featureCode, title, status, assignee, tagsString, milestone, gitHubIssueUrl,
+                           createdAt, updatedAt, project, sprint, commits, notifications);
+        }
     }
     
     @PrePersist
