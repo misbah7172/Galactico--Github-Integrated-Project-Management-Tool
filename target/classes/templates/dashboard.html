@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Galactico</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container" style="padding-top: 2rem;">
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <span th:text="${errorMessage}"></span>
+        </div>
+        
+        <!-- Welcome Section -->
+        <div class="dashboard-hero">
+            <div class="hero-content">
+                <h1 class="hero-title">Welcome back, <span th:text="${user.nickname}">User</span>! 👋</h1>
+                <p class="hero-subtitle">Track your progress and manage your teams from your dashboard</p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${#lists.size(teams)}">0</div>
+                    <div class="stat-label">Teams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${#lists.size(projects)}">0</div>
+                    <div class="stat-label">Projects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${taskCount}">0</div>
+                    <div class="stat-label">Tasks</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Teams Section -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-content">
+                    <div>
+                        <h2 class="card-title">
+                            <i class="fas fa-users"></i>
+                            Your Teams
+                        </h2>
+                        <p class="card-description">Collaborate with your team members</p>
+                    </div>
+                    <a th:href="@{/teams/create}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create Team
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(teams)}" class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <h3 class="empty-title">No teams yet</h3>
+                    <p class="empty-description">Create your first team to start collaborating</p>
+                    <a th:href="@{/teams/create}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create Your First Team
+                    </a>
+                </div>
+                <div th:unless="${#lists.isEmpty(teams)}" class="team-grid">
+                    <div th:each="team : ${teams}" class="team-card">
+                        <div class="team-card-header">
+                            <h3 class="team-name" th:text="${team.name}">Team Name</h3>
+                            <div class="team-members-count">
+                                <i class="fas fa-user"></i>
+                                <span th:text="${team.members.size()} + ' members'">0 members</span>
+                            </div>
+                        </div>
+                        <div class="team-card-actions">
+                            <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-eye"></i>
+                                View Details
+                            </a>
+                            <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                               th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Projects Section -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-content">
+                    <div>
+                        <h2 class="card-title">
+                            <i class="fas fa-rocket"></i>
+                            Your Projects
+                        </h2>
+                        <p class="card-description">Manage your project repositories</p>
+                    </div>
+                    <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                       th:href="@{/projects/create}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create Project
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(projects)}" class="empty-state">
+                    <div class="empty-icon">🚀</div>
+                    <h3 class="empty-title">No projects yet</h3>
+                    <p class="empty-description">Create your first project to start tracking tasks</p>
+                    <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                       th:href="@{/projects/create}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create Your First Project
+                    </a>
+                </div>
+                <div th:unless="${#lists.isEmpty(projects)}" class="project-grid">
+                    <div th:each="project : ${projects}" class="project-card">
+                        <div class="project-card-header">
+                            <h3 class="project-name" th:text="${project.name}">Project Name</h3>
+                            <div class="project-team">
+                                <i class="fas fa-users"></i>
+                                <span th:text="${project.team.name}">Team Name</span>
+                            </div>
+                        </div>
+                        <div class="project-card-body">
+                            <div class="project-repo">
+                                <i class="fab fa-github"></i>
+                                <a th:href="${project.gitHubRepoUrl}" target="_blank" class="repo-link" 
+                                   th:text="${#strings.abbreviate(project.gitHubRepoUrl, 35)}">Repository URL</a>
+                            </div>
+                        </div>
+                        <div class="project-card-actions">
+                            <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-eye"></i>
+                                View Details
+                            </a>
+                            <a th:href="@{/tasks/project/{id}(id=${project.id})}" class="btn btn-success btn-sm">
+                                <i class="fas fa-columns"></i>
+                                Kanban Board
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
