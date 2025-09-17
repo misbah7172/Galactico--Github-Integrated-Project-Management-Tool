@@ -10,6 +10,9 @@ hs_err_pid*
 *.swp
 *.swo
 *~
+# Ignore build output
+/target/
+
 
 # Node.js
 node_modules/
