@@ -1,0 +1,183 @@
+/* Team Member Contribution Tracking Styles */
+.contribution-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.contribution-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.contribution-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.member-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.member-avatar {
+    position: relative;
+    width: 50px;
+    height: 50px;
+}
+
+.member-avatar img,
+.avatar-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+}
+
+.avatar-placeholder {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.member-info h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.member-info p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.contribution-percentage {
+    margin-bottom: 1rem;
+}
+
+.contribution-percentage .progress-bar {
+    width: 100%;
+    background: #f3f4f6;
+    border-radius: 9999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.contribution-percentage .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+}
+
+.contribution-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.stat-box {
+    text-align: center;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-value.commits {
+    color: #059669;
+}
+
+.stat-value.tasks {
+    color: #7c3aed;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.task-completion-bar {
+    margin-top: 1rem;
+}
+
+.task-completion-bar .progress-fill {
+    background: linear-gradient(90deg, #7c3aed 0%, #5b21b6 100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .contribution-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .contribution-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Enhanced visual feedback */
+.contribution-card.top-contributor {
+    border-color: #fbbf24;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.contribution-card.top-contributor .member-info h4::after {
+    content: "🏆";
+    margin-left: 0.5rem;
+}
+
+/* Loading states */
+.contribution-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.contribution-loading .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.contribution-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.contribution-empty .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
