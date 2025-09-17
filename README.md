@@ -15,3 +15,5 @@ Role-based access for contributors and team leads
 
 Autotrack is designed to improve productivity, transparency, and collaboration in team-based software projects.
 
+Branchs pull git bash command : git fetch --all && for br in $(git branch -r | grep -v '\->'); do git branch --track "${br#origin/}" "$br" 2>/dev/null; done
+
