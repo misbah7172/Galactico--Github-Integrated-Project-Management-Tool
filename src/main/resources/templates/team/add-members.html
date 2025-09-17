@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Members - AutoTrack</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container">
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-content">
+                <div>
+                    <h1 class="page-title">👥 Add Members to <span th:text="${team.name}">Team</span></h1>
+                    <p class="page-description">Invite new members to join your team</p>
+                </div>
+                <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary">
+                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5m0 0l7 7m-7-7l7-7"/>
+                    </svg>
+                    Back to Team
+                </a>
+            </div>
+        </div>
+
+        <!-- Team Invitation Section -->
+        <div class="form-container">
+            <div class="form-card">
+                <div class="form-header">
+                    <h3 class="form-title">🎯 Invite Team Members</h3>
+                    <p class="form-subtitle">Send invitations to developers via their GitHub profiles</p>
+                </div>
+                
+                <div class="invite-form">
+                    <!-- Single Invitation -->
+                    <div class="form-group">
+                        <label for="inviteGithubUrl" class="form-label">GitHub Profile URL</label>
+                        <div class="invite-input-group">
+                            <input type="text" id="inviteGithubUrl" class="form-control" 
+                                   placeholder="https://github.com/username or just username">
+                            <button type="button" id="addInviteBtn" class="btn btn-secondary">
+                                <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Add
+                            </button>
+                        </div>
+                        <small class="form-help">Enter GitHub profile URL or just the username</small>
+                    </div>
+                    
+                    <!-- Batch Invitation -->
+                    <div class="form-group">
+                        <label for="batchInvites" class="form-label">📝 Bulk Invite (Multiple Members)</label>
+                        <textarea id="batchInvites" class="form-control" rows="4" 
+                                  placeholder="Enter multiple GitHub usernames, one per line:&#10;username1&#10;https://github.com/username2&#10;username3"></textarea>
+                        <button type="button" id="addBatchInvitesBtn" class="btn btn-secondary">
+                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="m5 15-4-4 4-4"></path>
+                                <path d="m11 19 4-4-4-4"></path>
+                            </svg>
+                            Add All
+                        </button>
+                    </div>
+                    
+                    <!-- Pending Invitations List -->
+                    <div id="pendingInvitesList" class="pending-invites-list" style="display: none;">
+                        <h5>📋 Members to Invite</h5>
+                        <div id="pendingInvitesContainer" class="pending-invites-container">
+                            <!-- Pending invitations will be shown here -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inviteMessage" class="form-label">Invitation Message</label>
+                        <textarea id="inviteMessage" class="form-control" rows="3" 
+                                  placeholder="Join our team to collaborate on exciting projects!"></textarea>
+                    </div>
+                    
+                    <button type="button" id="sendAllInvitesBtn" class="btn btn-primary" disabled>
+                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 8l7.89 3.26a2 2 0 001.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Send All Invitations
+                    </button>
+                    
+                    <!-- Legacy single invite button (for backwards compatibility) -->
+                    <button type="button" id="sendInviteBtn" class="btn btn-outline-primary" style="margin-left: 1rem;">
+                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 8l7.89 3.26a2 2 0 001.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Send Single Invitation
+                    </button>
+                </div>
+                
+                <!-- Sent Invitations List -->
+                <div id="sentInvitations" class="sent-invitations">
+                    <h4>📤 Sent Invitations</h4>
+                    <div id="invitationsList" class="invitations-list">
+                        <!-- Invitations will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // CSRF token for AJAX requests
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        
+        // Pending invites list
+        let pendingInvites = [];
+        
+        // Get team ID from URL
+        const teamId = [[${team.id}]];
+        
+        // Load existing sent invitations
+        loadSentInvitations(teamId);
+        
+        // Add single invite
+        document.getElementById('addInviteBtn').addEventListener('click', function() {
+            const githubUrl = document.getElementById('inviteGithubUrl').value.trim();
+            if (githubUrl) {
+                addToPendingInvites(githubUrl);
+                document.getElementById('inviteGithubUrl').value = '';
+            }
+        });
+        
+        // Add batch invites
+        document.getElementById('addBatchInvitesBtn').addEventListener('click', function() {
+            const batchText = document.getElementById('batchInvites').value.trim();
+            if (batchText) {
+                const lines = batchText.split('\n').map(line => line.trim()).filter(line => line);
+                lines.forEach(line => addToPendingInvites(line));
+                document.getElementById('batchInvites').value = '';
+            }
+        });
+        
+        // Add to pending invites list
+        function addToPendingInvites(githubUrl) {
+            if (!pendingInvites.includes(githubUrl)) {
+                pendingInvites.push(githubUrl);
+                updatePendingInvitesList();
+            }
+        }
+        
+        // Update pending invites display
+        function updatePendingInvitesList() {
+            const container = document.getElementById('pendingInvitesContainer');
+            const listElement = document.getElementById('pendingInvitesList');
+            const sendButton = document.getElementById('sendAllInvitesBtn');
+            
+            if (pendingInvites.length === 0) {
+                listElement.style.display = 'none';
+                sendButton.disabled = true;
+                return;
+            }
+            
+            listElement.style.display = 'block';
+            sendButton.disabled = false;
+            
+            container.innerHTML = pendingInvites.map((url, index) => `
+                <div class="pending-invite-item">
+                    <span class="invite-url">${url.replace('https://github.com/', '@')}</span>
+                    <button type="button" class="btn-remove" onclick="removePendingInvite(${index})">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // Remove pending invite
+        function removePendingInvite(index) {
+            pendingInvites.splice(index, 1);
+            updatePendingInvitesList();
+        }
+        
+        // Send all invitations
+        document.getElementById('sendAllInvitesBtn').addEventListener('click', function() {
+            if (pendingInvites.length === 0) {
+                alert('No invitations to send');
+                return;
+            }
+            
+            const message = document.getElementById('inviteMessage').value.trim();
+            
+            // Show loading state
+            this.disabled = true;
+            this.textContent = 'Sending...';
+            
+            // Send all invitations
+            Promise.all(pendingInvites.map(githubUrl => 
+                fetch('/team-invitations/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: new URLSearchParams({
+                        teamId: teamId,
+                        githubUrl: githubUrl,
+                        message: message
+                    })
+                }).then(response => response.text())
+            )).then(results => {
+                const successful = results.filter(result => result === 'success').length;
+                const failed = results.length - successful;
+                
+                let alertMessage = `Sent ${successful} invitation(s) successfully!`;
+                if (failed > 0) {
+                    alertMessage += ` ${failed} invitation(s) failed.`;
+                }
+                alert(alertMessage);
+                
+                pendingInvites = [];
+                updatePendingInvitesList();
+                document.getElementById('inviteMessage').value = '';
+                loadSentInvitations(teamId);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send invitations');
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = `
+                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 8l7.89 3.26a2 2 0 001.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Send All Invitations
+                `;
+            });
+        });
+        
+        // Enter key support for single invite
+        document.getElementById('inviteGithubUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('addInviteBtn').click();
+            }
+        });
+        
+        // Send invitation function (legacy single invite)
+        document.getElementById('sendInviteBtn').addEventListener('click', function() {
+            const githubUrl = document.getElementById('inviteGithubUrl').value.trim();
+            const message = document.getElementById('inviteMessage').value.trim();
+            
+            if (!githubUrl) {
+                alert('Please enter a GitHub profile URL');
+                return;
+            }
+            
+            // Show loading state
+            this.disabled = true;
+            this.textContent = 'Sending...';
+            
+            // Send invitation
+            fetch('/team-invitations/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: new URLSearchParams({
+                    teamId: teamId,
+                    githubUrl: githubUrl,
+                    message: message
+                })
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    alert('Invitation sent successfully!');
+                    document.getElementById('inviteGithubUrl').value = '';
+                    document.getElementById('inviteMessage').value = '';
+                    loadSentInvitations(teamId);
+                } else {
+                    alert(result);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send invitation');
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = `
+                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 8l7.89 3.26a2 2 0 001.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Send Single Invitation
+                `;
+            });
+        });
+        
+        // Load sent invitations
+        function loadSentInvitations(teamId) {
+            fetch(`/team-invitations/team/${teamId}`, {
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(invitations => {
+                const list = document.getElementById('invitationsList');
+                if (invitations.length === 0) {
+                    list.innerHTML = '<p class="no-invitations">No invitations sent yet</p>';
+                    return;
+                }
+                
+                list.innerHTML = invitations.map(inv => `
+                    <div class="invitation-item">
+                        <div class="invitation-info">
+                            <div class="invitation-user">
+                                <a href="${inv.inviteeGithubUrl}" target="_blank">${inv.inviteeGithubUrl.replace('https://github.com/', '@')}</a>
+                                ${inv.inviteeName ? `(${inv.inviteeName})` : ''}
+                            </div>
+                            <div class="invitation-message">"${inv.message || 'No message'}"</div>
+                            <div class="invitation-date">Sent ${new Date(inv.createdAt).toLocaleDateString()}</div>
+                        </div>
+                        <div class="invitation-status">
+                            <span class="status-badge status-${inv.status.toLowerCase()}">${inv.status}</span>
+                        </div>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error loading invitations:', error);
+            });
+        }
+    </script>
+    
+    <style>
+        .invite-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .invite-input-group input {
+            flex: 1;
+        }
+        
+        .pending-invites-list {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .pending-invites-list h5 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+        }
+        
+        .pending-invites-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .pending-invite-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .invite-url {
+            font-family: monospace;
+            color: var(--primary-color);
+            font-size: 0.875rem;
+        }
+        
+        .btn-remove {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-remove:hover {
+            background: var(--danger-bg);
+        }
+        
+        .invite-form {
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            background: var(--surface-color);
+        }
+        
+        .sent-invitations h4 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .invitations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .invitation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--background-color);
+        }
+        
+        .invitation-info {
+            flex: 1;
+        }
+        
+        .invitation-user {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .invitation-user a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-family: monospace;
+        }
+        
+        .invitation-user a:hover {
+            text-decoration: underline;
+        }
+        
+        .invitation-message {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            font-style: italic;
+        }
+        
+        .invitation-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-accepted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .no-invitations {
+            text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+            padding: 2rem;
+        }
+    </style>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
