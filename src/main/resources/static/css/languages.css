@@ -1,0 +1,126 @@
+/* Language breakdown styles */
+.language-breakdown {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.language-breakdown h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.language-progress-container {
+    margin-bottom: 15px;
+}
+
+.language-progress-bar {
+    display: flex;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.language-segment {
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.language-segment:hover {
+    opacity: 0.8;
+}
+
+.language-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.language-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.language-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid rgba(27, 31, 35, 0.15);
+}
+
+.language-name {
+    font-weight: 500;
+}
+
+.language-percentage {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Empty state */
+.language-empty {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .language-breakdown {
+        margin: 15px 0;
+        padding: 15px;
+    }
+    
+    .language-list {
+        gap: 8px;
+    }
+    
+    .language-item {
+        font-size: 0.85rem;
+    }
+}
+
+/* Animation for progress bar loading */
+@keyframes loadProgress {
+    0% {
+        width: 0%;
+    }
+    100% {
+        width: var(--target-width);
+    }
+}
+
+.language-segment.animate {
+    animation: loadProgress 1s ease-out;
+}
+
+/* Tooltip for language segments */
+.language-segment[title] {
+    cursor: pointer;
+}
+
+/* Card-like appearance */
+.language-breakdown.card-style {
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.language-breakdown.card-style:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease;
+}

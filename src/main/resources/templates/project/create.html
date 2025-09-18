@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Project - AutoTrack</title>
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <!-- Include your static header here -->
+    </div>
+    
+    <div class="container">
+        <!-- Alert Messages -->
+        <div class="alert alert-success" style="display:none;">Success message here</div>
+        <div class="alert alert-danger" style="display:none;">Error message here</div>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-content">
+                <div>
+                    <h1 class="page-title">Create New Project</h1>
+                    <p class="page-description">Connect your GitHub repository and start tracking commits</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create Project Form -->
+        <div class="form-container">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2 class="form-title">Project Details</h2>
+                    <p class="form-subtitle">Set up your GitHub repository for automated task tracking</p>
+                </div>
+                
+                <form action="/projects/create" method="post" class="form">
+                    <!-- Project Name -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">Project Name *</label>
+                        <input type="text" id="name" name="name" class="form-control" 
+                               placeholder="Enter a descriptive project name" required>
+                        <div class="form-error">Error for project name</div>
+                    </div>
+                    
+                    <!-- GitHub Repository URL -->
+                    <div class="form-group">
+                        <label for="gitHubRepoUrl" class="form-label">GitHub Repository URL *</label>
+                        <input type="url" id="gitHubRepoUrl" name="gitHubRepoUrl" class="form-control" 
+                               placeholder="https://github.com/username/repository" required>
+                        <p class="form-help">
+                            Enter the full URL to your GitHub repository. This will be used to track commits and manage tasks.
+                        </p>
+                        <div class="form-error">Error for repository URL</div>
+                    </div>
+                    
+                    <!-- Team Assignment (Optional) -->
+                    <div class="form-group">
+                        <label for="teamId" class="form-label">Assign to Team (Optional)</label>
+                        <select id="teamId" name="teamId" class="form-control">
+                            <option value="">-- No team (assign later) --</option>
+                            <option value="1">Team Alpha</option>
+                            <option value="2">Team Beta</option>
+                        </select>
+                        <p class="form-help">
+                            You can assign this project to a team now or later. Team members will be able to commit to this project.
+                        </p>
+                        <div class="form-error">Error for team selection</div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14m-7-7h14"/>
+                            </svg>
+                            Create Project
+                        </button>
+                        <a href="/projects" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <!-- Include your static footer here -->
+    </div>
+</body>
+</html>

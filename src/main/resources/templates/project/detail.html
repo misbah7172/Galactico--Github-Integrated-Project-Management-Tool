@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project - Galactico</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/contributions.css">
+  <link rel="stylesheet" href="/css/languages.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h1>Galactico</h1>
+    <!-- Add your static nav here if needed -->
+  </header>
+
+  <div class="container">
+    <!-- Alert Messages -->
+    <div class="alert alert-success" style="display: none;">Success message</div>
+    <div class="alert alert-danger" style="display: none;">Error message</div>
+
+    <!-- Project Details -->
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">Project Name</h1>
+        <div>
+          <a href="#" class="btn btn-success">Kanban Board</a>
+          <a href="#" class="btn btn-info">Analytics</a>
+          <a href="#" class="btn btn-secondary">CI/CD Pipeline</a>
+          <a href="#" class="btn btn-primary">Edit Project</a>
+          <a href="#" class="btn btn-warning">Change Team</a>
+          <button class="btn btn-danger delete-project-btn">Delete Project</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="row" style="display: flex; flex-wrap: wrap; gap: 2rem;">
+          <!-- Project Information -->
+          <div style="flex: 2; min-width: 300px;">
+            <h3>Project Information</h3>
+            <table class="table">
+              <tr><th>Name:</th><td>Project Name</td></tr>
+              <tr><th>GitHub Repository:</th><td><a href="#">Repository URL</a></td></tr>
+              <tr><th>Team:</th><td><a href="#">Team Name</a></td></tr>
+              <tr><th>Created:</th><td>2023-01-01</td></tr>
+              <tr><th>Last Updated:</th><td>2023-01-01</td></tr>
+            </table>
+          </div>
+
+          <!-- Project Statistics -->
+          <div style="flex: 1; min-width: 300px;">
+            <h3>Project Statistics</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div style="background-color: #f5f5f5; padding: 1rem; border-radius: 0.5rem;">
+                <h4>Tasks</h4>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                  <div><span style="font-size: 1.5rem; font-weight: bold;">0</span><span>Total</span></div>
+                  <div><span style="font-size: 1.5rem; font-weight: bold;">0</span><span>To Do</span></div>
+                  <div><span style="font-size: 1.5rem; font-weight: bold;">0</span><span>In Progress</span></div>
+                  <div><span style="font-size: 1.5rem; font-weight: bold;">0</span><span>Done</span></div>
+                </div>
+              </div>
+              <div style="background-color: #f5f5f5; padding: 1rem; border-radius: 0.5rem;">
+                <h4>Commits</h4>
+                <span style="font-size: 1.5rem; font-weight: bold;">0</span>
+                <span>Total Commits</span>
+              </div>
+              <div style="background-color: #f5f5f5; padding: 1rem; border-radius: 0.5rem;">
+                <h4>Team Members</h4>
+                <span style="font-size: 1.5rem; font-weight: bold;">0</span>
+                <span>Contributors</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Languages -->
+        <div class="language-breakdown card-style" style="margin-top: 2rem;">
+          <h3>Languages</h3>
+          <p>Language information not available</p>
+        </div>
+
+        <!-- Team Member Contributions -->
+        <div style="margin-top: 2rem;">
+          <h3>Team Member Contributions</h3>
+          <div class="contribution-empty">
+            <div class="empty-icon">👥</div>
+            <h4>No team members found</h4>
+            <p>Add team members to track their contributions to this project.</p>
+            <a href="#" class="btn btn-primary">Manage Team Members</a>
+          </div>
+        </div>
+
+        <!-- Recent Tasks -->
+        <div style="margin-top: 2rem;">
+          <h3>Recent Tasks</h3>
+          <div class="empty-state">
+            <p>No tasks created yet for this project.</p>
+            <a href="#" class="btn btn-primary">Create Task</a>
+          </div>
+        </div>
+
+        <!-- Recent Commits -->
+        <div style="margin-top: 2rem;">
+          <h3>Recent Commits</h3>
+          <div class="empty-state">
+            <p>No commits received yet for this project.</p>
+            <p>Make sure you have set up the GitHub webhook properly.</p>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div style="margin-top: 3rem; border: 1px solid red; border-radius: 0.5rem; padding: 1rem;">
+          <h3 style="color: red;">Danger Zone</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <p><strong>Delete this project</strong></p>
+              <p>Once you delete a project, there is no going back. Please be certain.</p>
+            </div>
+            <button class="btn btn-danger">Delete Project</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 Galactico</p>
+  </footer>
+
+  <script>
+    // Placeholder for commit stats (frontend only)
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("Frontend project page loaded.");
+    });
+  </script>
+</body>
+</html>
