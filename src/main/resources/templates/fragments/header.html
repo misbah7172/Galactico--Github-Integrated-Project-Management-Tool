@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Modern Header Fragment -->
+    <header th:fragment="header" class="header">
+        <div class="header-content">
+            <a th:href="@{/}" class="logo">
+                <svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Connecting lines -->
+  <line x1="400" y1="160" x2="200" y2="520" stroke="#2a2a2a" stroke-width="40"/>
+  <line x1="400" y1="160" x2="600" y2="520" stroke="#2a2a2a" stroke-width="40"/>
+  <line x1="230" y1="520" x2="570" y2="520" stroke="#2a2a2a" stroke-width="40"/>
+
+  <!-- Top Node -->
+  <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="#3c424b" stroke="#2a2a2a" stroke-width="8"/>
+
+  <!-- Bottom Left Node -->
+  <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac17c" stroke="#2a2a2a" stroke-width="8"/>
+
+  <!-- Bottom Right Node -->
+  <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac6f4" stroke="#2a2a2a" stroke-width="8"/>
+</svg>
+
+                Galactico
+            </a>
+            
+            <nav class="navbar" sec:authorize="isAuthenticated()">
+                <a th:href="@{/dashboard}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Dashboard
+                </a>
+                <a th:href="@{/teams}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Teams
+                </a>
+                <a th:href="@{/projects}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    Projects
+                </a>
+                <a th:href="@{/tasks/assigned}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Assigned Tasks
+                </a>
+                <a th:href="@{/commit-review}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M16 8v5a3 3 0 0 0 6 0v-5a10 10 0 1 0-20 0v5a3 3 0 0 0 6 0v-5"></path>
+                    </svg>
+                    Git Review
+                </a>
+                <a th:href="@{/notifications}" class="notifications-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    Notifications
+                    <span id="notifications-badge" class="notification-badge" style="display: none;">0</span>
+                </a>
+            </nav>
+            
+            <!-- User Profile Section -->
+            <div class="user-profile" sec:authorize="isAuthenticated()">
+                <img th:src="${#authentication.principal.attributes['avatar_url']}" 
+                     class="avatar" 
+                     alt="User Avatar"
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNGM0Y0RjYiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxMiIgcj0iNSIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNMjYgMjZWMjNBNCA0IDAgMCAwIDIyIDE5SDEwQTQgNCAwIDAgMCA2IDIzVjI2IiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo='"
+                />
+                <div class="user-info">
+                    <div class="user-name" th:text="${#authentication.principal.attributes['login']}">Username</div>
+                    <div class="user-role" sec:authorize="hasAuthority('TEAM_LEAD')">Team Lead</div>
+                    <div class="user-role" sec:authorize="hasAuthority('MEMBER')">Member</div>
+                </div>
+                
+                <form th:action="@{/logout}" method="post" style="margin-left: var(--space-4);">
+                    <button type="submit" class="btn btn-secondary btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Login Button for Anonymous Users -->
+            <div sec:authorize="isAnonymous()">
+                <a th:href="@{/login}" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                    </svg>
+                    Login with GitHub
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <script sec:authorize="isAuthenticated()">
+        // Load notification count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotificationCount();
+            
+            // Refresh notification count every 30 seconds
+            setInterval(loadNotificationCount, 30000);
+        });
+        
+        function loadNotificationCount() {
+            // Get CSRF token if available
+            const csrfToken = document.querySelector('meta[name="_csrf"]');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+            
+            const headers = {};
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader.getAttribute('content')] = csrfToken.getAttribute('content');
+            }
+            
+            fetch('/team-invitations/pending/count', {
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(count => {
+                const badge = document.getElementById('notifications-badge');
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading notification count:', error);
+            });
+        }
+    </script>
+    
+    <style>
+        .notifications-link {
+            position: relative;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+    </style>
+</body>
+</html>

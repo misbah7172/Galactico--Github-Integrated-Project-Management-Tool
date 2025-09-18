@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Footer Fragment -->
+    <footer th:fragment="footer" class="footer">
+        <div class="container">
+            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2023</span> Galactico. All rights reserved.</p>
+            <p>Automated task tracking through GitHub commit messages with Kanban-style project management.</p>
+        </div>
+    </footer>
+</body>
+</html>
