@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Galactico</title>
+    <link rel="stylesheet" href="/css/modern-ui.css">
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .error-icon {
+            font-size: 64px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .error-details {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            white-space: pre-line;
+            line-height: 1.6;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .github-oauth-help {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .github-oauth-help h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .github-oauth-help ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .github-oauth-help li {
+            margin: 5px 0;
+            color: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <h1 class="error-title" th:text="${errorMessage}">Error</h1>
+        <p class="error-details" th:text="${errorDetails}">An error occurred.</p>
+        
+        <!-- Show GitHub OAuth help for authentication errors -->
+        <div class="github-oauth-help" th:if="${errorMessage == 'Access Denied'}">
+            <h4>🔧 Troubleshooting GitHub Authentication</h4>
+            <ul>
+                <li><strong>Check GitHub OAuth App Settings:</strong>
+                    <ul>
+                        <li>Authorization callback URL should be: <code>http://localhost:5000/login/oauth2/code/github</code></li>
+                        <li>Homepage URL should be: <code>http://localhost:5000</code></li>
+                    </ul>
+                </li>
+                <li><strong>Verify Environment Variables:</strong>
+                    <ul>
+                        <li>GITHUB_CLIENT_ID is set correctly</li>
+                        <li>GITHUB_CLIENT_SECRET is set correctly</li>
+                    </ul>
+                </li>
+                <li><strong>Check Application Settings:</strong>
+                    <ul>
+                        <li>OAuth app is not suspended</li>
+                        <li>User email access is granted</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="action-buttons">
+            <a th:href="${homeUrl}" class="btn btn-primary">🏠 Go Home</a>
+            <a th:href="${loginUrl}" class="btn btn-secondary">🔐 Try Login Again</a>
+        </div>
+    </div>
+</body>
+</html>
