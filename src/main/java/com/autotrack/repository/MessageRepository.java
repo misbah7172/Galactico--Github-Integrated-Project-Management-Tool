@@ -20,6 +20,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query("SELECT m FROM Message m WHERE m.team.id = :teamId ORDER BY m.createdAt DESC")
     List<Message> findByTeamIdOrderByCreatedAtDesc(@Param("teamId") Long teamId);
     
-    @Query("SELECT DISTINCT m FROM Message m LEFT JOIN FETCH m.reactions WHERE m.team.id = :teamId ORDER BY m.createdAt DESC")
+    @Query("SELECT m FROM Message m WHERE m.team.id = :teamId ORDER BY m.createdAt DESC")
     List<Message> findByTeamIdWithReactionsOrderByCreatedAtDesc(@Param("teamId") Long teamId);
 }

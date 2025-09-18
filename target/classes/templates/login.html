@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Galactico</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <style>
+        body {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-4);
+        }
+        
+        .login-container {
+            background: white;
+            padding: var(--space-12);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-600), var(--primary-700));
+        }
+        
+        .login-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-8);
+            color: var(--primary-600);
+        }
+        
+        .login-logo svg {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .login-title {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-3);
+        }
+        
+        .login-subtitle {
+            color: var(--gray-600);
+            margin-bottom: var(--space-8);
+            font-size: var(--text-lg);
+        }
+        
+        .github-login-button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--gray-900) 0%, #1a1a1a 100%);
+            color: white;
+            border: none;
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-lg);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin-bottom: var(--space-6);
+        }
+        
+        .github-login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, #000 0%, var(--gray-900) 100%);
+            color: white;
+        }
+        
+        .github-login-button svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .login-features {
+            text-align: left;
+            margin-top: var(--space-8);
+            padding: var(--space-6);
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+        }
+        
+        .login-features h4 {
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+            font-size: var(--text-lg);
+            font-weight: 600;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+            color: var(--gray-600);
+        }
+        
+        .feature-list li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .feature-list svg {
+            width: 18px;
+            height: 18px;
+            color: var(--success-500);
+            flex-shrink: 0;
+        }
+        
+        .login-footer {
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+            color: var(--gray-500);
+            font-size: var(--text-sm);
+        }
+        
+        .login-footer a {
+            color: var(--primary-600);
+            text-decoration: none;
+        }
+        
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container fade-in">
+        <div class="login-logo">
+            <svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Connecting lines -->
+  <line x1="400" y1="160" x2="200" y2="520" stroke="#2a2a2a" stroke-width="40"/>
+  <line x1="400" y1="160" x2="600" y2="520" stroke="#2a2a2a" stroke-width="40"/>
+  <line x1="230" y1="520" x2="570" y2="520" stroke="#2a2a2a" stroke-width="40"/>
+
+  <!-- Top Node -->
+  <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="#3c424b" stroke="#2a2a2a" stroke-width="8"/>
+
+  <!-- Bottom Left Node -->
+  <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac17c" stroke="#2a2a2a" stroke-width="8"/>
+
+  <!-- Bottom Right Node -->
+  <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac6f4" stroke="#2a2a2a" stroke-width="8"/>
+</svg>
+
+            <span style="font-size: var(--text-2xl); font-weight: 700;">Galactico</span>
+        </div>
+        
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-subtitle">Sign in with your GitHub account to continue</p>
+        
+        <a href="/oauth2/authorization/github" class="github-login-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            Continue with GitHub
+        </a>
+        
+        <div class="login-features">
+            <h4>What you get with Galactico:</h4>
+            <ul class="feature-list">
+                <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Automatic task tracking from Git commits
+                </li>
+                <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Beautiful Kanban boards for project management
+                </li>
+                <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Team collaboration and progress insights
+                </li>
+                <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Real-time updates via GitHub webhooks
+                </li>
+            </ul>
+        </div>
+        
+        <div class="login-footer">
+            <p>By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
+        </div>
+    </div>
+</body>
+</html>

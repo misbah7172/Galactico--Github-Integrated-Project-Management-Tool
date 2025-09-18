@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service for managing notifications.
@@ -22,12 +23,12 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
-    private final EmailService emailService;
+    private final Optional<EmailService> emailService;
 
     @Autowired
     public NotificationService(NotificationRepository notificationRepository, 
                               UserRepository userRepository,
-                              EmailService emailService) {
+                              Optional<EmailService> emailService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
@@ -127,8 +128,8 @@ public class NotificationService {
             );
             
             // Send email notification for new task assignment
-            if (task.getProject() != null && task.getProject().getTeam() != null) {
-                emailService.sendTaskAssignmentEmail(
+            if (task.getProject() != null && task.getProject().getTeam() != null && emailService.isPresent()) {
+                emailService.get().sendTaskAssignmentEmail(
                     task.getAssignee(), 
                     task.getTitle(), 
                     task.getTitle(), // Using title as description since Task doesn't have description field
