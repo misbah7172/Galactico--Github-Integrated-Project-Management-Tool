@@ -1,534 +1,502 @@
 <!DOCTYPE html>
-<html
-  xmlns:th="http://www.thymeleaf.org"
-  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
->
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${team.name + ' - Galactico'}">Team - Galactico</title>
-    <link rel="stylesheet" th:href="@{/css/main.css}" />
-    <meta name="_csrf" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
-  </head>
-  <body>
-    <!-- Header -->
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header Fragment -->
     <div th:replace="~{fragments/header :: header}"></div>
-
+    
     <div class="container">
-      <!-- Alerts -->
-      <div
-        th:if="${successMessage}"
-        class="alert alert-success"
-        th:text="${successMessage}"
-      ></div>
-      <div
-        th:if="${errorMessage}"
-        class="alert alert-danger"
-        th:text="${errorMessage}"
-      ></div>
-
-      <!-- Team Card -->
-      <div class="card">
-        <div class="card-header">
-          <h1 class="card-title" th:text="${team.name}">Team Name</h1>
-          <div class="team-actions">
-            <!-- Chat -->
-            <a
-              th:href="@{/teams/{id}/messages(id=${team.id})}"
-              class="btn btn-secondary"
-            >
-              💬 Team Chat
-            </a>
-
-            <!-- Owner Actions -->
-            <span th:if="${team.owner.id == currentUser.id}">
-              <a
-                th:href="@{/teams/{id}/add-members(id=${team.id})}"
-                class="btn btn-outline-primary"
-                >➕ Add Members</a
-              >
-              <a
-                th:href="@{/teams/{id}/edit(id=${team.id})}"
-                class="btn btn-primary"
-                >✏️ Edit Team</a
-              >
-              <a
-                th:href="@{/projects/create?teamId={id}(id=${team.id})}"
-                class="btn btn-success"
-                >📂 Create Project</a
-              >
-              <button
-                type="button"
-                class="btn btn-danger"
-                onclick="checkTeamProjectsBeforeDelete(event)"
-              >
-                🗑️ Delete Team
-              </button>
-            </span>
-
-            <!-- Member Action -->
-            <span th:if="${team.owner.id != currentUser.id}">
-              <button class="btn btn-warning" onclick="confirmLeaveTeam()">
-                🚪 Leave Team
-              </button>
-            </span>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <div class="row" style="display: flex; flex-wrap: wrap; gap: 2rem">
-            <!-- Info -->
-            <div style="flex: 2; min-width: 300px">
-              <h3>Team Information</h3>
-              <table class="table">
-                <tr>
-                  <th>Name:</th>
-                  <td th:text="${team.name}">Team Name</td>
-                </tr>
-                <tr>
-                  <th>Created:</th>
-                  <td
-                    th:text="${#temporals.format(team.createdAt,'yyyy-MM-dd HH:mm')}"
-                  >
-                    2023-01-01
-                  </td>
-                </tr>
-                <tr>
-                  <th>Projects:</th>
-                  <td th:text="${team.projects.size()}">0</td>
-                </tr>
-              </table>
-            </div>
-
-            <!-- Members -->
-            <div style="flex: 1; min-width: 300px">
-              <h3>Team Members</h3>
-              <div class="members-list">
-                <div
-                  th:each="member : ${team.members}"
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    margin-bottom: 1rem;
-                    padding: 0.5rem;
-                    background: hsl(var(--light));
-                    border-radius: 0.5rem;
-                  "
-                >
-                  <img
-                    th:src="${member.avatarUrl}"
-                    alt="Member Avatar"
-                    style="width: 40px; height: 40px; border-radius: 50%"
-                  />
-                  <div style="flex: 1">
-                    <div style="font-weight: 500" th:text="${member.nickname}">
-                      Member Name
-                    </div>
-                    <div
-                      style="font-size: 0.875rem; color: hsl(var(--text-light))"
-                      th:text="${member.email}"
-                    >
-                      member@example.com
-                    </div>
-                  </div>
-                  <div
-                    th:if="${member.hasRole('TEAM_LEAD')}"
-                    class="badge badge-primary"
-                  >
-                    Team Lead
-                  </div>
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        
+        <!-- Team Details -->
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title" th:text="${team.name}">Team Name</h1>
+                <div class="team-actions">
+                    <!-- Team Chat for all members -->
+                    <a th:href="@{/teams/{id}/messages(id=${team.id})}" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-circle"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Team Chat
+                    </a>
+                    
+                    <!-- Owner-only actions -->
+                    <span th:if="${team.owner.id == currentUser.id}">
+                        <a th:href="@{/teams/{id}/add-members(id=${team.id})}" class="btn btn-outline-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                            Add Members
+                        </a>
+                        
+                        <a th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            Edit Team
+                        </a>
+                        
+                        <a th:href="@{/projects/create?teamId={id}(id=${team.id})}" class="btn btn-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Create Project
+                        </a>
+                        
+                        <!-- Dangerous actions - Delete Team -->
+                        <button class="btn btn-danger" onclick="checkTeamProjectsBeforeDelete()" 
+                                title="Delete Team - This will also delete all team projects">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3,6 5,6 21,6"/><path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            Delete Team
+                        </button>
+                    </span>
+                    
+                    <!-- Member-only actions (if not owner) -->
+                    <span th:if="${team.owner.id != currentUser.id}">
+                        <button class="btn btn-warning" onclick="confirmLeaveTeam()" 
+                                title="Leave Team - Your projects in this team will be removed">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Leave Team
+                        </button>
+                    </span>
                 </div>
-              </div>
             </div>
-          </div>
-
-          <!-- Projects -->
-          <div style="margin-top: 2rem">
-            <h3>Team Projects</h3>
-            <div th:if="${#lists.isEmpty(team.projects)}" class="empty-state">
-              <p>No projects created yet for this team.</p>
-              <a
-                th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}"
-                th:href="@{/projects/create}"
-                class="btn btn-primary"
-                >Create Project</a
-              >
+            <div class="card-body">
+                <div class="row" style="display: flex; flex-wrap: wrap; gap: 2rem;">
+                    <!-- Team Information -->
+                    <div style="flex: 2; min-width: 300px;">
+                        <h3>Team Information</h3>
+                        <table class="table">
+                            <tr>
+                                <th>Name:</th>
+                                <td th:text="${team.name}">Team Name</td>
+                            </tr>
+                            <tr>
+                                <th>Created:</th>
+                                <td th:text="${#temporals.format(team.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
+                            </tr>
+                            <tr>
+                                <th>Projects:</th>
+                                <td th:text="${team.projects.size()}">0</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <!-- Team Members -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>Team Members</h3>
+                        <div class="members-list">
+                            <div th:each="member : ${team.members}" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; padding: 0.5rem; background-color: hsl(var(--light)); border-radius: 0.5rem;">
+                                <img th:src="${member.avatarUrl}" alt="Member Avatar" style="width: 40px; height: 40px; border-radius: 50%;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500;" th:text="${member.nickname}">Member Name</div>
+                                    <div style="font-size: 0.875rem; color: hsl(var(--text-light));" th:text="${member.email}">member@example.com</div>
+                                </div>
+                                <div th:if="${member.hasRole('TEAM_LEAD')}" class="badge badge-primary">Team Lead</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team Projects -->
+                <div style="margin-top: 2rem;">
+                    <h3>Team Projects</h3>
+                    <div th:if="${#lists.isEmpty(team.projects)}" class="empty-state">
+                        <p>No projects created yet for this team.</p>
+                        <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                           th:href="@{/projects/create}" class="btn btn-primary">Create Project</a>
+                    </div>
+                    <div th:unless="${#lists.isEmpty(team.projects)}" class="table-responsive">
+                        <div class="info-box" style="margin-bottom: 1rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4m0-4h.01"/>
+                            </svg>
+                            <span>💡 <strong>VS Code Integration:</strong> Click the "Clone" button next to any project to copy the git clone command for your VS Code terminal.</span>
+                        </div>
+                        
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Project Name</th>
+                                    <th>GitHub Repository</th>
+                                    <th>Tasks</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="project : ${team.projects}">
+                                    <td><a th:href="@{/projects/{id}(id=${project.id})}" th:text="${project.name}">Project Name</a></td>
+                                    <td>
+                                        <a th:href="${project.gitHubRepoUrl}" target="_blank" 
+                                           th:text="${#strings.abbreviate(project.gitHubRepoUrl, 30)}"
+                                           class="github-link">Repository URL</a>
+                                        <button type="button" class="btn btn-outline btn-sm clone-btn" 
+                                                th:data-repo-url="${project.gitHubRepoUrl}"
+                                                onclick="copyCloneCommand(this)">
+                                            📋 Clone
+                                        </button>
+                                    </td>
+                                    <td th:text="${project.tasks.size()}">0</td>
+                                    <td th:text="${#temporals.format(project.createdAt, 'yyyy-MM-dd')}">2023-01-01</td>
+                                    <td>
+                                        <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary">View</a>
+                                        <a th:href="@{/tasks/project/{id}(id=${project.id})}" class="btn btn-success">Kanban</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Danger Zone -->
+                <div th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                     style="margin-top: 3rem; border: 1px solid hsl(var(--danger)); border-radius: 0.5rem; padding: 1rem;">
+                    <h3 style="color: hsl(var(--danger));">Danger Zone</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <p><strong>Delete this team</strong></p>
+                            <p>Once you delete a team, there is no going back. Please be certain.</p>
+                            <p th:if="${!team.projects.isEmpty()}" style="color: hsl(var(--danger));">
+                                You must delete all team projects before deleting the team.
+                            </p>
+                        </div>
+                        <form th:action="@{/teams/{id}/delete(id=${team.id})}" method="post" 
+                              onsubmit="return confirm('Are you sure you want to delete this team? This action cannot be undone.');">
+                            <button type="submit" class="btn btn-danger" th:disabled="${!team.projects.isEmpty()}">
+                                Delete Team
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-
-            <div
-              th:unless="${#lists.isEmpty(team.projects)}"
-              class="table-responsive"
-            >
-              <div class="info-box" style="margin-bottom: 1rem">
-                💡 <strong>VS Code Integration:</strong> Click "Clone" to copy
-                the git command.
-              </div>
-
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Project Name</th>
-                    <th>GitHub Repository</th>
-                    <th>Tasks</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr th:each="project : ${team.projects}">
-                    <td>
-                      <a
-                        th:href="@{/projects/{id}(id=${project.id})}"
-                        th:text="${project.name}"
-                        >Project</a
-                      >
-                    </td>
-                    <td>
-                      <a
-                        th:href="${project.gitHubRepoUrl}"
-                        target="_blank"
-                        th:text="${#strings.abbreviate(project.gitHubRepoUrl,30)}"
-                        class="github-link"
-                        >Repo</a
-                      >
-                      <button
-                        type="button"
-                        class="btn btn-outline btn-sm clone-btn"
-                        th:data-repo-url="${project.gitHubRepoUrl}"
-                        onclick="copyCloneCommand(this)"
-                      >
-                        📋 Clone
-                      </button>
-                    </td>
-                    <td th:text="${project.tasks.size()}">0</td>
-                    <td
-                      th:text="${#temporals.format(project.createdAt,'yyyy-MM-dd')}"
-                    >
-                      2023-01-01
-                    </td>
-                    <td>
-                      <a
-                        th:href="@{/projects/{id}(id=${project.id})}"
-                        class="btn btn-secondary"
-                        >View</a
-                      >
-                      <a
-                        th:href="@{/tasks/project/{id}(id=${project.id})}"
-                        class="btn btn-success"
-                        >Kanban</a
-                      >
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Danger Zone -->
-          <div
-            th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}"
-            style="
-              margin-top: 3rem;
-              border: 1px solid hsl(var(--danger));
-              border-radius: 0.5rem;
-              padding: 1rem;
-            "
-          >
-            <h3 style="color: hsl(var(--danger))">Danger Zone</h3>
-            <div
-              style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              "
-            >
-              <div>
-                <p><strong>Delete this team</strong></p>
-                <p>Once you delete a team, there is no going back.</p>
-                <p
-                  th:if="${!team.projects.isEmpty()}"
-                  style="color: hsl(var(--danger))"
-                >
-                  You must delete all projects first.
-                </p>
-              </div>
-              <form
-                th:action="@{/teams/{id}/delete(id=${team.id})}"
-                method="post"
-                onsubmit="return confirm('Are you sure? This cannot be undone.')"
-              >
-                <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
-                <button
-                  type="submit"
-                  class="btn btn-danger"
-                  th:disabled="${!team.projects.isEmpty()}"
-                >
-                  Delete Team
-                </button>
-              </form>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-
+    
     <script>
-      // Copy "git clone" command
-      function copyCloneCommand(button) {
-        const repoUrl = button.getAttribute("data-repo-url");
-        const cmd = `git clone ${repoUrl}`;
-
-        if (navigator.clipboard) {
-          navigator.clipboard
-            .writeText(cmd)
-            .then(() => {
-              showToast("✅ Clone command copied!");
-              button.textContent = "✅ Copied!";
-              setTimeout(() => (button.textContent = "📋 Clone"), 2000);
-            })
-            .catch(() => fallbackCopy(cmd, button));
-        } else {
-          fallbackCopy(cmd, button);
-        }
-      }
-
-      function fallbackCopy(text, button) {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-          document.execCommand("copy");
-          showToast("✅ Clone command copied!");
-          button.textContent = "✅ Copied!";
-          setTimeout(() => (button.textContent = "📋 Clone"), 2000);
-        } catch {
-          showToast("❌ Failed. Copy manually.");
-        }
-        textarea.remove();
-      }
-
-      // Toast
-      function showToast(msg) {
-        const toast = document.createElement("div");
-        toast.className = "toast";
-        toast.textContent = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.classList.add("show"), 100);
-        setTimeout(() => toast.remove(), 3000);
-      }
-
-      // Get team ID from URL
-      function getTeamIdFromUrl() {
-        const m = window.location.pathname.match(/\/teams\/(\d+)/);
-        return m ? m[1] : null;
-      }
-
-      // Check projects before delete
-      function checkTeamProjectsBeforeDelete(e) {
-        const btn = e.currentTarget;
-        const teamId = getTeamIdFromUrl();
-        if (!teamId) return;
-
-        btn.disabled = true;
-        btn.textContent = "Checking...";
-
-        fetch(`/teams/${teamId}/check-projects`)
-          .then((r) => r.json())
-          .then((data) => {
-            if (data.hasProjects) {
-              const names = data.projects.map((p) => `• ${p.name}`).join("\n");
-              if (
-                confirm(
-                  `⚠️ Team has ${data.projectCount} project(s):\n\n${names}\n\nProceed?`
-                )
-              ) {
-                confirmDeleteTeam(teamId);
-              }
+        // Copy clone command to clipboard
+        function copyCloneCommand(button) {
+            const repoUrl = button.getAttribute('data-repo-url');
+            const cloneCommand = `git clone ${repoUrl}`;
+            
+            // Use the Clipboard API if available
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(cloneCommand).then(() => {
+                    showToast('✅ Clone command copied to clipboard!');
+                    button.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        button.innerHTML = '📋 Clone';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyToClipboard(cloneCommand, button);
+                });
             } else {
-              confirmDeleteTeam(teamId);
+                fallbackCopyToClipboard(cloneCommand, button);
             }
-          })
-          .catch(() => showToast("Error checking projects."))
-          .finally(() => {
-            btn.disabled = false;
-            btn.textContent = "🗑️ Delete Team";
-          });
-      }
-
-      // Final delete
-      function confirmDeleteTeam(teamId) {
-        if (confirm("⚠️ FINAL WARNING: Delete this team permanently?")) {
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/teams/${teamId}/delete`;
-          const csrf = document.querySelector('meta[name="_csrf"]').content;
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = "_csrf";
-          input.value = csrf;
-          form.appendChild(input);
-          document.body.appendChild(form);
-          form.submit();
         }
-      }
-
-      // Leave team
-      function confirmLeaveTeam() {
-        if (confirm("Leave this team? Your projects will be removed.")) {
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/teams/${getTeamIdFromUrl()}/leave`;
-          const csrf = document.querySelector('meta[name="_csrf"]').content;
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = "_csrf";
-          input.value = csrf;
-          form.appendChild(input);
-          document.body.appendChild(form);
-          form.submit();
+        
+        // Fallback copy method
+        function fallbackCopyToClipboard(text, button) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('✅ Clone command copied to clipboard!');
+                button.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '📋 Clone';
+                }, 2000);
+            } catch (err) {
+                console.error('Fallback: Could not copy text: ', err);
+                showToast('❌ Failed to copy. Please copy manually: ' + text);
+            }
+            
+            document.body.removeChild(textArea);
         }
-      }
+        
+        // Show toast notification
+        function showToast(message) {
+            // Remove existing toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            // Create new toast
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Check team projects before deletion
+        function checkTeamProjectsBeforeDelete() {
+            const teamId = getTeamIdFromUrl();
+            if (!teamId) {
+                console.error('Unable to get team ID from URL');
+                return;
+            }
+
+            // Show loading state
+            const deleteBtn = event.target;
+            const originalText = deleteBtn.textContent;
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Checking...';
+
+            fetch(`/teams/${teamId}/check-projects`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    if (data.hasProjects) {
+                        // Team has active projects - show warning with project names
+                        const projectNames = data.projects.map(p => `• ${p.name}`).join('\n');
+                        const message = `⚠️ WARNING: This team is assigned to ${data.projectCount} active project(s):\n\n${projectNames}\n\nTo delete this team, you must first delete or reassign these projects.\n\nDo you want to proceed anyway? This will also delete all associated projects!`;
+                        
+                        if (confirm(message)) {
+                            confirmDeleteTeam();
+                        }
+                    } else {
+                        // No active projects - safe to delete
+                        confirmDeleteTeam();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking team projects:', error);
+                    showToast('Error checking team projects. Please try again.', 'error');
+                })
+                .finally(() => {
+                    // Restore button state
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = originalText;
+                });
+        }
+
+        // Confirm team deletion
+        function confirmDeleteTeam() {
+            if (confirm('⚠️ FINAL WARNING: This will permanently delete the team!\n\nThis action cannot be undone. All team members will lose access.\n\nAre you absolutely sure you want to delete this team?')) {
+                // Create form to delete team
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teams/${getTeamIdFromUrl()}/delete`;
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                if (csrfToken) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = csrfToken;
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // Confirm leaving team
+        function confirmLeaveTeam() {
+            if (confirm('Are you sure you want to leave this team?\n\nNote: Any projects you created in this team will be removed. This action cannot be undone.')) {
+                // Create form to leave team
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teams/${getTeamIdFromUrl()}/leave`;
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                if (csrfToken) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = csrfToken;
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        function getTeamIdFromUrl() {
+            const path = window.location.pathname;
+            const match = path.match(/\/teams\/(\d+)/);
+            return match ? match[1] : null;
+        }
+        
+        // Copy clone URL to clipboard
+        function copyCloneUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                // Show success feedback
+                const button = event.target.closest('.clone-btn');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = 'var(--success-color)';
+                button.style.color = 'white';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                    button.style.color = '';
+                }, 2000);
+            });
+        }
     </script>
+    
     <style>
-      .info-box {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 1rem;
-        background: #e0f2fe;
-        border: 1px solid #81d4fa;
-        border-radius: 6px;
-        color: #01579b;
-        font-size: 0.875rem;
-      }
-
-      .github-link {
-        font-family: monospace;
-        color: var(--primary-color);
-        text-decoration: none;
-        margin-right: 0.5rem;
-      }
-
-      .github-link:hover {
-        text-decoration: underline;
-      }
-
-      .clone-btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-        border: 1px solid var(--border-color);
-        background: var(--background-color);
-        color: var(--text-secondary);
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .clone-btn:hover {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-      }
-
-      .team-actions {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-
-      .team-actions .btn {
-        white-space: nowrap;
-      }
+        .info-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: #e0f2fe;
+            border: 1px solid #81d4fa;
+            border-radius: 6px;
+            color: #01579b;
+            font-size: 0.875rem;
+        }
+        
+        .github-link {
+            font-family: monospace;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-right: 0.5rem;
+        }
+        
+        .github-link:hover {
+            text-decoration: underline;
+        }
+        
+        .clone-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-color);
+            background: var(--background-color);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .clone-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .team-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .team-actions .btn {
+            white-space: nowrap;
+        }
     </style>
-
+    
     <!-- JavaScript for Team Management -->
     <script>
-      function confirmDeleteTeam() {
-        if (
-          confirm(
-            "⚠️ WARNING: This will permanently delete the team and all associated projects!\n\nThis action cannot be undone. All team members will lose access to team projects.\n\nAre you absolutely sure you want to delete this team?"
-          )
-        ) {
-          // Create form to delete team
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/teams/${getTeamIdFromUrl()}/delete`;
-
-          // Add CSRF token
-          const csrfToken = document
-            .querySelector('meta[name="_csrf"]')
-            ?.getAttribute("content");
-          if (csrfToken) {
-            const csrfInput = document.createElement("input");
-            csrfInput.type = "hidden";
-            csrfInput.name = "_csrf";
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
-          }
-
-          document.body.appendChild(form);
-          form.submit();
+        function confirmDeleteTeam() {
+            if (confirm('⚠️ WARNING: This will permanently delete the team and all associated projects!\n\nThis action cannot be undone. All team members will lose access to team projects.\n\nAre you absolutely sure you want to delete this team?')) {
+                // Create form to delete team
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teams/${getTeamIdFromUrl()}/delete`;
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                if (csrfToken) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = csrfToken;
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
-      }
-
-      function confirmLeaveTeam() {
-        if (
-          confirm(
-            "Are you sure you want to leave this team?\n\nNote: Any projects you created in this team will be removed. This action cannot be undone."
-          )
-        ) {
-          // Create form to leave team
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/teams/${getTeamIdFromUrl()}/leave`;
-
-          // Add CSRF token
-          const csrfToken = document
-            .querySelector('meta[name="_csrf"]')
-            ?.getAttribute("content");
-          if (csrfToken) {
-            const csrfInput = document.createElement("input");
-            csrfInput.type = "hidden";
-            csrfInput.name = "_csrf";
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
-          }
-
-          document.body.appendChild(form);
-          form.submit();
+        
+        function confirmLeaveTeam() {
+            if (confirm('Are you sure you want to leave this team?\n\nNote: Any projects you created in this team will be removed. This action cannot be undone.')) {
+                // Create form to leave team
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teams/${getTeamIdFromUrl()}/leave`;
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                if (csrfToken) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = csrfToken;
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
-      }
-
-      function getTeamIdFromUrl() {
-        const path = window.location.pathname;
-        const match = path.match(/\/teams\/(\d+)/);
-        return match ? match[1] : null;
-      }
-
-      // Copy clone URL to clipboard
-      function copyCloneUrl(url) {
-        navigator.clipboard.writeText(url).then(() => {
-          // Show success feedback
-          const button = event.target.closest(".clone-btn");
-          const originalText = button.textContent;
-          button.textContent = "Copied!";
-          button.style.background = "var(--success-color)";
-          button.style.color = "white";
-
-          setTimeout(() => {
-            button.textContent = originalText;
-            button.style.background = "";
-            button.style.color = "";
-          }, 2000);
-        });
-      }
+        
+        function getTeamIdFromUrl() {
+            const path = window.location.pathname;
+            const match = path.match(/\/teams\/(\d+)/);
+            return match ? match[1] : null;
+        }
+        
+        // Copy clone URL to clipboard
+        function copyCloneUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                // Show success feedback
+                const button = event.target.closest('.clone-btn');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = 'var(--success-color)';
+                button.style.color = 'white';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                    button.style.color = '';
+                }, 2000);
+            });
+        }
     </script>
-
+    
     <!-- Footer Fragment -->
     <div th:replace="~{fragments/footer :: footer}"></div>
-  </body>
+</body>
 </html>
