@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Assigned Tasks - Galactico</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h2 style="padding: 1rem; background: #f5f5f5; margin: 0;">Galactico - Demo Header</h2>
+  </header>
+
+  <div class="container" style="padding-top: 2rem;">
+    <!-- Page Header -->
+    <div class="page-hero">
+      <div class="page-hero-content">
+        <h1 class="page-title">
+          <i class="fas fa-tasks"></i>
+          My Assigned Tasks
+        </h1>
+        <p class="page-description">Track and manage all tasks assigned to you</p>
+      </div>
+    </div>
+
+    <!-- Task Statistics -->
+    <div class="tasks-stats-grid">
+      <div class="task-stat-card total">
+        <div class="stat-icon"><i class="fas fa-list"></i></div>
+        <div class="stat-content">
+          <div class="stat-number">6</div>
+          <div class="stat-label">Total Tasks</div>
+        </div>
+      </div>
+      <div class="task-stat-card todo">
+        <div class="stat-icon"><i class="fas fa-circle-notch"></i></div>
+        <div class="stat-content">
+          <div class="stat-number">2</div>
+          <div class="stat-label">To Do</div>
+        </div>
+      </div>
+      <div class="task-stat-card progress">
+        <div class="stat-icon"><i class="fas fa-play-circle"></i></div>
+        <div class="stat-content">
+          <div class="stat-number">3</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+      </div>
+      <div class="task-stat-card completed">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-content">
+          <div class="stat-number">1</div>
+          <div class="stat-label">Completed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasks List -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-content">
+          <div>
+            <h2 class="card-title">
+              <i class="fas fa-clipboard-list"></i>
+              Your Tasks
+            </h2>
+            <p class="card-description">All tasks currently assigned to you</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Filter Tabs -->
+        <div class="task-filter-tabs">
+          <button class="task-tab-btn active" onclick="filterTasks('all')">
+            <i class="fas fa-list"></i> All Tasks
+          </button>
+          <button class="task-tab-btn" onclick="filterTasks('TODO')">
+            <i class="fas fa-circle-notch"></i> To Do
+          </button>
+          <button class="task-tab-btn" onclick="filterTasks('IN_PROGRESS')">
+            <i class="fas fa-play-circle"></i> In Progress
+          </button>
+          <button class="task-tab-btn" onclick="filterTasks('DONE')">
+            <i class="fas fa-check-circle"></i> Completed
+          </button>
+        </div>
+
+        <!-- Tasks Demo List -->
+        <div class="assigned-tasks-list-modern">
+          <div class="assigned-task-item-modern" data-status="TODO">
+            <div class="task-header-row-modern">
+              <div class="task-info-left-modern">
+                <span class="task-feature-code-modern">Feature01</span>
+                <h3 class="task-title-modern">Setup project structure</h3>
+              </div>
+              <div class="task-status-badge-modern">
+                <span class="badge-modern badge-todo"><i class="fas fa-circle-notch"></i> TO DO</span>
+              </div>
+            </div>
+            <div class="task-meta-row-modern">
+              <div class="task-project-info-modern"><i class="fas fa-folder-open"></i> Project A</div>
+              <div class="task-updated-info-modern"><i class="fas fa-clock"></i> Updated Jan 01, 2024</div>
+            </div>
+            <div class="task-actions-row-modern">
+              <a href="#" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i> View Details</a>
+              <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit Task</a>
+              <a href="#" class="btn btn-success btn-sm"><i class="fas fa-columns"></i> Kanban Board</a>
+            </div>
+          </div>
+
+          <div class="assigned-task-item-modern" data-status="IN_PROGRESS">
+            <div class="task-header-row-modern">
+              <div class="task-info-left-modern">
+                <span class="task-feature-code-modern">Feature02</span>
+                <h3 class="task-title-modern">Implement login system</h3>
+              </div>
+              <div class="task-status-badge-modern">
+                <span class="badge-modern badge-progress"><i class="fas fa-play-circle"></i> IN PROGRESS</span>
+              </div>
+            </div>
+            <div class="task-meta-row-modern">
+              <div class="task-project-info-modern"><i class="fas fa-folder-open"></i> Project B</div>
+              <div class="task-updated-info-modern"><i class="fas fa-clock"></i> Updated Feb 10, 2024</div>
+            </div>
+            <div class="task-actions-row-modern">
+              <a href="#" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i> View Details</a>
+              <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit Task</a>
+              <a href="#" class="btn btn-success btn-sm"><i class="fas fa-columns"></i> Kanban Board</a>
+            </div>
+          </div>
+
+          <div class="assigned-task-item-modern" data-status="DONE">
+            <div class="task-header-row-modern">
+              <div class="task-info-left-modern">
+                <span class="task-feature-code-modern">Feature03</span>
+                <h3 class="task-title-modern">Finalize UI design</h3>
+              </div>
+              <div class="task-status-badge-modern">
+                <span class="badge-modern badge-completed"><i class="fas fa-check-circle"></i> COMPLETED</span>
+              </div>
+            </div>
+            <div class="task-meta-row-modern">
+              <div class="task-project-info-modern"><i class="fas fa-folder-open"></i> Project C</div>
+              <div class="task-updated-info-modern"><i class="fas fa-clock"></i> Updated Mar 05, 2024</div>
+            </div>
+            <div class="task-actions-row-modern">
+              <a href="#" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i> View Details</a>
+              <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit Task</a>
+              <a href="#" class="btn btn-success btn-sm"><i class="fas fa-columns"></i> Kanban Board</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer style="padding: 1rem; text-align: center; background: #f5f5f5; margin-top: 2rem;">
+    <p>Galactico - Demo Footer</p>
+  </footer>
+
+  <script>
+    function filterTasks(status) {
+      document.querySelectorAll('.task-tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.querySelectorAll('.assigned-task-item-modern').forEach(item => {
+        const taskStatus = item.getAttribute('data-status');
+        let shouldShow = false;
+
+        if (status === 'all') {
+          shouldShow = true;
+        } else if (status === 'TODO') {
+          shouldShow = (taskStatus === 'TODO' || taskStatus === 'BACKLOG');
+        } else {
+          shouldShow = (taskStatus === status);
+        }
+        item.style.display = shouldShow ? 'block' : 'none';
+      });
+    }
+  </script>
+
+    <style>
+        .tab-navigation {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            cursor: pointer;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .tab-btn:hover {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+
+        .tab-btn.active {
+            background-color: hsl(var(--primary));
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Assigned Tasks List Styles */
+        .assigned-tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .assigned-task-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .assigned-task-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        .task-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            gap: 1rem;
+        }
+
+        .task-info-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-feature-code {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .task-status-badge {
+            flex-shrink: 0;
+        }
+
+        .task-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .task-project-info,
+        .task-updated-info {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .task-project-info svg,
+        .task-updated-info svg {
+            flex-shrink: 0;
+        }
+
+        .task-actions-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        /* Badge Styles */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .badge-primary {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tab-navigation {
+                flex-wrap: wrap;
+            }
+
+            .task-header-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .task-meta-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .task-actions-row {
+                justify-content: stretch;
+            }
+
+            .task-actions-row .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .assigned-task-item {
+                padding: 1rem;
+            }
+
+            .task-actions-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>
