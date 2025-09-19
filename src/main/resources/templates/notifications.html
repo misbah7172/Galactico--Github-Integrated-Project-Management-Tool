@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - Galactico</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <!-- Header -->
+  <div id="header">
+    <!-- Replace this with your header content -->
+  </div>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-content">
+        <div>
+          <h1 class="page-title">Notifications</h1>
+          <p class="page-description">Stay updated with team invitations and project updates</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Tabs -->
+    <div class="tabs">
+      <button class="tab-button active" onclick="showTab('invitations')">Team Invitations</button>
+      <button class="tab-button" onclick="showTab('general')">General</button>
+    </div>
+
+    <!-- Team Invitations Tab -->
+    <div id="invitations-tab" class="tab-content active">
+      <div class="notification-section">
+        <div class="section-header">
+          <h2>Team Invitations</h2>
+          <span id="invitations-count" class="count-badge">0</span>
+        </div>
+
+        <div id="team-invitations" class="notifications-list">
+          <!-- Team invitations will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- General Notifications Tab -->
+    <div id="general-tab" class="tab-content">
+      <div class="notification-section">
+        <div class="section-header">
+          <h2>General Notifications</h2>
+          <span id="general-count" class="count-badge">0</span>
+        </div>
+
+        <div id="general-notifications" class="notifications-list">
+          <!-- General notifications will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab functionality
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      document.getElementById(tabName + '-tab').classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Load notifications on page load
+    document.addEventListener('DOMContentLoaded', function () {
+      loadTeamInvitations();
+      loadGeneralNotifications();
+    });
+
+    // Load team invitations (frontend demo only)
+    function loadTeamInvitations() {
+      const container = document.getElementById('team-invitations');
+      const countBadge = document.getElementById('invitations-count');
+
+      const invitations = []; // Dummy empty array for frontend
+
+      countBadge.textContent = invitations.length;
+
+      if (invitations.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">No Invitations</div>
+            <h3>No pending invitations</h3>
+            <p>You don't have any team invitations at the moment.</p>
+          </div>
+        `;
+        return;
+      }
+    }
+
+    // Load general notifications (frontend demo only)
+    function loadGeneralNotifications() {
+      const container = document.getElementById('general-notifications');
+      const countBadge = document.getElementById('general-count');
+
+      countBadge.textContent = '0';
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">No Notifications</div>
+          <h3>No notifications</h3>
+          <p>You're all caught up! No new notifications.</p>
+        </div>
+      `;
+    }
+  </script>
+
+    <style>
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-button:hover {
+            color: var(--text-primary);
+        }
+        
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .notification-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .count-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: 1.5rem;
+            text-align: center;
+        }
+        
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .notification-item {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        
+        .notification-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .notification-content {
+            padding: 1.5rem;
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .notification-header h4 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+        
+        .notification-time {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .notification-body {
+            margin-bottom: 1rem;
+        }
+        
+        .notification-body p {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-secondary);
+        }
+        
+        .invitation-message {
+            font-style: italic;
+            color: var(--text-muted) !important;
+            padding: 0.5rem;
+            background: var(--background-color);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .invitation-hint {
+            font-size: 0.875rem;
+            color: var(--text-muted) !important;
+            padding: 0.5rem;
+            background: var(--info-bg);
+            border-radius: 4px;
+        }
+        
+        .notification-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .empty-state, .error-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-icon, .error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state h3, .error-state h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+        }
+        
+        .empty-state p, .error-state p {
+            margin: 0;
+            color: var(--text-muted);
+        }
+    </style>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

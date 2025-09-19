@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commit Review Dashboard - Galactico</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/commit-review.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+ <style>
+        /* Test style to verify CSS loading */
+        .test-css-loaded {
+            content: "CSS_LOADED";
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+        }
+        .commit-card {
+            border-left: 4px solid #6c757d;
+            transition: all 0.2s ease;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .commit-card.pending {
+            border-left-color: #ffc107;
+        }
+        .commit-card.approved {
+            border-left-color: #198754;
+        }
+        .commit-card.rejected {
+            border-left-color: #dc3545;
+        }
+        .commit-card.merged {
+            border-left-color: #0d6efd;
+        }
+        .commit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .commit-message {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border-left: 3px solid #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .stats-card {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+        }
+        .nav-pills .nav-link {
+            color: #495057;
+            margin-bottom: 0.25rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #667eea;
+            color: white;
+        }
+        .nav-pills .nav-link:hover {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .nav-pills .nav-link.active:hover {
+            background-color: #5a6fd8;
+            color: white;
+        }
+        .btn-group .btn {
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            border-bottom: none;
+            font-weight: 600;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .badge {
+            font-weight: 500;
+        }
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .container-fluid {
+            max-width: 1400px;
+        }
+        .sidebar-card {
+            position: sticky;
+            top: 1rem;
+        }
+    </style>
+</head>
+<body>
+  <!-- Header -->
+  <div id="header">
+    <!-- Replace with your static header -->
+  </div>
+
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-md-3 col-lg-2">
+        <div class="card sidebar-card">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-code-branch me-2"></i>Git Review</h6>
+          </div>
+          <div class="card-body p-2">
+            <nav class="nav nav-pills flex-column">
+              <a class="nav-link active" href="#pending" data-bs-toggle="pill">
+                <i class="fas fa-clock me-2"></i>Pending Review
+                <span class="badge bg-warning rounded-pill ms-auto">2</span>
+              </a>
+              <a class="nav-link" href="#approved" data-bs-toggle="pill">
+                <i class="fas fa-check me-2"></i>Approved
+                <span class="badge bg-success rounded-pill ms-auto">5</span>
+              </a>
+              <a class="nav-link" href="#my-commits" data-bs-toggle="pill">
+                <i class="fas fa-user me-2"></i>My Commits
+              </a>
+              <a class="nav-link" href="#statistics" data-bs-toggle="pill">
+                <i class="fas fa-chart-bar me-2"></i>Statistics
+              </a>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-md-9 col-lg-10">
+        <div class="tab-content">
+          <!-- Pending Review Tab -->
+          <div class="tab-pane fade show active" id="pending">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h4><i class="fas fa-clock text-warning me-2"></i>Pending Review</h4>
+              <div class="test-commit-review small">
+                CSS Test: If you see green background, CSS is working!
+              </div>
+              <button class="btn btn-outline-primary" onclick="refreshPendingCommits()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+              </button>
+            </div>
+
+            <div id="pending-commits-container">
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <div class="card commit-card pending">
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-8">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title mb-0">Developer A</h6>
+                            <span class="badge bg-warning status-badge">Pending Review</span>
+                          </div>
+                          <div class="commit-message mb-2">
+                            feat: Add authentication system
+                          </div>
+                          <div class="row text-muted small">
+                            <div class="col-md-6"><i class="fas fa-code-branch me-1"></i> feature/auth</div>
+                            <div class="col-md-6"><i class="fas fa-tasks me-1"></i> Task #101</div>
+                          </div>
+                          <div class="row text-muted small mt-1">
+                            <div class="col-md-6"><i class="fas fa-clock me-1"></i> Jan 15, 2025 14:30</div>
+                            <div class="col-md-6"><i class="fas fa-external-link-alt me-1"></i><a href="#" target="_blank">View Commit</a></div>
+                          </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                          <div class="btn-group-vertical" role="group">
+                            <button type="button" class="btn btn-success btn-sm mb-2"><i class="fas fa-check me-1"></i>Approve</button>
+                            <button type="button" class="btn btn-danger btn-sm"><i class="fas fa-times me-1"></i>Reject</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Another pending commit example -->
+                <div class="col-12 mb-3">
+                  <div class="card commit-card pending">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">Developer B</h6>
+                        <span class="badge bg-warning status-badge">Pending Review</span>
+                      </div>
+                      <div class="commit-message mb-2">fix: Correct navbar bug</div>
+                      <div class="row text-muted small">
+                        <div class="col-md-6"><i class="fas fa-code-branch me-1"></i> bugfix/navbar</div>
+                        <div class="col-md-6"><i class="fas fa-tasks me-1"></i> Task #102</div>
+                      </div>
+                      <div class="row text-muted small mt-1">
+                        <div class="col-md-6"><i class="fas fa-clock me-1"></i> Jan 18, 2025 09:45</div>
+                        <div class="col-md-6"><i class="fas fa-external-link-alt me-1"></i><a href="#" target="_blank">View Commit</a></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Approved Commits Tab -->
+          <div class="tab-pane fade" id="approved">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h4><i class="fas fa-check text-success me-2"></i>Approved Commits</h4>
+            </div>
+
+            <div class="row">
+              <div class="col-12 mb-3">
+                <div class="card commit-card approved">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="card-title mb-0">Developer C</h6>
+                      <span class="badge bg-success status-badge">Approved</span>
+                    </div>
+                    <div class="commit-message mb-2">refactor: Optimize API calls</div>
+                    <div class="row text-muted small">
+                      <div class="col-md-4"><i class="fas fa-code-branch me-1"></i> feature/api</div>
+                      <div class="col-md-4"><i class="fas fa-user-check me-1"></i> Lead</div>
+                      <div class="col-md-4"><i class="fas fa-calendar me-1"></i> Jan 10, 2025</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- My Commits Tab -->
+          <div class="tab-pane fade" id="my-commits">
+            <h4><i class="fas fa-user text-primary me-2"></i>My Commits</h4>
+
+            <div class="row mb-4">
+              <div class="col-md-4">
+                <div class="card stats-card text-center">
+                  <div class="card-body">
+                    <h3 class="mb-0">12</h3>
+                    <p class="mb-0">Total Commits</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-success text-white text-center">
+                  <div class="card-body">
+                    <h3 class="mb-0">7</h3>
+                    <p class="mb-0">Approved</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-warning text-white text-center">
+                  <div class="card-body">
+                    <h3 class="mb-0">3</h3>
+                    <p class="mb-0">Pending</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 mb-3">
+                <div class="card commit-card pending">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="card-title mb-0">Improve dashboard UI</h6>
+                      <span class="badge bg-warning status-badge">PENDING_REVIEW</span>
+                    </div>
+                    <div class="row text-muted small">
+                      <div class="col-md-6"><i class="fas fa-code-branch me-1"></i> ui/dashboard</div>
+                      <div class="col-md-6"><i class="fas fa-clock me-1"></i> Jan 12, 2025 11:20</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistics Tab -->
+          <div class="tab-pane fade" id="statistics">
+            <h4><i class="fas fa-chart-bar text-info me-2"></i>Commit Statistics</h4>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header"><h6 class="mb-0">Recent Activity (Last 30 Days)</h6></div>
+                  <div class="card-body">
+                    <canvas id="commitChart" width="400" height="200"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header"><h6 class="mb-0">Top Contributors</h6></div>
+                  <div class="card-body">
+                    <ul>
+                      <li>Dev A - 8 commits</li>
+                      <li>Dev B - 5 commits</li>
+                      <li>Dev C - 4 commits</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- End Main -->
+    </div>
+  </div>
+
+  <!-- Rejection Modal -->
+  <div class="modal fade" id="rejectionModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Reject Commit</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="rejectionForm">
+            <input type="hidden" id="rejectCommitId">
+            <div class="mb-3">
+              <label for="rejectionReason" class="form-label">Reason for rejection:</label>
+              <textarea class="form-control" id="rejectionReason" rows="3" required
+                        placeholder="Please provide a clear reason for rejecting this commit..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger">Reject Commit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    function refreshPendingCommits() {
+      alert("Refreshing pending commits... (frontend only demo)");
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const ctx = document.getElementById("commitChart");
+      if (ctx) {
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+            datasets: [{
+              label: "Commits",
+              data: [5, 8, 4, 7],
+              backgroundColor: "rgba(54, 162, 235, 0.7)"
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- Footer -->
+  <div id="footer">
+    <!-- Replace with your static footer -->
+  </div>
+</body>
+</html>
