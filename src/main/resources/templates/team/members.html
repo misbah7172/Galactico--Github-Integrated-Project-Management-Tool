@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Team Members - AutoTrack</title>
+    <link rel="stylesheet" href="/css/common.css" />
+    <link rel="stylesheet" href="/css/teams.css" />
+    <link rel="stylesheet" href="/css/members.css" />
+    <script src="https://unpkg.com/feather-icons"></script>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <!-- Static Header -->
+      <h2>AutoTrack</h2>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container">
+      <div class="page-header">
+        <div class="header-info">
+          <h1>Team Alpha <span class="member-count">(5 members)</span></h1>
+          <p>Manage team members and their commit tracking usernames</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="showAddMemberModal()">
+            <i data-feather="user-plus"></i>
+            Add Member
+          </button>
+          <a href="team-details.html" class="btn btn-outline">
+            <i data-feather="arrow-left"></i>
+            Back to Team
+          </a>
+        </div>
+      </div>
+
+      <!-- AutoTrack Info Banner -->
+      <div class="autotrack-info">
+        <div class="info-icon">
+          <i data-feather="git-commit"></i>
+        </div>
+        <div class="info-content">
+          <h3>Automatic Task Tracking</h3>
+          <p>
+            Team members use their assigned usernames in commit messages to
+            automatically update tasks.
+          </p>
+          <div class="commit-example">
+            <strong>Example:</strong>
+            <code>"Feature01 : login page -> Alice -> todo"</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- Members List -->
+      <div class="members-grid">
+        <!-- Example Member -->
+        <div class="member-card">
+          <div class="member-avatar">
+            <img
+              src="avatar1.png"
+              alt="Alice"
+              onerror="this.src='default-avatar.png'"
+            />
+            <div class="member-status">
+              <span class="status-badge team-lead">Lead</span>
+            </div>
+          </div>
+          <div class="member-info">
+            <h3>Alice</h3>
+            <p class="member-email">alice@example.com</p>
+            <div class="member-github">
+              <i data-feather="github"></i>
+              <a href="https://github.com/alice" target="_blank">@alice</a>
+            </div>
+          </div>
+          <div class="member-stats">
+            <div class="stat">
+              <span class="stat-value">12</span>
+              <span class="stat-label">Tasks</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">34</span>
+              <span class="stat-label">Commits</span>
+            </div>
+          </div>
+          <div class="member-actions">
+            <button
+              class="btn btn-outline btn-sm edit-member-btn"
+              onclick="editMemberUsername(1,'Alice')"
+            >
+              <i data-feather="edit-2"></i>
+              Edit Username
+            </button>
+            <button
+              class="btn btn-danger btn-sm kick-member-btn"
+              onclick="kickMember(1,'Alice')"
+            >
+              <i data-feather="user-minus"></i>
+              Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Another Example Member -->
+        <div class="member-card">
+          <div class="member-avatar">
+            <img
+              src="avatar2.png"
+              alt="Bob"
+              onerror="this.src='default-avatar.png'"
+            />
+            <div class="member-status">
+              <span class="status-badge member">Member</span>
+            </div>
+          </div>
+          <div class="member-info">
+            <h3>Bob</h3>
+            <p class="member-email">bob@example.com</p>
+            <div class="member-github">
+              <i data-feather="github"></i>
+              <a href="https://github.com/bob" target="_blank">@bob</a>
+            </div>
+          </div>
+          <div class="member-stats">
+            <div class="stat">
+              <span class="stat-value">8</span>
+              <span class="stat-label">Tasks</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">20</span>
+              <span class="stat-label">Commits</span>
+            </div>
+          </div>
+          <div class="member-actions">
+            <button
+              class="btn btn-outline btn-sm edit-member-btn"
+              onclick="editMemberUsername(2,'Bob')"
+            >
+              <i data-feather="edit-2"></i>
+              Edit Username
+            </button>
+            <button
+              class="btn btn-danger btn-sm kick-member-btn"
+              onclick="kickMember(2,'Bob')"
+            >
+              <i data-feather="user-minus"></i>
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State (hidden by default in demo) -->
+      <div class="empty-state" style="display: none">
+        <div class="empty-icon">
+          <i data-feather="users" size="64"></i>
+        </div>
+        <h3>No Team Members</h3>
+        <p>
+          Start building your team by adding members with their GitHub
+          usernames.
+        </p>
+        <button class="btn btn-secondary" onclick="showAddMemberModal()">
+          <i data-feather="user-plus"></i>
+          Add First Member
+        </button>
+      </div>
+    </main>
+
+    <!-- Add Member Modal -->
+    <div id="addMemberModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Add Team Member</h3>
+          <button class="modal-close" onclick="hideAddMemberModal()">
+            <i data-feather="x"></i>
+          </button>
+        </div>
+
+        <form action="add-member.html" method="post" class="modal-body">
+          <div class="form-group">
+            <label for="githubUsername">GitHub Username</label>
+            <input
+              type="text"
+              id="githubUsername"
+              name="githubUsername"
+              required
+              placeholder="Enter GitHub username (e.g., octocat)"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="commitUsername">Commit Tracking Username</label>
+            <input
+              type="text"
+              id="commitUsername"
+              name="commitUsername"
+              required
+              placeholder="Commit name (e.g., Rakib)"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="userEmail">Email (Optional)</label>
+            <input
+              type="email"
+              id="userEmail"
+              name="userEmail"
+              placeholder="user@example.com"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="sendInvitation" value="true" />
+              <span class="checkbox-custom"></span>
+              Send invitation email
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="isTeamLead" value="true" />
+              <span class="checkbox-custom"></span>
+              Make this user a Team Lead
+            </label>
+          </div>
+
+          <div class="commit-format-example">
+            <h4>Commit Message Format</h4>
+            <code id="commitExample"
+              >"Feature01 : task description -> CommitUsername -> status"</code
+            >
+          </div>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="hideAddMemberModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-secondary">Add Member</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <!-- Static Footer -->
+      <p>&copy; 2025 AutoTrack</p>
+    </div>
+
+    <script>
+      feather.replace();
+
+      function showAddMemberModal() {
+        document.getElementById("addMemberModal").style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
+
+      function hideAddMemberModal() {
+        document.getElementById("addMemberModal").style.display = "none";
+        document.body.style.overflow = "auto";
+      }
+
+      function editMemberUsername(memberId, currentUsername) {
+        const newUsername = prompt(
+          "Enter new commit tracking username:",
+          currentUsername
+        );
+        if (newUsername && newUsername !== currentUsername) {
+          alert(`Username updated to ${newUsername} (Demo only)`);
+        }
+      }
+
+      function kickMember(memberId, memberName) {
+        if (confirm(`Remove ${memberName} from the team?`)) {
+          alert(`${memberName} removed (Demo only).`);
+        }
+      }
+
+      // Update commit example live
+      document
+        .getElementById("commitUsername")
+        .addEventListener("input", function () {
+          const username = this.value || "CommitUsername";
+          document.getElementById(
+            "commitExample"
+          ).textContent = `"Feature01 : task description -> ${username} -> status"`;
+        });
+    </script>
+  </body>
+</html>

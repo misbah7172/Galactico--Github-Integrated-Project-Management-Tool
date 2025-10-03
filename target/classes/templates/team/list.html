@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teams - Galactico</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <!-- Insert static header here -->
+    </div>
+
+    <main class="container" style="padding-top: 2rem">
+      <!-- Page Header -->
+      <div class="page-hero">
+        <div class="page-hero-content">
+          <h1 class="page-title">
+            <i class="fas fa-users"></i>
+            Teams
+          </h1>
+          <p class="page-description">
+            Manage your teams and collaborate with colleagues
+          </p>
+        </div>
+        <div class="page-hero-actions">
+          <a href="create-team.html" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Create Team
+          </a>
+        </div>
+      </div>
+
+      <!-- Teams Grid -->
+      <div class="teams-grid">
+        <!-- Example Team Card -->
+        <div class="team-card-modern">
+          <div class="team-card-header-modern">
+            <div class="team-info">
+              <h3 class="team-name-modern">Team Alpha</h3>
+              <div class="team-member-count-modern">
+                <i class="fas fa-user"></i>
+                <span>5 members</span>
+              </div>
+            </div>
+            <div class="team-owner-badge">
+              <i class="fas fa-crown"></i>
+              Owner
+            </div>
+          </div>
+
+          <!-- Members -->
+          <div class="team-members-modern">
+            <div class="member-avatars-modern">
+              <div class="member-avatar-modern" title="Alice">
+                <img src="avatar1.png" alt="Alice" />
+              </div>
+              <div class="member-avatar-modern" title="Bob">
+                <div class="avatar-placeholder-modern">B</div>
+              </div>
+              <div class="member-avatar-modern" title="Charlie">
+                <img src="avatar2.png" alt="Charlie" />
+              </div>
+              <div class="member-avatar-modern" title="Diana">
+                <div class="avatar-placeholder-modern">D</div>
+              </div>
+              <div class="member-avatar-modern" title="Eve">
+                <img src="avatar3.png" alt="Eve" />
+              </div>
+              <div class="member-avatar-modern extra-members">
+                <span>+3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="team-stats-modern">
+            <div class="team-stat-modern">
+              <div class="stat-icon">
+                <i class="fas fa-project-diagram"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value-modern">4</div>
+                <div class="stat-label-modern">Projects</div>
+              </div>
+            </div>
+            <div class="team-stat-modern">
+              <div class="stat-icon">
+                <i class="fas fa-calendar"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value-modern">Jan 2024</div>
+                <div class="stat-label-modern">Created</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="team-actions-modern">
+            <a href="team-details.html" class="btn btn-secondary btn-sm">
+              <i class="fas fa-eye"></i>
+              View Details
+            </a>
+
+            <a
+              href="create-project.html?teamId=1"
+              class="btn btn-primary btn-sm"
+            >
+              <i class="fas fa-plus"></i>
+              Create Project
+            </a>
+
+            <a href="add-members.html?teamId=1" class="btn btn-success btn-sm">
+              <i class="fas fa-user-plus"></i>
+              Add Members
+            </a>
+
+            <a href="team-chat.html?teamId=1" class="btn btn-info btn-sm">
+              <i class="fas fa-comments"></i>
+              Chat
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State (if no teams) -->
+      <div class="empty-state-modern" style="display: none">
+        <div class="empty-icon-modern">
+          <i class="fas fa-users"></i>
+        </div>
+        <h3 class="empty-title-modern">No teams yet</h3>
+        <p class="empty-description-modern">
+          Create your first team to start collaborating on projects and tracking
+          tasks.
+        </p>
+        <div class="empty-actions-modern">
+          <a href="create-team.html" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus"></i>
+            Create Your First Team
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <div class="footer">
+      <!-- Insert static footer here -->
+    </div>
+  </body>
+</html>
