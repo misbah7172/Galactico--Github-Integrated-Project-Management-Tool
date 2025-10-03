@@ -1,216 +1,341 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit Project - AutoTrack</title>
-  <link rel="stylesheet" href="/css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Project - AutoTrack</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 <body>
-  <!-- Header -->
-  <header>
-    <h1>AutoTrack</h1>
-    <!-- Add nav here -->
-  </header>
-
-  <div class="container">
-    <!-- Alert Messages -->
-    <div class="alert alert-success" style="display: none;">Success message</div>
-    <div class="alert alert-danger" style="display: none;">Error message</div>
-
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="page-header-content">
-        <div>
-          <h1 class="page-title">⚙️ Edit Project</h1>
-          <p class="page-description">Update your project settings and GitHub repository connection</p>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container">
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-content">
+                <div>
+                    <h1 class="page-title">⚙️ Edit Project</h1>
+                    <p class="page-description">Update your project settings and GitHub repository connection</p>
+                </div>
+                <div class="page-actions">
+                    <a th:href="@{/projects/{id}(id=${projectDTO.id})}" class="btn btn-secondary">
+                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                        Back to Project
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="page-actions">
-          <a href="/projects/1" class="btn btn-secondary">
-            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M15 18l-6-6 6-6"/>
-            </svg>
-            Back to Project
-          </a>
+        
+        <!-- Edit Project Form -->
+        <div class="form-container">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2 class="form-title">Project Settings</h2>
+                    <p class="form-subtitle">Update your project details and GitHub repository configuration</p>
+                </div>
+                
+                <form th:action="@{/projects/{id}/edit(id=${projectDTO.id})}" th:object="${projectDTO}" method="post" class="form">
+                    <!-- Project Name -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">Project Name *</label>
+                        <input type="text" id="name" th:field="*{name}" class="form-control" 
+                               placeholder="Enter a descriptive project name" required>
+                        <div class="form-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    </div>
+                    
+                    <!-- GitHub Repository URL -->
+                    <div class="form-group">
+                        <label for="gitHubRepoUrl" class="form-label">GitHub Repository URL *</label>
+                        <input type="url" id="gitHubRepoUrl" th:field="*{gitHubRepoUrl}" class="form-control" 
+                               placeholder="https://github.com/username/repository" required>
+                        <p class="form-help">
+                            📋 This URL is used for CI/CD pipeline integration and automated task tracking.
+                            <br>🔗 <strong>Connect your repository to enable direct GitHub Actions deployment!</strong>
+                        </p>
+                        <div class="form-error" th:if="${#fields.hasErrors('gitHubRepoUrl')}" th:errors="*{gitHubRepoUrl}"></div>
+                    </div>
+                    
+                    <!-- GitHub Access Token -->
+                    <div class="form-group">
+                        <label for="gitHubAccessToken" class="form-label">
+                            GitHub Access Token 
+                            <span th:if="${projectDTO.gitHubAccessToken != null and !#strings.isEmpty(projectDTO.gitHubAccessToken)}" 
+                                  class="token-status">✅ Configured</span>
+                            <span th:unless="${projectDTO.gitHubAccessToken != null and !#strings.isEmpty(projectDTO.gitHubAccessToken)}" 
+                                  class="token-status-missing">❌ Not Set</span>
+                        </label>
+                        <div class="token-input-group">
+                            <input type="password" id="gitHubAccessToken" th:field="*{gitHubAccessToken}" class="form-control" 
+                                   th:placeholder="${projectDTO.gitHubAccessToken != null and !#strings.isEmpty(projectDTO.gitHubAccessToken) ? 'Current token: ghp_••••••••••••••••••••••••••••••••••••' : 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}">
+                            <button type="button" class="btn-toggle-token" onclick="toggleTokenVisibility()" title="Show/Hide Token">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="token-help">
+                            <p class="form-help">
+                                🔑 <strong>Required for direct GitHub Actions deployment!</strong>
+                                <br>
+                                <span th:if="${projectDTO.gitHubAccessToken != null and !#strings.isEmpty(projectDTO.gitHubAccessToken)}">
+                                    💡 To update your token: Clear the field and enter a new token, or leave blank to keep current token.
+                                </span>
+                                <span th:unless="${projectDTO.gitHubAccessToken != null and !#strings.isEmpty(projectDTO.gitHubAccessToken)}">
+                                    📝 Create a <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">GitHub Personal Access Token</a> with <code>repo</code> and <code>actions</code> permissions.
+                                </span>
+                                <br>⚠️ Keep this token secure - it grants access to your GitHub repository.
+                            </p>
+                            <div class="token-actions">
+                                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" class="btn btn-link">
+                                    🔗 Create New Token
+                                </a>
+                                <span th:if="${projectDTO.gitHubAccessToken != null and !#strings.isEmpty(projectDTO.gitHubAccessToken)}">
+                                    <button type="button" class="btn btn-link" onclick="clearToken()" style="color: #dc3545;">
+                                        🗑️ Remove Token
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-error" th:if="${#fields.hasErrors('gitHubAccessToken')}" th:errors="*{gitHubAccessToken}"></div>
+                    </div>
+                    
+                    <!-- Team Assignment -->
+                    <div class="form-group">
+                        <label for="teamId" class="form-label">Assigned Team</label>
+                        <select id="teamId" th:field="*{teamId}" class="form-control">
+                            <option value="">-- No team assigned --</option>
+                            <option th:each="team : ${teams}" th:value="${team.id}" th:text="${team.name}">Team Name</option>
+                        </select>
+                        <p class="form-help">
+                            Team members can commit to this project and access CI/CD features.
+                        </p>
+                        <div class="form-error" th:if="${#fields.hasErrors('teamId')}" th:errors="*{teamId}"></div>
+                    </div>
+                    
+                    <!-- CI/CD Integration Info -->
+                    <div class="info-section">
+                        <div class="info-header">
+                            <h3 class="info-title">🚀 CI/CD Integration</h3>
+                        </div>
+                        <div class="info-content">
+                            <p>After updating your GitHub repository URL, you can:</p>
+                            <ul>
+                                <li>✅ Generate automated CI/CD pipelines</li>
+                                <li>✅ Push workflows directly to GitHub Actions</li>
+                                <li>✅ Monitor deployment status</li>
+                                <li>✅ Track commit-based task progress</li>
+                            </ul>
+                            <div class="info-actions">
+                                <a th:href="@{/projects/{id}/cicd(id=${projectDTO.id})}" class="btn btn-info">
+                                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="m8 12l-2-2-2 2 2 2 2-2zm8 0l2-2 2 2-2 2-2-2z"/>
+                                        <path d="M12 8V2m0 20v-6"/>
+                                    </svg>
+                                    Configure CI/CD
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                                <polyline points="17,21 17,13 7,13 7,21"/>
+                                <polyline points="7,3 7,8 15,8"/>
+                            </svg>
+                            Update Project
+                        </button>
+                        <a th:href="@{/projects/{id}(id=${projectDTO.id})}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
     </div>
-
-    <!-- Edit Project Form -->
-    <div class="form-container">
-      <div class="form-card">
-        <div class="form-header">
-          <h2 class="form-title">Project Settings</h2>
-          <p class="form-subtitle">Update your project details and GitHub repository configuration</p>
-        </div>
-
-        <form action="/projects/1/edit" method="post" class="form">
-          <!-- Project Name -->
-          <div class="form-group">
-            <label for="name" class="form-label">Project Name *</label>
-            <input type="text" id="name" name="name" class="form-control" 
-                   placeholder="Enter a descriptive project name" required>
-            <div class="form-error">Error for project name</div>
-          </div>
-
-          <!-- GitHub Repository URL -->
-          <div class="form-group">
-            <label for="gitHubRepoUrl" class="form-label">GitHub Repository URL *</label>
-            <input type="url" id="gitHubRepoUrl" name="gitHubRepoUrl" class="form-control" 
-                   placeholder="https://github.com/username/repository" required>
-            <p class="form-help">
-              📋 This URL is used for CI/CD pipeline integration and automated task tracking.
-              <br>🔗 <strong>Connect your repository to enable direct GitHub Actions deployment!</strong>
-            </p>
-            <div class="form-error">Error for repository URL</div>
-          </div>
-
-          <!-- GitHub Access Token -->
-          <div class="form-group">
-            <label for="gitHubAccessToken" class="form-label">
-              GitHub Access Token <span class="token-status">❌ Not Set</span>
-            </label>
-            <div class="token-input-group">
-              <input type="password" id="gitHubAccessToken" name="gitHubAccessToken" class="form-control" 
-                     placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-              <button type="button" class="btn-toggle-token" onclick="toggleTokenVisibility()" title="Show/Hide Token">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            </div>
-            <div class="token-help">
-              <p class="form-help">
-                🔑 <strong>Required for direct GitHub Actions deployment!</strong>
-                <br>📝 Create a <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">GitHub Personal Access Token</a> with <code>repo</code> and <code>actions</code> permissions.
-                <br>⚠️ Keep this token secure - it grants access to your GitHub repository.
-              </p>
-              <div class="token-actions">
-                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" class="btn btn-link">
-                  🔗 Create New Token
-                </a>
-                <button type="button" class="btn btn-link" onclick="clearToken()" style="color: #dc3545;">
-                  🗑️ Remove Token
-                </button>
-              </div>
-            </div>
-            <div class="form-error">Error for token</div>
-          </div>
-
-          <!-- Team Assignment -->
-          <div class="form-group">
-            <label for="teamId" class="form-label">Assigned Team</label>
-            <select id="teamId" name="teamId" class="form-control">
-              <option value="">-- No team assigned --</option>
-              <option value="1">Team Alpha</option>
-              <option value="2">Team Beta</option>
-            </select>
-            <p class="form-help">Team members can commit to this project and access CI/CD features.</p>
-          </div>
-
-          <!-- CI/CD Integration Info -->
-          <div class="info-section">
-            <div class="info-header">
-              <h3 class="info-title">🚀 CI/CD Integration</h3>
-            </div>
-            <div class="info-content">
-              <p>After updating your GitHub repository URL, you can:</p>
-              <ul>
-                <li>✅ Generate automated CI/CD pipelines</li>
-                <li>✅ Push workflows directly to GitHub Actions</li>
-                <li>✅ Monitor deployment status</li>
-                <li>✅ Track commit-based task progress</li>
-              </ul>
-              <div class="info-actions">
-                <a href="/projects/1/cicd" class="btn btn-info">
-                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="m8 12l-2-2-2 2 2 2 2-2zm8 0l2-2 2 2-2 2-2-2z"/>
-                    <path d="M12 8V2m0 20v-6"/>
-                  </svg>
-                  Configure CI/CD
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Form Actions -->
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-              <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-                <polyline points="17,21 17,13 7,13 7,21"/>
-                <polyline points="7,3 7,8 15,8"/>
-              </svg>
-              Update Project
-            </button>
-            <a href="/projects/1" class="btn btn-secondary">Cancel</a>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <footer>
-    <p>© 2025 AutoTrack</p>
-  </footer>
-
-  <style>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <style>
     .info-section {
-      background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
-      border: 1px solid #e1e8ed;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin: 1.5rem 0;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
+        border: 1px solid #e1e8ed;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
     }
-    .info-title { color: #1a73e8; font-size: 1.1rem; font-weight: 600; margin: 0; }
-    .info-content p { color: #5f6368; margin-bottom: 0.75rem; font-size: 0.95rem; }
-    .info-content ul { color: #5f6368; font-size: 0.9rem; padding-left: 1rem; }
+    
+    .info-header {
+        margin-bottom: 1rem;
+    }
+    
+    .info-title {
+        color: #1a73e8;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-content p {
+        color: #5f6368;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .info-content ul {
+        color: #5f6368;
+        font-size: 0.9rem;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .info-content li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-actions {
+        margin-top: 1rem;
+    }
+    
     .btn-info {
-      background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
-      color: white; border: none; padding: 0.6rem 1.2rem;
-      border-radius: 8px; text-decoration: none; display: inline-flex;
-      align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 500;
-      transition: all 0.2s ease;
+        background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
     }
+    
     .btn-info:hover {
-      background: linear-gradient(135deg, #1557b0 0%, #0f4389 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        background: linear-gradient(135deg, #1557b0 0%, #0f4389 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        color: white;
+        text-decoration: none;
     }
-    .token-status { color: #28a745; font-size: 0.8rem; font-weight: 500; }
-    .token-status-missing { color: #dc3545; font-size: 0.8rem; font-weight: 500; }
-    .token-input-group { position: relative; display: flex; align-items: center; }
-    .token-input-group input { padding-right: 3rem; }
+    
+    /* Token Management Styles */
+    .token-status {
+        color: #28a745;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .token-status-missing {
+        color: #dc3545;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .token-input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    
+    .token-input-group input {
+        padding-right: 3rem;
+    }
+    
     .btn-toggle-token {
-      position: absolute; right: 0.75rem; background: none;
-      border: none; cursor: pointer; color: #6c757d; padding: 0.25rem;
+        position: absolute;
+        right: 0.75rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #6c757d;
+        padding: 0.25rem;
+        border-radius: 4px;
+        transition: color 0.2s ease;
     }
-    .btn-toggle-token:hover { color: #495057; background-color: #f8f9fa; }
-    .btn-link { background: none; border: none; color: #1a73e8; text-decoration: none; font-size: 0.9rem; cursor: pointer; }
-    .btn-link:hover { color: #1557b0; text-decoration: underline; }
-  </style>
-
-  <script>
+    
+    .btn-toggle-token:hover {
+        color: #495057;
+        background-color: #f8f9fa;
+    }
+    
+    .token-help {
+        margin-top: 0.5rem;
+    }
+    
+    .token-actions {
+        margin-top: 0.75rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .btn-link {
+        background: none;
+        border: none;
+        color: #1a73e8;
+        text-decoration: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 0.25rem 0;
+        transition: color 0.2s ease;
+    }
+    
+    .btn-link:hover {
+        color: #1557b0;
+        text-decoration: underline;
+    }
+    </style>
+    
+    <script>
     function toggleTokenVisibility() {
-      const tokenInput = document.getElementById('gitHubAccessToken');
-      const button = document.querySelector('.btn-toggle-token');
-      if (tokenInput.type === 'password') {
-        tokenInput.type = 'text';
-        button.title = 'Hide Token';
-      } else {
-        tokenInput.type = 'password';
-        button.title = 'Show Token';
-      }
+        const tokenInput = document.getElementById('gitHubAccessToken');
+        const button = document.querySelector('.btn-toggle-token');
+        
+        if (tokenInput.type === 'password') {
+            tokenInput.type = 'text';
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+            `;
+            button.title = 'Hide Token';
+        } else {
+            tokenInput.type = 'password';
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+            `;
+            button.title = 'Show Token';
+        }
     }
+    
     function clearToken() {
-      if (confirm('Are you sure you want to remove the GitHub access token?')) {
-        document.getElementById('gitHubAccessToken').value = '';
-        document.getElementById('gitHubAccessToken').focus();
-      }
+        if (confirm('Are you sure you want to remove the GitHub access token? This will disable direct GitHub Actions deployment until you add a new token.')) {
+            document.getElementById('gitHubAccessToken').value = '';
+            document.getElementById('gitHubAccessToken').focus();
+        }
     }
-  </script>
+    </script>
 </body>
 </html>
