@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams - Galactico</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container" style="padding-top: 2rem;">
+        <!-- Page Header -->
+        <div class="page-hero">
+            <div class="page-hero-content">
+                <h1 class="page-title">
+                    <i class="fas fa-users"></i>
+                    Teams
+                </h1>
+                <p class="page-description">Manage your teams and collaborate with colleagues</p>
+            </div>
+            <div class="page-hero-actions">
+                <a th:href="@{/teams/create}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create Team
+                </a>
+            </div>
+        </div>
+
+        <div class="teams-grid" th:if="${teams} and not ${#lists.isEmpty(teams)}">
+            <div class="team-card-modern" th:each="team : ${teams}">
+                <div class="team-card-header-modern">
+                    <div class="team-info">
+                        <h3 class="team-name-modern" th:text="${team.name}">Team Name</h3>
+                        <div class="team-member-count-modern">
+                            <i class="fas fa-user"></i>
+                            <span th:text="${#lists.size(team.members)} + ' members'">5 members</span>
+                        </div>
+                    </div>
+                    <div class="team-owner-badge" th:if="${team.owner.id == currentUser.id}">
+                        <i class="fas fa-crown"></i>
+                        Owner
+                    </div>
+                </div>
+                
+                <div class="team-members-modern" th:if="${team.members} and not ${#lists.isEmpty(team.members)}">
+                    <div class="member-avatars-modern">
+                        <div class="member-avatar-modern" th:each="member, iterStat : ${team.members}" 
+                             th:if="${iterStat.index < 5}" th:title="${member.nickname}">
+                            <img th:if="${member.avatarUrl}" th:src="${member.avatarUrl}" th:alt="${member.nickname}">
+                            <div th:unless="${member.avatarUrl}" class="avatar-placeholder-modern" 
+                                 th:text="${#strings.substring(member.nickname, 0, 1).toUpperCase()}">M</div>
+                        </div>
+                        <div th:if="${#lists.size(team.members) > 5}" class="member-avatar-modern extra-members">
+                            <span th:text="'+' + ${#lists.size(team.members) - 5}">+3</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-stats-modern">
+                    <div class="team-stat-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value-modern" th:text="${#lists.size(team.projects)}">0</div>
+                            <div class="stat-label-modern">Projects</div>
+                        </div>
+                    </div>
+                    <div class="team-stat-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value-modern" th:text="${team.createdAt != null ? #temporals.format(team.createdAt, 'MMM yyyy') : 'Unknown'}">Jan 2024</div>
+                            <div class="stat-label-modern">Created</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-actions-modern">
+                    <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-eye"></i>
+                        View Details
+                    </a>
+                    
+                    <!-- Show Create Project only for team owners -->
+                    <a th:if="${team.owner.id == currentUser.id}" 
+                       th:href="@{/projects/create?teamId={id}(id=${team.id})}" 
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i>
+                        Create Project
+                    </a>
+                    
+                    <!-- Show Add Members only for team owners -->
+                    <a th:if="${team.owner.id == currentUser.id}" 
+                       th:href="@{/teams/create?teamId={id}(id=${team.id})}" 
+                       class="btn btn-success btn-sm">
+                        <i class="fas fa-user-plus"></i>
+                        Add Members
+                    </a>
+                       
+                    <!-- Show team messages for all members -->
+                    <a th:href="@{/teams/{id}/messages(id=${team.id})}" 
+                       class="btn btn-info btn-sm">
+                        <i class="fas fa-comments"></i>
+                        Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state-modern" th:if="${teams} == null or ${#lists.isEmpty(teams)}">
+            <div class="empty-icon-modern">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="empty-title-modern">No teams yet</h3>
+            <p class="empty-description-modern">Create your first team to start collaborating on projects and tracking tasks.</p>
+            <div class="empty-actions-modern">
+                <a th:href="@{/teams/create}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i>
+                    Create Your First Team
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

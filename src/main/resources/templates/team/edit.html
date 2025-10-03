@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Team - AutoTrack</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container">
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-content">
+                <div>
+                    <h1 class="page-title">
+                        <i class="fas fa-edit"></i> Edit Team
+                    </h1>
+                    <p class="page-description">Update team settings and view member GitHub information</p>
+                </div>
+                <div class="page-actions">
+                    <a th:href="@{/teams/{id}(id=${teamDTO.id})}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Team
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Team Form -->
+        <div class="form-container">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2 class="form-title">
+                        <i class="fas fa-cog"></i> Team Settings
+                    </h2>
+                    <p class="form-subtitle">Update team information and member settings</p>
+                </div>
+                
+                <form th:action="@{/teams/{id}/edit(id=${teamDTO.id})}" th:object="${teamDTO}" method="post" class="form">
+                    <!-- Team Name -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-users"></i> Team Name *
+                        </label>
+                        <input type="text" id="name" th:field="*{name}" class="form-control" 
+                               placeholder="Enter team name" required>
+                        <div class="form-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    </div>
+                    
+                    <!-- Team Description -->
+                    <div class="form-group">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left"></i> Description
+                        </label>
+                        <textarea id="description" th:field="*{description}" class="form-control" rows="3"
+                                  placeholder="Brief description of your team's purpose"></textarea>
+                        <div class="form-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                    </div>
+                    
+                    <!-- GitHub Organization URL -->
+                    <div class="form-group">
+                        <label for="githubOrganizationUrl" class="form-label">
+                            <i class="fab fa-github"></i> GitHub Organization URL
+                        </label>
+                        <input type="url" id="githubOrganizationUrl" th:field="*{githubOrganizationUrl}" class="form-control"
+                               placeholder="https://github.com/your-organization">
+                        <p class="form-help">Link to your GitHub organization for better commit tracking</p>
+                        <div class="form-error" th:if="${#fields.hasErrors('githubOrganizationUrl')}" th:errors="*{githubOrganizationUrl}"></div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <a th:href="@{/teams/{id}(id=${teamDTO.id})}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Team Members Management Section -->
+            <div class="form-card" style="margin-top: 2rem;">                <div class="form-header">
+                    <h3 class="form-title">
+                        <i class="fas fa-user-cog"></i> Team Members & GitHub Information
+                    </h3>
+                    <p class="form-subtitle">View team members and their GitHub information for commit tracking</p>
+                </div>
+                
+                <div class="members-section">
+                    <!-- Current Members -->
+                    <div th:if="${teamMembers != null and !teamMembers.empty}" class="current-members">
+                        <h4 class="members-title">
+                            <i class="fas fa-users"></i> Current Members
+                        </h4>
+                        
+                        <div class="members-grid">
+                            <div th:each="member : ${teamMembers}" class="member-card">
+                                <div class="member-info">
+                                    <div class="member-avatar">
+                                        <img th:if="${member.avatarUrl}" 
+                                             th:src="${member.avatarUrl}" 
+                                             th:alt="${member.nickname}"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">                                        <div class="avatar-placeholder" 
+                                             th:style="${member.avatarUrl != null and member.avatarUrl != '' ? 'display:none;' : ''}"
+                                             th:text="${member.nickname?.substring(0,1)?.toUpperCase()}">A</div>
+                                    </div>
+                                    <div class="member-details">
+                                        <h5 class="member-name" th:text="${member.nickname}">Member Name</h5>
+                                        <p class="member-email" th:text="${member.email}">member@example.com</p>                                        <div class="github-info">
+                                            <i class="fab fa-github"></i>
+                                            <span class="github-username" th:text="${member.nickname != null ? member.nickname : 'Not linked'}">username</span>
+                                        </div>
+                                    </div>
+                                </div>                                <div class="member-actions">
+                                    <a th:if="${member.nickname != null}" 
+                                       th:href="'https://github.com/' + ${member.nickname}" 
+                                       target="_blank" 
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="fab fa-github"></i> View Profile
+                                    </a>                                      <!-- Kick member button (only for team owner and not themselves) -->
+                                    <button th:if="${teamDTO.ownerId == currentUser.id and member.id != currentUser.id}" 
+                                            class="btn btn-sm btn-danger kick-member-btn" 
+                                            onclick="kickMember(this.getAttribute('data-member-id'), this.getAttribute('data-member-nickname'))"
+                                            th:attr="data-member-id=${member.id},data-member-nickname=${member.nickname}">
+                                        <i class="fas fa-user-minus"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- No Members Message -->
+                    <div th:if="${teamMembers == null or teamMembers.empty}" class="empty-state">
+                        <div class="empty-illustration">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h4>No team members yet</h4>
+                        <p>Invite members to your team to start tracking their commits</p>
+                        <a th:href="@{/teams/{id}/members(id=${teamDTO.id})}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Invite Members
+                        </a>
+                    </div>
+                      <!-- GitHub Integration Info -->
+                    <div class="info-box">
+                        <div class="info-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="info-content">
+                            <h5>GitHub Integration</h5>
+                            <p>Team members' GitHub usernames are automatically used for commit tracking. Commits are tracked based on the GitHub ID linked to each member's account.</p>
+                            <ul>
+                                <li>Commit format: <code>Feature01: task description -> username -> status</code></li>
+                                <li>GitHub usernames are automatically linked from OAuth authentication</li>
+                                <li>Real-time Kanban board updates based on commits</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+        <style>
+        /* Members Grid */
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .member-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .member-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+        
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .member-avatar {
+            position: relative;
+            width: 50px;
+            height: 50px;
+        }
+        
+        .member-avatar img,
+        .avatar-placeholder {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .avatar-placeholder {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .member-details {
+            flex: 1;
+        }
+        
+        .member-name {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .member-email {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .github-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        
+        .github-username {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f3f4f6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .member-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+        
+        .empty-illustration {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #d1d5db;
+        }
+        
+        .empty-state h4 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+        
+        .empty-state p {
+            margin: 0 0 1.5rem 0;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .info-icon {
+            font-size: 1.5rem;
+            color: #3b82f6;
+            flex-shrink: 0;
+        }
+        
+        .info-content h5 {
+            margin: 0 0 0.5rem 0;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        
+        .info-content p {
+            margin: 0 0 1rem 0;
+            color: #1e40af;
+            line-height: 1.5;
+        }
+        
+        .info-content ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: #1e40af;
+        }
+        
+        .info-content li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-content code {
+            background: #1e40af;
+            color: #dbeafe;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+    </style>
+    
+    <!-- JavaScript for Team Management -->
+    <script>
+        function kickMember(memberId, memberName) {
+            const reason = prompt(`Please provide a reason for removing ${memberName} from the team (optional):`);
+            if (reason !== null) { // User didn't cancel the prompt
+                if (confirm(`Are you sure you want to remove ${memberName} from the team?\n\nNote: Their contributions will remain in the project history unless explicitly removed.`)) {
+                    // Create form to kick member
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/teams/${getTeamIdFromUrl()}/kick/${memberId}`;
+                    
+                    // Add CSRF token
+                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                    if (csrfToken) {
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_csrf';
+                        csrfInput.value = csrfToken;
+                        form.appendChild(csrfInput);
+                    }
+                    
+                    // Add reason if provided
+                    if (reason.trim()) {
+                        const reasonInput = document.createElement('input');
+                        reasonInput.type = 'hidden';
+                        reasonInput.name = 'reason';
+                        reasonInput.value = reason.trim();
+                        form.appendChild(reasonInput);
+                    }
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        }
+        
+        function getTeamIdFromUrl() {
+            const path = window.location.pathname;
+            const match = path.match(/\/teams\/(\d+)/);
+            return match ? match[1] : null;
+        }
+    </script>
+</body>
+</html>

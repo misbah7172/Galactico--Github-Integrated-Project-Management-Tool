@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Chat - AutoTrack</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container">
+        <div class="page-header">
+            <div class="page-header-content">
+                <div>
+                    <h1 class="page-title">💬 Team Chat</h1>
+                    <p class="page-description">Collaborate and communicate with your team members</p>
+                </div>
+                <a th:href="@{/teams/{id}(id=${teamId})}" class="btn btn-secondary">
+                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5m0 0l7 7m-7-7l7-7"/>
+                    </svg>
+                    Back to Team
+                </a>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <!-- Messages Area -->
+            <div class="chat-messages" id="chatMessages">                <div th:if="${messages} and not ${#lists.isEmpty(messages)}">
+                    <div class="message" th:each="message : ${messages}" 
+                         th:classappend="${message.sender.id == currentUser.id} ? 'message-own' : 'message-other'"
+                         th:data-message-id="${message.id}">
+                        <div class="message-header">
+                            <div class="message-author">
+                                <img th:if="${message.sender.avatarUrl}" 
+                                     th:src="${message.sender.avatarUrl}" 
+                                     th:alt="${message.sender.nickname}"
+                                     class="author-avatar">
+                                <div th:unless="${message.sender.avatarUrl}" 
+                                     class="author-avatar-placeholder"
+                                     th:text="${#strings.substring(message.sender.nickname, 0, 1).toUpperCase()}">M</div>
+                                <span class="author-name" th:text="${message.sender.nickname}">John Doe</span>
+                            </div>
+                            <div class="message-time" th:text="${#temporals.format(message.createdAt, 'MMM dd, yyyy HH:mm')}">Dec 20, 2024 14:30</div>
+                        </div>                        <div class="message-content-wrapper">
+                            <div class="message-content" th:text="${message.content}">Hello team!</div>
+                            <!-- Reactions display will be added by JavaScript -->
+                            <div class="message-reactions" th:data-message-id="${message.id}"></div>                            <div class="message-actions">
+                                <button class="react-btn" 
+                                        onclick="toggleReactionPicker(this.getAttribute('data-message-id'))"
+                                        th:attr="data-message-id=${message.id}">😀</button>
+                                <button th:if="${message.sender.id == currentUser.id}" 
+                                        class="delete-btn" 
+                                        onclick="deleteMessage(this.getAttribute('data-message-id'))"
+                                        th:attr="data-message-id=${message.id}">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div th:if="${messages} == null or ${#lists.isEmpty(messages)}" class="no-messages">
+                    <div class="no-messages-icon">💬</div>
+                    <h3>No messages yet</h3>
+                    <p>Start the conversation by sending the first message!</p>
+                </div>
+            </div>
+
+            <!-- Message Input -->
+            <div class="chat-input-container">
+                <form id="messageForm" class="chat-input-form">
+                    <div class="input-group">
+                        <textarea id="messageContent" 
+                                  placeholder="Type your message..." 
+                                  rows="2" 
+                                  required
+                                  class="message-input"></textarea>
+                        <button type="submit" class="send-button" id="sendButton">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        const teamId = [[${teamId}]];
+        const currentUserId = [[${currentUser.id}]];
+        
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Initial scroll
+        scrollToBottom();
+          // Send message
+        document.getElementById('messageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const content = document.getElementById('messageContent').value.trim();
+            if (!content) return;
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+              fetch(`/teams/${teamId}/messages/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: new URLSearchParams({
+                    content: content
+                })
+            })            .then(response => {
+                if (response.ok) {
+                    // Clear message first, then reload
+                    document.getElementById('messageContent').value = '';
+                    loadRecentMessages();
+                    return response.text(); // Changed from json() to text()
+                } else {
+                    // Error response
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+            })
+            .then(result => {
+                // Message sent successfully, already cleared input and reloaded
+                console.log('Message sent successfully:', result);
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                alert('Failed to send message: ' + error.message);
+            })
+            .finally(() => {
+                sendButton.disabled = false;
+            });
+        });
+        
+        // Enter key to send (Shift+Enter for new line)
+        document.getElementById('messageContent').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+            }
+        });
+          // Load recent messages
+        function loadRecentMessages() {
+            fetch(`/teams/${teamId}/messages/recent`, {
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Failed to load messages');
+                }
+            })
+            .then(messages => {
+                displayMessages(messages);
+                scrollToBottom();
+            })
+            .catch(error => {
+                console.error('Error loading messages:', error);
+                // Don't show alert for background refresh errors
+            });        }
+          // Render reactions for a message
+        function renderReactions(messageId, reactions) {
+            const reactionsContainer = document.querySelector(`[data-message-id="${messageId}"] .message-reactions`);
+            if (!reactionsContainer) return;
+            
+            reactionsContainer.innerHTML = '';
+            
+            Object.entries(reactions).forEach(([emoji, users]) => {
+                if (users.length > 0) {
+                    const userReacted = users.some(user => user.id === currentUserId);
+                    const reactionItem = document.createElement('div');
+                    reactionItem.className = `reaction-item ${userReacted ? 'user-reacted' : ''}`;
+                    reactionItem.onclick = () => addReaction(messageId, emoji);
+                    
+                    reactionItem.innerHTML = `
+                        <span class="reaction-emoji">${emoji}</span>
+                        <span class="reaction-count">${users.length}</span>
+                    `;
+                    
+                    reactionsContainer.appendChild(reactionItem);
+                }
+            });
+        }
+          // Display messages
+        function displayMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            if (messages.length === 0) {
+                chatMessages.innerHTML = `
+                    <div class="no-messages">
+                        <div class="no-messages-icon">💬</div>
+                        <h3>No messages yet</h3>
+                        <p>Start the conversation by sending the first message!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            chatMessages.innerHTML = messages.reverse().map(message => {
+                const isOwn = message.sender.id === currentUserId;
+                const messageClass = isOwn ? 'message message-own' : 'message message-other';
+                
+                return `
+                    <div class="${messageClass}" data-message-id="${message.id}">
+                        <div class="message-header">
+                            <div class="message-author">
+                                ${message.sender.avatarUrl ? 
+                                    `<img src="${message.sender.avatarUrl}" alt="${message.sender.nickname}" class="author-avatar">` :
+                                    `<div class="author-avatar-placeholder">${message.sender.nickname.charAt(0).toUpperCase()}</div>`
+                                }
+                                <span class="author-name">${message.sender.nickname}</span>
+                            </div>
+                            <div class="message-time">${new Date(message.createdAt).toLocaleString()}</div>
+                        </div>                        <div class="message-content-wrapper">
+                            <div class="message-content">${message.content}</div>
+                            <div class="message-reactions" data-message-id="${message.id}"></div>
+                            <div class="message-actions">
+                                <button class="react-btn" onclick="toggleReactionPicker(${message.id})">😀</button>
+                                ${isOwn ? `<button class="delete-btn" onclick="deleteMessage(${message.id})">🗑️</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;            }).join('');
+            
+            // Render reactions for each message
+            messages.forEach(message => {
+                if (message.reactions && Object.keys(message.reactions).length > 0) {
+                    renderReactions(message.id, message.reactions);
+                }
+            });
+        }
+        // Auto-refresh messages every 5 seconds
+        setInterval(loadRecentMessages, 5000);
+          // Delete message function
+        function deleteMessage(messageId) {
+            console.log('Deleting message:', messageId);
+            
+            if (!confirm('Are you sure you want to delete this message?')) {
+                return;
+            }
+            
+            fetch(`/teams/${teamId}/messages/${messageId}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                console.log('Delete response status:', response.status);
+                if (response.ok) {
+                    loadRecentMessages(); // Refresh messages
+                } else {
+                    return response.text().then(text => {
+                        console.error('Delete failed:', text);
+                        alert('Failed to delete message: ' + text);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting message:', error);
+                alert('Failed to delete message');
+            });
+        }
+          // React to message function
+        function toggleReactionPicker(messageId) {
+            console.log('Toggle reaction picker for message:', messageId);
+            
+            const existingPicker = document.querySelector('.reaction-picker');
+            if (existingPicker) {
+                existingPicker.remove();
+                return;
+            }
+            
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (!messageElement) {
+                console.error('Message element not found for ID:', messageId);
+                return;
+            }
+            
+            const picker = document.createElement('div');
+            picker.className = 'reaction-picker';
+            picker.innerHTML = `
+                <div class="reaction-options">
+                    <button onclick="addReaction(${messageId}, '👍')">👍</button>
+                    <button onclick="addReaction(${messageId}, '❤️')">❤️</button>
+                    <button onclick="addReaction(${messageId}, '😂')">😂</button>
+                    <button onclick="addReaction(${messageId}, '😮')">😮</button>
+                    <button onclick="addReaction(${messageId}, '😢')">😢</button>
+                    <button onclick="addReaction(${messageId}, '😡')">😡</button>
+                </div>
+            `;
+            
+            messageElement.appendChild(picker);
+            
+            // Close picker when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closePickerHandler(e) {
+                    if (!picker.contains(e.target)) {
+                        picker.remove();
+                        document.removeEventListener('click', closePickerHandler);
+                    }
+                });
+            }, 100);
+        }
+          // Add reaction to message
+        function addReaction(messageId, emoji) {
+            console.log('Adding reaction:', emoji, 'to message:', messageId);
+            
+            fetch(`/teams/${teamId}/messages/${messageId}/react`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: new URLSearchParams({
+                    emoji: emoji
+                })
+            })
+            .then(response => {
+                console.log('Reaction response status:', response.status);
+                if (response.ok) {
+                    // Remove picker
+                    const picker = document.querySelector('.reaction-picker');
+                    if (picker) picker.remove();
+                    
+                    // Refresh messages to show new reaction
+                    loadRecentMessages();
+                } else {
+                    return response.text().then(text => {
+                        console.error('Reaction failed:', text);
+                        alert('Failed to add reaction: ' + text);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error adding reaction:', error);
+                alert('Failed to add reaction');
+            });
+        }
+    </script>
+
+    <style>        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            max-width: 70%;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .message-own {
+            align-self: flex-end;
+        }
+        
+        .message-other {
+            align-self: flex-start;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-author {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .author-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+          .author-avatar-placeholder {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-600);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .author-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--gray-900);
+        }
+          .message-time {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        .message-content {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+        
+        .message-content-wrapper {
+            position: relative;
+        }
+          .message-actions {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            display: none;
+            gap: 5px;
+            background: white;
+            border-radius: 20px;
+            padding: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .message:hover .message-actions {
+            display: flex;
+        }
+          .react-btn, .delete-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 12px;
+            transition: background 0.2s;
+            min-width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .react-btn:hover, .delete-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .delete-btn {
+            color: #dc3545;
+        }
+        
+        .reaction-picker {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .reaction-options {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            padding: 8px;
+            display: flex;
+            gap: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .reaction-options button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+          .reaction-options button:hover {
+            background: #f0f0f0;
+        }
+        
+        /* Message reactions display */
+        .message-reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        
+        .reaction-item {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .reaction-item:hover {
+            background: var(--gray-200);
+        }
+        
+        .reaction-item.user-reacted {
+            background: var(--primary-100);
+            border-color: var(--primary-300);
+            color: var(--primary-700);
+        }
+        
+        .reaction-emoji {
+            font-size: 14px;
+        }
+        
+        .reaction-count {
+            font-size: 11px;
+            font-weight: 500;
+            min-width: 12px;
+            text-align: center;
+        }.message-own .message-content {
+            background: var(--primary-600);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-other .message-content {
+            background: var(--gray-100);
+            color: var(--gray-900);
+            border-bottom-left-radius: 4px;
+        }
+          .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+        
+        .chat-input-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .input-group {
+            display: flex;
+            width: 100%;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+          .message-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+            min-height: 20px;
+            max-height: 120px;
+        }
+          .message-input:focus {
+            outline: none;
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 2px var(--primary-200);
+        }
+        
+        .send-button {
+            background: var(--primary-600);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .send-button:hover:not(:disabled) {
+            background: var(--primary-700);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+          .no-messages {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray-500);
+        }
+        
+        .no-messages-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .no-messages h3 {
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 60vh;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+        }
+    </style>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Members - AutoTrack</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/teams.css}">
+    <link rel="stylesheet" th:href="@{/css/members.css}">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="page-header">
+            <div class="header-info">
+                <h1>
+                    <span th:text="${team.name}">Team Name</span>
+                    <span class="member-count" th:text="'(' + ${#lists.size(team.members)} + ' members)'">Members</span>
+                </h1>
+                <p>Manage team members and their commit tracking usernames</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="showAddMemberModal()">
+                    <i data-feather="user-plus"></i>
+                    Add Member
+                </button>
+                <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-outline">
+                    <i data-feather="arrow-left"></i>
+                    Back to Team
+                </a>
+            </div>
+        </div>
+
+        <!-- AutoTrack Info Banner -->
+        <div class="autotrack-info">
+            <div class="info-icon">
+                <i data-feather="git-commit"></i>
+            </div>
+            <div class="info-content">
+                <h3>Automatic Task Tracking</h3>
+                <p>Team members use their assigned usernames in commit messages to automatically update tasks.</p>
+                <div class="commit-example">
+                    <strong>Example:</strong> <code>"Feature01 : login page -> YourUsername -> todo"</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members List -->
+        <div class="members-grid">
+            <div th:each="member : ${team.members}" class="member-card">
+                <div class="member-avatar">
+                    <img th:src="${member.avatarUrl}" th:alt="${member.nickname}" 
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjNmNGY2Ii8+CjxjaXJjbGUgY3g9IjMyIiBjeT0iMjQiIHI9IjEyIiBmaWxsPSIjOWNhM2FmIi8+CjxwYXRoIGQ9Im0xNiA0OGMwLTkgNy0xNiAxNi0xNnMxNiA3IDE2IDE2djhINTJ6IiBmaWxsPSIjOWNhM2FmIi8+Cjwvc3ZnPgo='" />
+                    <div class="member-status">
+                        <span th:if="${member.hasRole('TEAM_LEAD')}" class="status-badge team-lead">Lead</span>
+                        <span th:unless="${member.hasRole('TEAM_LEAD')}" class="status-badge member">Member</span>
+                    </div>
+                </div>
+                
+                <div class="member-info">
+                    <h3 th:text="${member.nickname}">Nickname</h3>
+                    <p class="member-email" th:text="${member.email}">email@example.com</p>
+                    <div class="member-github">
+                        <i data-feather="github"></i>
+                        <a th:href="'https://github.com/' + ${member.nickname}" target="_blank" th:text="'@' + ${member.nickname}">@username</a>
+                    </div>
+                </div>
+
+                <div class="member-stats">
+                    <div class="stat">
+                        <span class="stat-value" th:text="${member.assignedTasksCount ?: 0}">0</span>
+                        <span class="stat-label">Tasks</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" th:text="${member.commitsCount ?: 0}">0</span>
+                        <span class="stat-label">Commits</span>
+                    </div>
+                </div>
+
+                <div class="member-actions">
+                    <button class="btn btn-outline btn-sm edit-member-btn" 
+                            onclick="editMemberUsername(this.getAttribute('data-member-id'), this.getAttribute('data-member-nickname'))"
+                            th:attr="data-member-id=${member.id},data-member-nickname=${member.nickname}">
+                        <i data-feather="edit-2"></i>
+                        Edit Username
+                    </button>
+                    <!-- Team leader can kick members (but not themselves) -->
+                    <button th:if="${team.owner.id == currentUser.id and member.id != currentUser.id}" 
+                            class="btn btn-danger btn-sm kick-member-btn" 
+                            onclick="kickMember(this.getAttribute('data-member-id'), this.getAttribute('data-member-nickname'))"
+                            th:attr="data-member-id=${member.id},data-member-nickname=${member.nickname}">
+                        <i data-feather="user-minus"></i>
+                        Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${team.members.empty}" class="empty-state">
+            <div class="empty-icon">
+                <i data-feather="users" size="64"></i>
+            </div>
+            <h3>No Team Members</h3>
+            <p>Start building your team by adding members with their GitHub usernames.</p>
+            <button class="btn btn-secondary" onclick="showAddMemberModal()">
+                <i data-feather="user-plus"></i>
+                Add First Member
+            </button>
+        </div>
+    </main>
+
+    <!-- Add Member Modal -->
+    <div id="addMemberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Team Member</h3>
+                <button class="modal-close" onclick="hideAddMemberModal()">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            
+            <form th:action="@{/teams/{id}/members/add(id=${team.id})}" method="post" class="modal-body">
+                <div class="form-group">
+                    <label for="githubUsername">GitHub Username</label>
+                    <input type="text" id="githubUsername" name="githubUsername" required 
+                           placeholder="Enter GitHub username (e.g., octocat)" class="form-control">
+                    <small class="form-help">The user's GitHub username for commit tracking</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="commitUsername">Commit Tracking Username</label>
+                    <input type="text" id="commitUsername" name="commitUsername" required 
+                           placeholder="Username for commit messages (e.g., Rakib, Misbah)" class="form-control">
+                    <small class="form-help">This username will be used in commit messages for task tracking</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="userEmail">Email (Optional)</label>
+                    <input type="email" id="userEmail" name="userEmail" 
+                           placeholder="user@example.com" class="form-control">
+                    <small class="form-help">Used for notifications and invitations</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="sendInvitation" value="true" id="sendInvitation">
+                        <span class="checkbox-custom"></span>
+                        Send invitation email
+                    </label>
+                    <small class="form-help">Send an email invitation to the provided email address</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="isTeamLead" value="true">
+                        <span class="checkbox-custom"></span>
+                        Make this user a Team Lead
+                    </label>
+                </div>
+
+                <div class="commit-format-example">
+                    <h4>Commit Message Format</h4>
+                    <p>Once added, this member should use this format in commits:</p>
+                    <code id="commitExample">"Feature01 : task description -> CommitUsername -> status"</code>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="hideAddMemberModal()">Cancel</button>
+                    <button type="submit" class="btn btn-secondary">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+        feather.replace();
+
+        function showAddMemberModal() {
+            document.getElementById('addMemberModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideAddMemberModal() {
+            document.getElementById('addMemberModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function editMemberUsername(memberId, currentUsername) {
+            const newUsername = prompt('Enter new commit tracking username:', currentUsername);
+            if (newUsername && newUsername !== currentUsername) {
+                // Update username via AJAX
+                fetch(`/teams/members/${memberId}/username`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ username: newUsername })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to update username');
+                    }
+                })
+                .catch(error => {
+                    alert('Error updating username: ' + error.message);
+                });
+            }
+        }
+
+        function removeMember(memberId) {
+            if (confirm('Are you sure you want to remove this member from the team?')) {
+                // Remove member via form submission
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teams/members/${memberId}/remove`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        function kickMember(memberId, memberName) {
+            const reason = prompt(`Please provide a reason for removing ${memberName} from the team (optional):`);
+            if (reason !== null) { // User didn't cancel the prompt
+                if (confirm(`Are you sure you want to remove ${memberName} from the team?\n\nNote: Their contributions will remain in the project history unless explicitly removed.`)) {
+                    // Create form to kick member
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/teams/${getTeamIdFromUrl()}/kick/${memberId}`;
+                    
+                    // Add CSRF token
+                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                    
+                    if (csrfToken && csrfHeader) {
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_csrf';
+                        csrfInput.value = csrfToken;
+                        form.appendChild(csrfInput);
+                    }
+                    
+                    // Add reason if provided
+                    if (reason.trim()) {
+                        const reasonInput = document.createElement('input');
+                        reasonInput.type = 'hidden';
+                        reasonInput.name = 'reason';
+                        reasonInput.value = reason.trim();
+                        form.appendChild(reasonInput);
+                    }
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        }
+        
+        function getTeamIdFromUrl() {
+            const path = window.location.pathname;
+            const match = path.match(/\/teams\/(\d+)/);
+            return match ? match[1] : null;
+        }
+
+        // Update commit example when username changes
+        document.getElementById('commitUsername').addEventListener('input', function() {
+            const username = this.value || 'CommitUsername';
+            document.getElementById('commitExample').textContent = 
+                `"Feature01 : task description -> ${username} -> status"`;
+        });
+
+        // Auto-fill commit username from GitHub username
+        document.getElementById('githubUsername').addEventListener('input', function() {
+            const githubUsername = this.value;
+            const commitUsernameField = document.getElementById('commitUsername');
+            if (!commitUsernameField.value && githubUsername) {
+                // Convert GitHub username to a more readable format
+                commitUsernameField.value = githubUsername.charAt(0).toUpperCase() + githubUsername.slice(1);
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('addMemberModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideAddMemberModal();
+            }
+        });
+    </script>
+</body>
+</html>
