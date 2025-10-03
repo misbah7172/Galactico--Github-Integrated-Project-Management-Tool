@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'Kanban Board - ' + project.name}">Kanban Board - Project</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container-fluid">
+        <!-- Project Header -->
+        <div class="project-header">
+            <div class="project-title">
+                <div class="project-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h1 th:text="${project.name}">Project Galactico</h1>
+            </div>
+            <div class="project-stats">
+                <div class="stat-item">
+                    <i class="fas fa-clipboard"></i>
+                    <span th:text="${todoTasks.size() + inProgressTasks.size() + doneTasks.size()}">0</span>
+                    <span>Issues</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <span th:text="${project.team.members.size()}">0</span>
+                    <span>Members</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-code-branch"></i>
+                    <span>Real-time</span>
+                </div>
+            </div>
+            <div class="project-actions">
+                <button class="action-btn">
+                    <i class="fas fa-filter"></i>
+                    Filter
+                </button>
+                <button class="action-btn">
+                    <i class="fas fa-search"></i>
+                    Search
+                </button>
+                <div class="real-time-indicator">
+                    <i class="fas fa-circle" style="color: #10b981;"></i>
+                    <span>Live</span>
+                </div>
+            </div>
+        >        <!-- Kanban Board -->
+        <div class="kanban-board">
+            <!-- TODO Column -->
+            <div class="kanban-column todo">
+                <div class="column-header">
+                    <div class="column-header-content">
+                        <div class="column-title">
+                            <i class="fas fa-circle column-icon"></i>
+                            <h3>To Do</h3>
+                        </div>
+                        <div class="column-meta">
+                            <span class="task-count" th:text="${todoTasks.size()}">0</span>
+                            <span class="wip-limit">/ 10</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-list" data-status="TODO">
+                    <div th:if="${todoTasks.empty}" class="empty-state">
+                        <div class="empty-illustration">
+                            <i class="fas fa-clipboard"></i>
+                        </div>
+                        <p class="empty-message">No tasks to do</p>
+                        <p class="empty-submessage">Tasks will appear here when created from commits</p>
+                        <div class="commit-example">
+                            <code>Feature01: build login form -> Misbah -> todo</code>
+                        </div>
+                    </div>
+                      <div th:each="task : ${todoTasks}" 
+                         class="task-card" 
+                         th:classappend="${task.declined} ? 'declined' : ''"
+                         th:data-task-id="${task.id}"
+                         th:data-status="${task.status}"
+                         draggable="true">
+                        
+                        <div class="card-header">
+                            <div class="card-left">
+                                <div class="task-type-icon task">
+                                    <i class="fas fa-check-square"></i>
+                                </div>
+                                <span class="task-id" th:text="${task.featureCode ?: 'AT-' + task.id}">AT-123</span>
+                                <!-- Show status badge for BACKLOG tasks -->
+                                <span th:if="${task.status.name() == 'BACKLOG'}" class="status-badge backlog" title="Backlog">
+                                    <i class="fas fa-list"></i> Backlog
+                                </span>
+                                <!-- Show decline indicator -->
+                                <span th:if="${task.declined}" class="decline-badge" th:title="'Declined by ' + ${task.declinedBy?.nickname} + ' on ' + ${#temporals.format(task.declinedAt, 'MMM dd, yyyy')}">
+                                    <i class="fas fa-times-circle"></i> Declined
+                                </span>
+                            </div>
+                            <div class="card-right">
+                                <div class="priority-indicator medium"></div>
+                                <div class="card-actions">
+                                    <button class="card-action-btn" title="Quick actions">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <h4 class="task-title" th:text="${task.title}">Task Title</h4>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="card-footer-left">
+                                <div class="task-tags" th:if="${task.tags != null and !task.tags.isEmpty()}">
+                                    <span th:each="tag : ${task.tags.split(',')}" 
+                                          class="tag" 
+                                          th:text="${tag.trim()}">tag</span>
+                                </div>
+                            </div>
+                            <div class="card-footer-right">
+                                <div class="assignee-avatar" th:if="${task.assignee != null}" th:title="${task.assignee.nickname}">
+                                    <img th:src="${task.assignee.avatarUrl}" 
+                                         th:alt="${task.assignee.nickname}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="avatar-placeholder" style="display:none;" th:text="${task.assignee.nickname?.substring(0,1)?.toUpperCase()}">A</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick action menu -->
+                        <div class="quick-actions-menu">
+                            <button class="quick-action" onclick="moveTask(this, 'IN_PROGRESS')">
+                                <i class="fas fa-arrow-right"></i> Start Progress
+                            </button>
+                            <button class="quick-action" onclick="deleteTask(this)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IN_PROGRESS Column -->
+            <div class="kanban-column in-progress">
+                <div class="column-header">
+                    <div class="column-header-content">
+                        <div class="column-title">
+                            <i class="fas fa-clock column-icon"></i>
+                            <h3>In Progress</h3>
+                        </div>
+                        <div class="column-meta">
+                            <span class="task-count" th:text="${inProgressTasks.size()}">0</span>
+                            <span class="wip-limit">/ 5</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-list" data-status="IN_PROGRESS">
+                    <div th:if="${inProgressTasks.empty}" class="empty-state">
+                        <div class="empty-illustration">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <p class="empty-message">No tasks in progress</p>
+                        <p class="empty-submessage">Tasks move here when work begins</p>
+                        <div class="commit-example">
+                            <code>Feature01: added form validation -> Rakib</code>
+                        </div>
+                    </div>
+                    
+                    <div th:each="task : ${inProgressTasks}" 
+                         class="task-card" 
+                         th:data-task-id="${task.id}"
+                         draggable="true">
+                        
+                        <div class="card-header">
+                            <div class="card-left">
+                                <div class="task-type-icon task">
+                                    <i class="fas fa-check-square"></i>
+                                </div>
+                                <span class="task-id" th:text="${task.featureCode ?: 'AT-' + task.id}">AT-123</span>
+                            </div>
+                            <div class="card-right">
+                                <div class="priority-indicator medium"></div>
+                                <div class="card-actions">
+                                    <button class="card-action-btn" title="Quick actions">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <h4 class="task-title" th:text="${task.title}">Task Title</h4>
+                            
+                            <!-- Progress indicator for in-progress tasks -->
+                            <div class="progress-container">
+                                <div class="progress-label">
+                                    <span>In Progress</span>
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="card-footer-left">
+                                <div class="task-tags" th:if="${task.tags != null and !task.tags.isEmpty()}">
+                                    <span th:each="tag : ${task.tags.split(',')}" 
+                                          class="tag" 
+                                          th:text="${tag.trim()}">tag</span>
+                                </div>
+                            </div>
+                            <div class="card-footer-right">
+                                <div class="assignee-avatar" th:if="${task.assignee != null}" th:title="${task.assignee.nickname}">
+                                    <img th:src="${task.assignee.avatarUrl}" 
+                                         th:alt="${task.assignee.nickname}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="avatar-placeholder" style="display:none;" th:text="${task.assignee.nickname?.substring(0,1)?.toUpperCase()}">A</div>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Quick action menu -->
+                        <div class="quick-actions-menu">
+                            <button class="quick-action" onclick="moveTask(this, 'DONE')">
+                                <i class="fas fa-check"></i> Mark Done
+                            </button>
+                            <button class="quick-action" onclick="moveTask(this, 'TODO')">
+                                <i class="fas fa-arrow-left"></i> Move to To Do
+                            </button>
+                            <!-- Team Leader Actions -->
+                            <div sec:authorize="hasRole('TEAM_LEADER')" class="leader-actions">
+                                <button class="quick-action decline-action" onclick="declineTask(this)" title="Decline this commit - Team Leader only">
+                                    <i class="fas fa-times-circle"></i> Decline Commit
+                                </button>
+                            </div>
+                            <button class="quick-action" onclick="deleteTask(this)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DONE Column -->
+            <div class="kanban-column done">
+                <div class="column-header">
+                    <div class="column-header-content">
+                        <div class="column-title">
+                            <i class="fas fa-check-circle column-icon"></i>
+                            <h3>Done</h3>
+                        </div>
+                        <div class="column-meta">
+                            <span class="task-count" th:text="${doneTasks.size()}">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-list" data-status="DONE">
+                    <div th:if="${doneTasks.empty}" class="empty-state">
+                        <div class="empty-illustration">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <p class="empty-message">No completed tasks yet</p>
+                        <p class="empty-submessage">Completed tasks will appear here</p>
+                        <div class="commit-example">
+                            <code>Feature01: login completed -> Rakib -> done</code>
+                        </div>
+                    </div>
+                    
+                    <div th:each="task : ${doneTasks}" 
+                         class="task-card completed" 
+                         th:data-task-id="${task.id}"
+                         draggable="true">
+                        
+                        <div class="card-header">
+                            <div class="card-left">
+                                <div class="task-type-icon task">
+                                    <i class="fas fa-check-square"></i>
+                                </div>
+                                <span class="task-id" th:text="${task.featureCode ?: 'AT-' + task.id}">AT-123</span>
+                            </div>
+                            <div class="card-right">
+                                <div class="completion-badge">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="card-action-btn" title="Quick actions">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <h4 class="task-title" th:text="${task.title}">Task Title</h4>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="card-footer-left">
+                                <div class="task-tags" th:if="${task.tags != null and !task.tags.isEmpty()}">
+                                    <span th:each="tag : ${task.tags.split(',')}" 
+                                          class="tag" 
+                                          th:text="${tag.trim()}">tag</span>
+                                </div>
+                                <div class="completion-date" th:if="${task.updatedAt}">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span th:text="${#temporals.format(task.updatedAt, 'MMM dd')}">Dec 15</span>
+                                </div>
+                            </div>
+                            <div class="card-footer-right">
+                                <div class="assignee-avatar" th:if="${task.assignee != null}" th:title="${task.assignee.nickname}">
+                                    <img th:src="${task.assignee.avatarUrl}" 
+                                         th:alt="${task.assignee.nickname}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="avatar-placeholder" style="display:none;" th:text="${task.assignee.nickname?.substring(0,1)?.toUpperCase()}">A</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick action menu -->
+                        <div class="quick-actions-menu">
+                            <button class="quick-action" onclick="moveTask(this, 'IN_PROGRESS')">
+                                <i class="fas fa-undo"></i> Reopen
+                            </button>
+                            <button class="quick-action" onclick="deleteTask(this)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Status Info -->
+        <div class="realtime-info">
+            <div class="info-section">
+                <h4><i class="fas fa-info-circle"></i> How It Works</h4>
+                <p>This Kanban board is fully real-time and driven by commit messages. Tasks are automatically created and updated based on your Git commits.</p>
+            </div>
+            <div class="info-section">
+                <h4><i class="fas fa-code-branch"></i> Commit Examples</h4>
+                <div class="commit-examples">
+                    <div class="example">
+                        <strong>Create Task:</strong>
+                        <code>Feature01: build login form -> Misbah -> todo</code>
+                    </div>
+                    <div class="example">
+                        <strong>Start Work:</strong>
+                        <code>Feature01: added form validation -> Misbah</code>
+                    </div>
+                    <div class="example">
+                        <strong>Complete Task:</strong>
+                        <code>Feature01: login completed -> Misbah -> done</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+      <!-- JavaScript -->
+    <script th:src="@{/js/kanban.js}"></script>
+
+    <!-- Additional JavaScript for Team Leader Features -->
+    <script>
+        // Function to decline a task commit (Team Leader only)
+        function declineTask(button) {
+            const taskCard = button.closest('.task-card');
+            const taskId = taskCard.getAttribute('data-task-id');
+            
+            // Show confirmation dialog
+            if (confirm('Are you sure you want to decline this commit?\n\nThis will move the task back to "To Do" and notify the team member that their work needs to be improved.')) {
+                
+                // Show loading state
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Declining...';
+                button.disabled = true;
+                
+                // Get CSRF token
+                const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                
+                // Send decline request
+                fetch(`/api/tasks/${taskId}/decline`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [header]: token
+                    },
+                    body: JSON.stringify({
+                        reason: 'Task does not meet quality standards. Please review and improve before resubmitting.'
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Show success message
+                        showNotification('Task declined successfully. The team member has been notified.', 'success');
+                        
+                        // Refresh the page to update the board
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        throw new Error('Failed to decline task');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error declining task:', error);
+                    showNotification('Failed to decline task. Please try again.', 'error');
+                    
+                    // Reset button state
+                    button.innerHTML = '<i class="fas fa-times-circle"></i> Decline Commit';
+                    button.disabled = false;
+                });
+            }
+        }
+        
+        // Function to show notifications
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+        
+        // Auto-refresh every 30 seconds to show new commits
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                location.reload();
+            }
+        }, 30000);
+    </script>
+    
+    <!-- CSS for notifications and team leader features -->
+    <style>
+        .leader-actions {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .decline-action {
+            background-color: #fef2f2 !important;
+            color: #dc2626 !important;
+            border: 1px solid #fecaca !important;
+        }
+        
+        .decline-action:hover {
+            background-color: #fee2e2 !important;
+            border-color: #fca5a5 !important;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left-color: #10b981;
+            color: #065f46;
+        }
+        
+        .notification.success i {
+            color: #10b981;
+        }
+        
+        .notification.error {
+            border-left-color: #dc2626;
+            color: #7f1d1d;
+        }
+        
+        .notification.error i {
+            color: #dc2626;
+        }
+        
+        /* Enhanced task card for declined status */
+        .task-card.declined {
+            border-left: 4px solid #dc2626;
+            background: #fef2f2;
+        }
+        
+        .task-card.declined .task-title::after {
+            content: " (Declined)";
+            color: #dc2626;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+          /* Team leader badge */
+        .team-leader-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        /* Decline badge */
+        .decline-badge {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            border: 1px solid #fecaca;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .decline-badge i {
+            font-size: 0.65rem;
+        }
+    </style>
+</body>
+</html>
