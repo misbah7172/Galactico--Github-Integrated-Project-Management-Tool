@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${project.name + ' - Galactico'}">Project - Galactico</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/contributions.css}">
+    <link rel="stylesheet" th:href="@{/css/languages.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container">
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        
+        <!-- Project Details -->
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title" th:text="${project.name}">Project Name</h1>
+                <div>
+                    <a th:href="@{/tasks/project/{id}(id=${project.id})}" class="btn btn-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trello"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>
+                        Kanban Board
+                    </a>
+                    <a th:href="@{/projects/{id}/analytics(id=${project.id})}" class="btn btn-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        Analytics
+                    </a>
+                    <a th:href="@{/projects/{id}/cicd(id=${project.id})}" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings"><circle cx="12" cy="12" r="3"/><path d="m12 1 2.09 1.26L15.82 1l1.26 2.09L19 3l-.74 1.55L19 6l-1.55.26L17.74 8l-2.09-.26L14 9l-1.26-.74L11 9l-.74-1.26L8 8l.26-1.55L8 5l1.55-.26L8 3l2.09.26L12 1z"/><path d="m21.64 13a10 10 0 0 0-1.16-.88 9.6 9.6 0 0 0-.88-1.16 10.26 10.26 0 0 0-1.2-.62 10.19 10.19 0 0 0-.62-1.2 10.26 10.26 0 0 0-1.16-.88 9.6 9.6 0 0 0-.88-1.16 10 10 0 0 0-1.2-.62 10.08 10.08 0 0 0-.62-1.2"/></svg>
+                        CI/CD Pipeline
+                    </a>
+                    <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                       th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                        Edit Project
+                    </a>
+                    
+                    <!-- Change Team button - only show for project owner or current team owner -->
+                    <a th:if="${project.owner?.id == currentUser?.id or project.team?.owner?.id == currentUser?.id}"
+                       th:href="@{/projects/{id}/change-team(id=${project.id})}" class="btn btn-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shuffle"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                        Change Team
+                    </a>
+                    
+                    <!-- Delete project button - only show for project owner or team owner -->
+                    <button th:if="${project.owner?.id == currentUser?.id or project.team?.owner?.id == currentUser?.id}"
+                            class="btn btn-danger delete-project-btn" 
+                            onclick="confirmDeleteProject(this.getAttribute('data-project-id'), this.getAttribute('data-project-name'))"
+                            th:attr="data-project-id=${project.id},data-project-name=${project.name}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3,6 5,6 21,6"/><path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        Delete Project
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row" style="display: flex; flex-wrap: wrap; gap: 2rem;">
+                    <!-- Project Information -->
+                    <div style="flex: 2; min-width: 300px;">
+                        <h3>Project Information</h3>
+                        <table class="table">
+                            <tr>
+                                <th>Name:</th>
+                                <td th:text="${project.name}">Project Name</td>
+                            </tr>
+                            <tr>
+                                <th>GitHub Repository:</th>
+                                <td>
+                                    <a th:href="${project.gitHubRepoUrl}" target="_blank" th:text="${project.gitHubRepoUrl}">
+                                        Repository URL
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Team:</th>
+                                <td>
+                                    <a th:href="@{/teams/{id}(id=${project.team.id})}" th:text="${project.team.name}">
+                                        Team Name
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Created:</th>
+                                <td th:text="${#temporals.format(project.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
+                            </tr>
+                            <tr>
+                                <th>Last Updated:</th>
+                                <td th:text="${#temporals.format(project.updatedAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <!-- Project Statistics -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>Project Statistics</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="background-color: hsl(var(--light)); padding: 1rem; border-radius: 0.5rem;">
+                                <h4>Tasks</h4>
+                                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                                    <div>
+                                        <span style="font-size: 1.5rem; font-weight: bold;" th:text="${project.tasks.size()}">0</span>
+                                        <span style="display: block; font-size: 0.875rem; color: hsl(var(--text-light));">Total</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 1.5rem; font-weight: bold;" 
+                                              th:text="${project.tasks.?[status.name() == 'TODO' or status.name() == 'BACKLOG'].size()}">0</span>
+                                        <span style="display: block; font-size: 0.875rem; color: hsl(var(--text-light));">To Do</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 1.5rem; font-weight: bold;" 
+                                              th:text="${project.tasks.?[status.name() == 'IN_PROGRESS'].size()}">0</span>
+                                        <span style="display: block; font-size: 0.875rem; color: hsl(var(--text-light));">In Progress</span>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 1.5rem; font-weight: bold;" 
+                                              th:text="${project.tasks.?[status.name() == 'DONE'].size()}">0</span>
+                                        <span style="display: block; font-size: 0.875rem; color: hsl(var(--text-light));">Done</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="background-color: hsl(var(--light)); padding: 1rem; border-radius: 0.5rem;">
+                                <h4>Commits</h4>
+                                <div style="margin-top: 0.5rem;">
+                                    <span style="font-size: 1.5rem; font-weight: bold;" th:text="${project.commits.size()}">0</span>
+                                    <span style="display: block; font-size: 0.875rem; color: hsl(var(--text-light));">Total Commits</span>
+                                </div>
+                            </div>
+                            
+                            <div style="background-color: hsl(var(--light)); padding: 1rem; border-radius: 0.5rem;">
+                                <h4>Team Members</h4>
+                                <div style="margin-top: 0.5rem;">
+                                    <span style="font-size: 1.5rem; font-weight: bold;" th:text="${project.team.members.size()}">0</span>
+                                    <span style="display: block; font-size: 0.875rem; color: hsl(var(--text-light));">Contributors</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Programming Languages Breakdown -->
+                <div class="language-breakdown card-style" style="margin-top: 2rem;">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;">
+                            <polyline points="16,18 22,12 16,6"></polyline>
+                            <polyline points="8,6 2,12 8,18"></polyline>
+                        </svg>
+                        Languages
+                    </h3>
+                    
+                    <div th:if="${languageStats != null and !languageStats.isEmpty()}">
+                        <!-- Language Progress Bar -->
+                        <div class="language-progress-container">
+                            <div class="language-progress-bar">
+                                <div th:each="entry : ${languageStats}" 
+                                     class="language-segment animate"
+                                     th:style="'background-color: ' + ${languageAnalysisService.getLanguageColor(entry.key)} + '; width: ' + ${entry.value} + '%'"
+                                     th:title="${entry.key} + ': ' + ${#numbers.formatDecimal(entry.value, 1, 1)} + '%'">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Language List -->
+                        <ul class="language-list">
+                            <li th:each="entry : ${languageStats}" class="language-item">
+                                <span class="language-color" 
+                                      th:style="'background-color: ' + ${languageAnalysisService.getLanguageColor(entry.key)}"></span>
+                                <span class="language-name" th:text="${entry.key}">Language</span>
+                                <span class="language-percentage" th:text="${#numbers.formatDecimal(entry.value, 1, 1)} + '%'">0.0%</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div th:if="${languageStats == null or languageStats.isEmpty()}" class="language-empty">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <p>Language information not available</p>
+                        <small>This may happen if the repository is private or the GitHub API is not accessible.</small>
+                    </div>
+                </div>
+                
+                <!-- Team Member Contributions -->
+                <div th:if="${project.team != null and !#lists.isEmpty(memberContributions)}" style="margin-top: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">Team Member Contributions</h3>
+                        <span style="font-size: 0.875rem; color: #6b7280;">Based on commits and task assignments</span>
+                    </div>
+                    
+                    <div class="contribution-grid">
+                        <div th:each="contribution, iterStat : ${memberContributions}" 
+                             class="contribution-card"
+                             th:classappend="${iterStat.index == 0 and contribution.contributionPercentage > 30} ? 'top-contributor' : ''">
+                            
+                            <div class="member-header">
+                                <div class="member-avatar">
+                                    <img th:if="${contribution.avatarUrl}" 
+                                         th:src="${contribution.avatarUrl}" 
+                                         th:alt="${contribution.memberName}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="avatar-placeholder" 
+                                         th:style="${contribution.avatarUrl != null and contribution.avatarUrl != '' ? 'display:none;' : ''}"
+                                         th:text="${contribution.memberName?.substring(0,1)?.toUpperCase()}">A</div>
+                                </div>
+                                <div class="member-info">
+                                    <h4 th:text="${contribution.memberName}">Member Name</h4>
+                                    <p th:if="${contribution.githubUsername}" th:text="'@' + ${contribution.githubUsername}">@username</p>
+                                    <p th:unless="${contribution.githubUsername}" style="color: #f59e0b;">No GitHub username set</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Contribution Percentage -->
+                            <div class="contribution-percentage">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="font-size: 0.875rem; font-weight: 500; color: #374151;">Overall Contribution</span>
+                                    <span style="font-size: 1.25rem; font-weight: 700; color: #1f2937;" 
+                                          th:text="${#numbers.formatDecimal(contribution.contributionPercentage, 1, 1)} + '%'">0.0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" th:style="'width: ' + ${contribution.contributionPercentage} + '%;'"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Statistics -->
+                            <div class="contribution-stats">
+                                <div class="stat-box">
+                                    <div class="stat-value commits" th:text="${contribution.totalCommits}">0</div>
+                                    <div class="stat-label">Commits</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-value tasks" th:text="${contribution.completedTasks} + '/' + ${contribution.totalTasks}">0/0</div>
+                                    <div class="stat-label">Tasks Done</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Task Completion Bar -->
+                            <div th:if="${contribution.totalTasks > 0}" class="task-completion-bar">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="font-size: 0.875rem; font-weight: 500; color: #374151;">Task Completion</span>
+                                    <span style="font-size: 0.875rem; font-weight: 600; color: #7c3aed;" 
+                                          th:text="${#numbers.formatDecimal(contribution.taskCompletionPercentage, 1, 1)} + '%'">0.0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" th:style="'width: ' + ${contribution.taskCompletionPercentage} + '%;'"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Member Activity Indicator -->
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div th:if="${contribution.totalCommits > 0 or contribution.totalTasks > 0}" 
+                                         style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></div>
+                                    <div th:unless="${contribution.totalCommits > 0 or contribution.totalTasks > 0}" 
+                                         style="width: 8px; height: 8px; background: #6b7280; border-radius: 50%;"></div>
+                                    <span style="font-size: 0.75rem; color: #6b7280;">
+                                        <span th:if="${contribution.totalCommits > 0 or contribution.totalTasks > 0}">Active Contributor</span>
+                                        <span th:unless="${contribution.totalCommits > 0 or contribution.totalTasks > 0}">No Activity</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- No Team Members Message -->
+                <div th:if="${project.team != null and #lists.isEmpty(memberContributions)}" style="margin-top: 2rem;">
+                    <h3>Team Member Contributions</h3>
+                    <div class="contribution-empty">
+                        <div class="empty-icon">👥</div>
+                        <h4>No team members found</h4>
+                        <p>Add team members to track their contributions to this project.</p>
+                        <a th:href="@{/teams/{id}/members(id=${project.team.id})}" class="btn btn-primary">
+                            Manage Team Members
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Webhook Information -->
+                <div th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" style="margin-top: 2rem;">
+                    <h3>GitHub Webhook Setup</h3>
+                    <p>To enable automatic task tracking from your GitHub commits, set up a webhook with these details:</p>
+                    <table class="table">
+                        <tr>
+                            <th>Payload URL:</th>
+                            <td th:text="${'https://' + #httpServletRequest.serverName + '/webhook/github'}">
+                                https://your-domain.com/webhook/github
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Content Type:</th>
+                            <td>application/json</td>
+                        </tr>
+                        <tr>
+                            <th>Secret:</th>
+                            <td th:text="${project.webhookSecret}">secret</td>
+                        </tr>
+                        <tr>
+                            <th>Events:</th>
+                            <td>Just the push event</td>
+                        </tr>
+                    </table>
+                    <p>
+                        <strong>Note:</strong> Set up the webhook in your GitHub repository settings under "Webhooks".
+                    </p>
+                </div>
+                
+                <!-- Recent Tasks -->
+                <div style="margin-top: 2rem;">
+                    <h3>Recent Tasks</h3>
+                    <div th:if="${#lists.isEmpty(project.tasks)}" class="empty-state">
+                        <p>No tasks created yet for this project.</p>
+                        <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                           th:href="@{/tasks/create(projectId=${project.id})}" class="btn btn-primary">Create Task</a>
+                    </div>
+                    <div th:unless="${#lists.isEmpty(project.tasks)}" class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Feature Code</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Assignee</th>
+                                    <th>Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="task : ${project.tasks}">
+                                    <td th:text="${task.featureCode}">Feature01</td>
+                                    <td><a th:href="@{/tasks/{id}(id=${task.id})}" th:text="${task.title}">Task Title</a></td>
+                                    <td>
+                                        <span th:if="${task.status.name() == 'BACKLOG'}" class="badge badge-backlog" th:text="${task.status}">BACKLOG</span>
+                                        <span th:if="${task.status.name() == 'TODO'}" class="badge badge-primary" th:text="${task.status}">TODO</span>
+                                        <span th:if="${task.status.name() == 'IN_PROGRESS'}" class="badge badge-warning" th:text="${task.status}">IN_PROGRESS</span>
+                                        <span th:if="${task.status.name() == 'DONE'}" class="badge badge-success" th:text="${task.status}">DONE</span>
+                                    </td>
+                                    <td th:text="${task.assignee != null ? task.assignee.nickname : 'Unassigned'}">User</td>
+                                    <td th:text="${#temporals.format(task.updatedAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
+                                    <td>
+                                        <a th:href="@{/tasks/{id}(id=${task.id})}" class="btn btn-secondary">View</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Recent Commits -->
+                <div style="margin-top: 2rem;">
+                    <h3>Recent Commits</h3>
+                    <div th:if="${#lists.isEmpty(project.commits)}" class="empty-state">
+                        <p>No commits received yet for this project.</p>
+                        <p>Make sure you have set up the GitHub webhook properly.</p>
+                    </div>
+                    <div th:unless="${#lists.isEmpty(project.commits)}">
+                        <!-- Commit Statistics Summary -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">📊 Commit Statistics</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="commitStatsContainer">
+                                            <div class="row text-center">
+                                                <div class="col-md-2">
+                                                    <div class="stat-item">
+                                                        <h4 class="text-primary" id="totalCommits">-</h4>
+                                                        <small class="text-muted">Total Commits</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="stat-item">
+                                                        <h4 class="text-success" id="linesAdded">-</h4>
+                                                        <small class="text-muted">Lines Added</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="stat-item">
+                                                        <h4 class="text-warning" id="linesModified">-</h4>
+                                                        <small class="text-muted">Lines Modified</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="stat-item">
+                                                        <h4 class="text-danger" id="linesDeleted">-</h4>
+                                                        <small class="text-muted">Lines Deleted</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="stat-item">
+                                                        <h4 class="text-info" id="filesChanged">-</h4>
+                                                        <small class="text-muted">Files Changed</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="stat-item">
+                                                        <h4 class="text-secondary" id="impactScore">-</h4>
+                                                        <small class="text-muted">Impact Score</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Commit</th>
+                                        <th>Message</th>
+                                        <th>Author</th>
+                                        <th>Code Changes</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="commit : ${project.commits}">
+                                        <td>
+                                            <a th:if="${commit.gitHubUrl != null}" th:href="${commit.gitHubUrl}" target="_blank" 
+                                               th:text="${#strings.substring(commit.sha, 0, 7)}">abcd123</a>
+                                            <span th:unless="${commit.gitHubUrl != null}" th:text="${#strings.substring(commit.sha, 0, 7)}">abcd123</span>
+                                        </td>
+                                        <td th:text="${commit.message}">Commit message</td>
+                                        <td th:text="${commit.authorName}">Author Name</td>
+                                        <td>
+                                            <div class="commit-stats">
+                                                <span class="badge badge-success" th:if="${commit.linesAdded > 0}" 
+                                                      th:text="'+' + ${commit.linesAdded}" title="Lines added">+0</span>
+                                                <span class="badge badge-warning" th:if="${commit.linesModified > 0}" 
+                                                      th:text="'~' + ${commit.linesModified}" title="Lines modified">~0</span>
+                                                <span class="badge badge-danger" th:if="${commit.linesDeleted > 0}" 
+                                                      th:text="'-' + ${commit.linesDeleted}" title="Lines deleted">-0</span>
+                                                <span class="badge badge-info" th:if="${commit.filesChanged > 0}" 
+                                                      th:text="${commit.filesChanged} + ' files'" title="Files changed">0 files</span>
+                                            </div>
+                                        </td>
+                                        <td th:text="${#temporals.format(commit.committedAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Danger Zone -->
+                <div th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                     style="margin-top: 3rem; border: 1px solid hsl(var(--danger)); border-radius: 0.5rem; padding: 1rem;">
+                    <h3 style="color: hsl(var(--danger));">Danger Zone</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <p><strong>Delete this project</strong></p>
+                            <p>Once you delete a project, there is no going back. Please be certain.</p>
+                        </div>
+                        <form th:action="@{/projects/{id}/delete(id=${project.id})}" method="post" 
+                              onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.');">
+                            <button type="submit" class="btn btn-danger">Delete Project</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <!-- JavaScript for Project Management -->
+    <script>
+        // Load commit statistics on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCommitStatistics();
+        });
+        
+        function loadCommitStatistics() {
+            const projectId = /*[[${project.id}]]*/ 1;
+            
+            fetch(`/api/commit-stats/project/${projectId}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateCommitStatsDisplay(data);
+                })
+                .catch(error => {
+                    console.error('Error loading commit statistics:', error);
+                });
+        }
+        
+        function updateCommitStatsDisplay(stats) {
+            document.getElementById('totalCommits').textContent = stats.totalCommits || 0;
+            document.getElementById('linesAdded').textContent = stats.totalLinesAdded || 0;
+            document.getElementById('linesModified').textContent = stats.totalLinesModified || 0;
+            document.getElementById('linesDeleted').textContent = stats.totalLinesDeleted || 0;
+            document.getElementById('filesChanged').textContent = stats.totalFilesChanged || 0;
+            document.getElementById('impactScore').textContent = stats.impactScore || 0;
+        }
+        
+        function confirmDeleteProject(projectId, projectName) {
+            if (confirm(`Are you sure you want to delete the project "${projectName}"?\n\nThis action cannot be undone. All tasks and commits associated with this project will be removed.`)) {
+                // Create form to delete project
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/projects/${projectId}/delete`;
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                if (csrfToken) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = csrfToken;
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+</body>
+</html>
