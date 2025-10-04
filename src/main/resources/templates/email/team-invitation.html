@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Invitation - Galactico</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .highlight {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #0056b3;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .features {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .feature-icon {
+            color: #28a745;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Galactico</div>
+            <h1 class="title">You're Invited to Join a Team!</h1>
+        </div>
+
+        <div class="content">
+            <p>Hello!</p>
+            
+            <p><strong>Team Lead</strong> has invited you to join the 
+               <strong>Team Name</strong> team on Galactico.</p>
+
+            <div class="highlight">
+                <p><strong>What is Galactico?</strong></p>
+                <p>Galactico is an automated task tracking system that seamlessly integrates with your GitHub workflow. 
+                   It automatically creates and manages tasks based on your commit messages, making project management effortless.</p>
+            </div>
+
+            <div class="features">
+                <h3>What you'll get:</h3>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>Automatic task creation from commit messages</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>Real-time task status tracking</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>Team collaboration and communication</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>Kanban board visualization</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>GitHub integration and notifications</span>
+                </div>
+            </div>
+
+            <p>To get started, simply sign in with your GitHub account:</p>
+            
+            <div style="text-align: center;">
+                <a href="#" class="cta-button">Join Team & Sign In</a>
+            </div>
+
+            <p style="margin-top: 30px;">Once you're logged in, you'll automatically be part of the 
+               <strong>Team Name</strong> team and can start collaborating right away!</p>
+        </div>
+
+        <div class="footer">
+            <p>This invitation was sent from Galactico. If you received this email by mistake, you can safely ignore it.</p>
+            <p>Visit us at <a href="#">Galactico</a></p>
+        </div>
+    </div>
+</body>
+</html>

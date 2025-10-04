@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Task Assignment - Galactico</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .task-card {
+            background-color: #f8f9fa;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .task-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .task-description {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+            margin: 15px 0;
+        }
+        .team-info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #1e7e34;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .status-badge {
+            background-color: #ffc107;
+            color: #212529;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Galactico</div>
+            <h1 class="title">New Task Assigned!</h1>
+        </div>
+
+        <div class="content">
+            <p>Hi <strong>Developer</strong>!</p>
+            
+            <p>A new task has been automatically assigned to you through a GitHub commit.</p>
+
+            <div class="task-card">
+                <div class="task-title">Task Title</div>
+                <div class="status-badge">New</div>
+                
+                <div class="task-description">
+                    <strong>Description:</strong>
+                    <p>Task description goes here...</p>
+                </div>
+            </div>
+
+            <div class="team-info">
+                <strong>Team:</strong> Team Name
+            </div>
+
+            <p>This task was created automatically from a commit message. You can view more details, 
+               update the status, and collaborate with your team members on the Galactico dashboard.</p>
+            
+            <div style="text-align: center;">
+                <a href="#" class="cta-button">View Task Details</a>
+            </div>
+
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+                <strong>Pro Tip:</strong> Update your task status by including it in your commit messages. 
+                Use formats like “Feature01 : task description -> YourUsername -> in-progress” to automatically 
+                track your progress!
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>This notification was sent from Galactico because you were assigned to a task.</p>
+            <p>Visit your dashboard at <a href="#">Galactico</a></p>
+        </div>
+    </div>
+</body>
+</html>
