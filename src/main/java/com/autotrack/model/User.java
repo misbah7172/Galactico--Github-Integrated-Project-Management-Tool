@@ -45,6 +45,9 @@ public class User {
     @OneToMany(mappedBy = "assignee", cascade = CascadeType.ALL)
     private List<Task> assignedTasks = new ArrayList<>();
     
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Notification> notifications = new ArrayList<>();
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
@@ -55,7 +58,8 @@ public class User {
     public User() {}
 
     public User(Long id, String nickname, String email, String gitHubId, String avatarUrl, 
-                List<Role> roles, List<Team> teams, List<Task> assignedTasks) {
+                List<Role> roles, List<Team> teams, List<Task> assignedTasks, 
+                List<Notification> notifications, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.nickname = nickname;
         this.email = email;
@@ -64,6 +68,7 @@ public class User {
         this.roles = roles != null ? roles : new ArrayList<>();
         this.teams = teams != null ? teams : new ArrayList<>();
         this.assignedTasks = assignedTasks != null ? assignedTasks : new ArrayList<>();
+        this.notifications = notifications != null ? notifications : new ArrayList<>();
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -93,6 +98,9 @@ public class User {
     public List<Task> getAssignedTasks() { return assignedTasks; }
     public void setAssignedTasks(List<Task> assignedTasks) { this.assignedTasks = assignedTasks; }
 
+    public List<Notification> getNotifications() { return notifications; }
+    public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -113,6 +121,7 @@ public class User {
         private List<Role> roles = new ArrayList<>();
         private List<Team> teams = new ArrayList<>();
         private List<Task> assignedTasks = new ArrayList<>();
+        private List<Notification> notifications = new ArrayList<>();
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
@@ -124,8 +133,13 @@ public class User {
         public UserBuilder roles(List<Role> roles) { this.roles = roles; return this; }
         public UserBuilder teams(List<Team> teams) { this.teams = teams; return this; }
         public UserBuilder assignedTasks(List<Task> assignedTasks) { this.assignedTasks = assignedTasks; return this; }
+        public UserBuilder notifications(List<Notification> notifications) { this.notifications = notifications; return this; }
         public UserBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public UserBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+
+        public User build() {
+            return new User(id, nickname, email, gitHubId, avatarUrl, roles, teams, assignedTasks, notifications, createdAt, updatedAt);
+        }
     }
     
     @PrePersist

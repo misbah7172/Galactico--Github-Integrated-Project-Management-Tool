@@ -2,7 +2,9 @@ package com.autotrack.controller;
 
 import com.autotrack.dto.MessageDTO;
 import com.autotrack.model.Message;
+import com.autotrack.model.MessageReaction;
 import com.autotrack.model.User;
+import com.autotrack.repository.MessageReactionRepository;
 import com.autotrack.service.MessageService;
 import com.autotrack.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,26 @@ public class MessageController {    @Autowired
     @Autowired
     private UserService userService;
     
+    @Autowired
+    private MessageReactionRepository messageReactionRepository;@GetMapping
+    public String teamMessages(@PathVariable Long teamId, Model model, @AuthenticationPrincipal OAuth2User principal) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+        
+        User currentUser = userService.getCurrentUser(principal);
+        
+        try {
+            List<Message> messages = messageService.getTeamMessages(teamId, currentUser);
+            model.addAttribute("messages", messages);
+            model.addAttribute("teamId", teamId);
+            model.addAttribute("currentUser", currentUser);
+            return "team/messages";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", "You don't have access to this team's messages");
+            return "error";
+        }
+    }    @PostMapping("/send")
     @ResponseBody
     public ResponseEntity<?> sendMessage(@PathVariable Long teamId, 
                                        @RequestParam String content,
@@ -71,6 +93,39 @@ public class MessageController {    @Autowired
         try {
             User currentUser = userService.getCurrentUser(principal);
             messageService.deleteMessage(messageId, currentUser);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    @PostMapping("/{messageId}/react")
+    @ResponseBody
+    public ResponseEntity<?> addReaction(@PathVariable Long teamId,
+                                       @PathVariable Long messageId,
+                                       @RequestParam String emoji,
+                                       @AuthenticationPrincipal OAuth2User principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body("Authentication required");
+        }
+        
+        try {
+            User currentUser = userService.getCurrentUser(principal);
+            
+            // Check if reaction already exists
+            Optional<MessageReaction> existingReaction = messageReactionRepository
+                .findByMessageIdAndUserIdAndEmoji(messageId, currentUser.getId(), emoji);
+            
+            if (existingReaction.isPresent()) {
+                // Remove existing reaction (toggle off)
+                messageReactionRepository.delete(existingReaction.get());
+            } else {
+                // Add new reaction
+                Message message = messageService.getMessageById(messageId);
+                MessageReaction reaction = new MessageReaction(message, currentUser, emoji);
+                messageReactionRepository.save(reaction);
+            }
+            
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -28,6 +28,9 @@ public class Message {
     
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<MessageReaction> reactions;
 
     // Constructors
     public Message() {}
@@ -76,6 +79,14 @@ public class Message {
         return createdAt;
     }    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<MessageReaction> getReactions() {
+        return reactions;
+    }
+
+    public void setReactions(List<MessageReaction> reactions) {
+        this.reactions = reactions;
     }
 
     @PrePersist

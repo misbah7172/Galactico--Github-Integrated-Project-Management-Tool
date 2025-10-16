@@ -137,6 +137,7 @@ public class Task {
 
     public List<Notification> getNotifications() { return notifications; }
     public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
+
     // Decline-related getters and setters
     public User getDeclinedBy() { return declinedBy; }
     public void setDeclinedBy(User declinedBy) { this.declinedBy = declinedBy; }

@@ -1,6 +1,7 @@
 package com.autotrack.dto;
 
 import com.autotrack.model.Message;
+import com.autotrack.model.MessageReaction;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,20 @@ public class MessageDTO {
         this.sender = new UserDTO(message.getSender());
         this.teamId = message.getTeam().getId();
         this.createdAt = message.getCreatedAt();
+        
+        // Group reactions by emoji - handle null reactions
+        if (message.getReactions() != null) {
+            this.reactions = message.getReactions().stream()
+                .collect(Collectors.groupingBy(
+                    MessageReaction::getEmoji,
+                    Collectors.mapping(
+                        reaction -> new UserDTO(reaction.getUser()),
+                        Collectors.toList()
+                    )
+                ));
+        } else {
+            this.reactions = new HashMap<>();
+        }
     }
 
     // Getters and setters
