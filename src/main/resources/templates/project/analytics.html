@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commit Analytics - Galactico</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1e293b 50%, var(--midnight-blue) 100%) !important;
+            min-height: 100vh !important;
+            color: var(--text-primary) !important;
+            line-height: 1.6 !important;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .analytics-container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 2rem 1.5rem !important;
+            position: relative !important;
+            z-index: 1 !important;
+        }
+
+        .page-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin-bottom: 3rem !important;
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 20px !important;
+            padding: 2rem !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .page-title {
+            font-size: 2.5rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.5rem !important;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-cyan) 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary) !important;
+            font-size: 1.1rem !important;
+        }
+
+        .project-selector {
+            display: flex !important;
+            align-items: center !important;
+            gap: 1rem !important;
+            margin-top: 1rem !important;
+        }
+
+        .project-dropdown {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important;
+            padding: 0.75rem 1rem !important;
+            color: var(--text-primary) !important;
+            font-size: 0.95rem !important;
+            min-width: 200px !important;
+            outline: none !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .project-dropdown:focus {
+            border-color: var(--neon-cyan) !important;
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
+        }
+
+        .project-dropdown option {
+            background: var(--midnight-blue) !important;
+            color: var(--text-primary) !important;
+            padding: 0.5rem !important;
+        }
+
+        .analysis-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            padding: 0.75rem 1.5rem !important;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--indigo) 100%) !important;
+            color: var(--text-primary) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            white-space: nowrap !important;
+        }
+
+        .analysis-btn:hover:not(:disabled) {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3) !important;
+        }
+
+        .analysis-btn:disabled {
+            background: rgba(75, 85, 99, 0.5) !important;
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
+        }
+
+        .back-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            padding: 0.875rem 1.5rem !important;
+            background: transparent !important;
+            color: var(--text-secondary) !important;
+            text-decoration: none !important;
+            border: 2px solid var(--border-color) !important;
+            border-radius: 12px !important;
+            font-weight: 500 !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .back-btn:hover {
+            border-color: var(--neon-cyan) !important;
+            color: var(--neon-cyan) !important;
+            transform: translateY(-2px) !important;
+            text-decoration: none !important;
+        }
+
+        .analytics-grid {
+            display: grid !important;
+            gap: 2rem !important;
+            margin-bottom: 3rem !important;
+        }
+
+        .overview-card {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 20px !important;
+            padding: 2rem !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .overview-card:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+            border-color: rgba(99, 102, 241, 0.4) !important;
+        }
+
+        .overview-header {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1.5rem !important;
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+            color: var(--text-primary) !important;
+        }
+
+        .stats-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+            gap: 2rem !important;
+        }
+
+        .stat-item {
+            text-align: center !important;
+            padding: 1rem !important;
+            background: rgba(6, 182, 212, 0.05) !important;
+            border: 1px solid rgba(6, 182, 212, 0.15) !important;
+            border-radius: 12px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .stat-item:hover {
+            background: rgba(6, 182, 212, 0.1) !important;
+            border-color: rgba(6, 182, 212, 0.3) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .stat-value {
+            font-size: 2rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .stat-label {
+            color: var(--text-secondary) !important;
+            font-size: 0.875rem !important;
+            font-weight: 500 !important;
+        }
+
+        .charts-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 2rem !important;
+            margin-bottom: 3rem !important;
+        }
+
+        .chart-card {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 20px !important;
+            padding: 2rem !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+            border-color: rgba(99, 102, 241, 0.4) !important;
+        }
+
+        .chart-header {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1.5rem !important;
+            font-size: 1.1rem !important;
+            font-weight: 600 !important;
+            color: var(--text-primary) !important;
+        }
+
+        .chart-canvas {
+            position: relative !important;
+            height: 300px !important;
+        }
+
+        .contributors-table-card {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 20px !important;
+            padding: 2rem !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+            margin-bottom: 3rem !important;
+        }
+
+        .table-wrapper {
+            overflow-x: auto !important;
+            border-radius: 12px !important;
+            background: rgba(15, 23, 42, 0.5) !important;
+        }
+
+        .contributors-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 0 !important;
+        }
+
+        .contributors-table th {
+            background: rgba(99, 102, 241, 0.1) !important;
+            color: var(--text-primary) !important;
+            padding: 1rem !important;
+            text-align: left !important;
+            font-weight: 600 !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        .contributors-table td {
+            padding: 1rem !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--text-secondary) !important;
+        }
+
+        .contributors-table tbody tr:hover {
+            background: rgba(6, 182, 212, 0.05) !important;
+        }
+
+        .loading-state {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.75rem !important;
+            padding: 2rem !important;
+            color: var(--text-secondary) !important;
+        }
+
+        .spinner {
+            width: 20px !important;
+            height: 20px !important;
+            border: 2px solid var(--border-color) !important;
+            border-top: 2px solid var(--neon-cyan) !important;
+            border-radius: 50% !important;
+            animation: spin 1s linear infinite !important;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .metrics-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 2rem !important;
+        }
+
+        .additional-metrics {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 20px !important;
+            padding: 2rem !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .metrics-inner-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 1.5rem !important;
+        }
+
+        .metric-item {
+            text-align: center !important;
+            padding: 1.5rem !important;
+            background: rgba(139, 92, 246, 0.05) !important;
+            border: 1px solid rgba(139, 92, 246, 0.15) !important;
+            border-radius: 12px !important;
+        }
+
+        .metric-value {
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+            color: var(--text-primary) !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .metric-label {
+            color: var(--text-secondary) !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* Color variations for different stats */
+        .stat-commits { color: var(--neon-cyan) !important; }
+        .stat-added { color: var(--success-color) !important; }
+        .stat-modified { color: var(--warning-color) !important; }
+        .stat-deleted { color: var(--danger-color) !important; }
+        .stat-files { color: var(--info-color) !important; }
+        .stat-impact { color: var(--soft-violet) !important; }
+
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analytics-container {
+                padding: 1rem !important;
+            }
+            
+            .page-header {
+                flex-direction: column !important;
+                gap: 1.5rem !important;
+                text-align: center !important;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            .metrics-inner-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .page-title {
+                font-size: 2rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+
+    <div class="analytics-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">
+                    <i class="fas fa-chart-line" style="color: var(--neon-cyan);"></i>
+                    Commit Analytics
+                </h1>
+                <div class="project-selector">
+                    <select id="projectSelect" class="project-dropdown">
+                        <option value="">Select a project...</option>
+                    </select>
+                    <button id="showAnalysisBtn" class="analysis-btn" disabled>
+                        <i class="fas fa-chart-bar"></i>
+                        Show Analysis
+                    </button>
+                </div>
+            </div>
+            <a href="/projects" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Projects</span>
+            </a>
+        </div>
+
+        <!-- Overview Statistics -->
+        <div class="analytics-grid">
+            <div class="overview-card">
+                <div class="overview-header">
+                    <i class="fas fa-chart-bar" style="color: var(--neon-cyan);"></i>
+                    <span>Project Overview</span>
+                </div>
+                <div class="stats-grid" id="overviewStats">
+                    <div class="stat-item">
+                        <div class="stat-value stat-commits" id="totalCommits">-</div>
+                        <div class="stat-label">Total Commits</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value stat-added" id="totalLinesAdded">-</div>
+                        <div class="stat-label">Lines Added</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value stat-modified" id="totalLinesModified">-</div>
+                        <div class="stat-label">Lines Modified</div>
+                                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value stat-deleted" id="totalLinesDeleted">-</div>
+                        <div class="stat-label">Lines Deleted</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value stat-files" id="totalFilesModified">-</div>
+                        <div class="stat-label">Files Modified</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value stat-impact" id="impactScore">-</div>
+                        <div class="stat-label">Impact Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <i class="fas fa-calendar" style="color: var(--neon-cyan);"></i>
+                    <span>Daily Activity</span>
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="dailyActivityChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <i class="fas fa-chart-pie" style="color: var(--indigo);"></i>
+                    <span>Commit Size Distribution</span>
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="commitSizeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contributors Table -->
+        <div class="contributors-table-card">
+            <div class="overview-header">
+                <i class="fas fa-users" style="color: var(--soft-violet);"></i>
+                <span>Top Contributors</span>
+            </div>
+            <div class="table-wrapper">
+                <table class="contributors-table" id="contributorsTable">
+                    <thead>
+                        <tr>
+                            <th>Contributor</th>
+                            <th>Commits</th>
+                            <th>Lines Added</th>
+                            <th>Lines Deleted</th>
+                            <th>Files Changed</th>
+                            <th>Impact Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="6" class="loading-state">
+                                <div class="spinner"></div>
+                                <span>Loading contributors data...</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Additional Metrics -->
+        <div class="metrics-grid">
+            <div class="additional-metrics">
+                <div class="overview-header">
+                    <i class="fas fa-clock" style="color: var(--warning-color);"></i>
+                    <span>Time Distribution</span>
+                </div>
+                <div class="metrics-inner-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="morningCommits">-</div>
+                        <div class="metric-label">Morning</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="afternoonCommits">-</div>
+                        <div class="metric-label">Afternoon</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="eveningCommits">-</div>
+                        <div class="metric-label">Evening</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="nightCommits">-</div>
+                        <div class="metric-label">Night</div>
+                    </div>
+                </div>
+            </div>
+            <div class="additional-metrics">
+                <div class="overview-header">
+                    <i class="fas fa-file-code" style="color: var(--info-color);"></i>
+                    <span>File Type Distribution</span>
+                </div>
+                <div class="metrics-inner-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="javaFiles">-</div>
+                        <div class="metric-label">Java Files</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="htmlFiles">-</div>
+                        <div class="metric-label">HTML Files</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="cssFiles">-</div>
+                        <div class="metric-label">CSS Files</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="jsFiles">-</div>
+                        <div class="metric-label">JS Files</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dailyActivityChart, commitSizeChart;
+        let currentProjectId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProjects();
+            setupEventListeners();
+        });
+
+        function loadProjects() {
+            fetch('/api/projects/user-projects')
+                .then(response => response.json())
+                .then(projects => {
+                    const select = document.getElementById('projectSelect');
+                    select.innerHTML = '<option value="">Select a project...</option>';
+                    
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = project.id;
+                        option.textContent = project.name;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading projects:', error);
+                });
+        }
+
+        function setupEventListeners() {
+            const projectSelect = document.getElementById('projectSelect');
+            const showAnalysisBtn = document.getElementById('showAnalysisBtn');
+
+            projectSelect.addEventListener('change', function() {
+                const selectedProjectId = this.value;
+                showAnalysisBtn.disabled = !selectedProjectId;
+                
+                if (selectedProjectId) {
+                    currentProjectId = selectedProjectId;
+                }
+            });
+
+            showAnalysisBtn.addEventListener('click', function() {
+                if (currentProjectId) {
+                    loadAnalyticsData();
+                }
+            });
+        }
+
+        function loadAnalyticsData() {
+            if (!currentProjectId) {
+                console.error('No project selected');
+                return;
+            }
+
+            showLoadingStates();
+
+            Promise.all([
+                fetch(/api/analytics/${currentProjectId}/overview),
+                fetch(/api/analytics/${currentProjectId}/daily-activity),
+                fetch(/api/analytics/${currentProjectId}/commit-sizes),
+                fetch(/api/analytics/${currentProjectId}/contributors),
+                fetch(/api/analytics/${currentProjectId}/time-distribution),
+                fetch(/api/analytics/${currentProjectId}/file-types)
+            ])
+            .then(responses => Promise.all(responses.map(r => r.json())))
+            .then(([overview, dailyActivity, commitSizes, contributors, timeDistribution, fileTypes]) => {
+                updateOverviewStats(overview);
+                createDailyActivityChart(dailyActivity);
+                createCommitSizeChart(commitSizes);
+                updateContributorsTable(contributors);
+                updateTimeDistribution(timeDistribution);
+                updateFileTypeDistribution(fileTypes);
+            })
+            .catch(error => {
+                console.error('Error loading analytics data:', error);
+                showErrorMessage('Failed to load analytics data. Please try again.');
+            });
+        }
+
+        function showLoadingStates() {
+            const loadingHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>';
+            
+            document.getElementById('totalCommits').textContent = '-';
+            document.getElementById('totalLinesAdded').textContent = '-';
+            document.getElementById('totalLinesModified').textContent = '-';
+            document.getElementById('totalLinesDeleted').textContent = '-';
+            document.getElementById('totalFilesModified').textContent = '-';
+            document.getElementById('impactScore').textContent = '-';
+            
+            const tbody = document.querySelector('#contributorsTable tbody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="spinner"></div><span>Loading contributors...</span></td></tr>';
+            }
+        }
+
+        function showErrorMessage(message) {
+            const errorHTML = <div style="text-align: center; color: var(--danger-color); padding: 2rem;">${message}</div>;
+            document.querySelector('.analytics-container').innerHTML = errorHTML;
+        }
+
+
+
+        function updateOverviewStats(overview) {
+            document.getElementById('totalCommits').textContent = overview.totalCommits;
+            document.getElementById('totalLinesAdded').textContent = formatNumber(overview.totalLinesAdded);
+            document.getElementById('totalLinesModified').textContent = formatNumber(overview.totalLinesModified);
+            document.getElementById('totalLinesDeleted').textContent = formatNumber(overview.totalLinesDeleted);
+            document.getElementById('totalFilesModified').textContent = overview.totalFilesModified;
+            document.getElementById('impactScore').textContent = overview.impactScore;
+        }
+
+        function createDailyActivityChart(dailyData) {
+            const ctx = document.getElementById('dailyActivityChart').getContext('2d');
+            
+            if (dailyActivityChart) {
+                dailyActivityChart.destroy();
+            }
+
+            dailyActivityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailyData.map(d => d.date),
+                    datasets: [{
+                        label: 'Commits',
+                        data: dailyData.map(d => d.commits),
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#f8fafc'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#cbd5e1'
+                            },
+                            grid: {
+                                color: 'rgba(99, 102, 241, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#cbd5e1'
+                            },
+                            grid: {
+                                color: 'rgba(99, 102, 241, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCommitSizeChart(sizeData) {
+            const ctx = document.getElementById('commitSizeChart').getContext('2d');
+            
+            if (commitSizeChart) {
+                commitSizeChart.destroy();
+            }
+
+            commitSizeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Small', 'Medium', 'Large', 'Very Large'],
+                    datasets: [{
+                        data: [sizeData.small, sizeData.medium, sizeData.large, sizeData.veryLarge],
+                        backgroundColor: [
+                            '#06b6d4',
+                            '#22c55e',
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#f8fafc',
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateContributorsTable(contributors) {
+            const tbody = document.querySelector('#contributorsTable tbody');
+            
+            if (!contributors || contributors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No contributors data available</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = contributors.map(contributor => `
+                <tr>
+                    <td><strong>${contributor.name || 'Unknown'}</strong></td>
+                    <td>${contributor.commits || 0}</td>
+                    <td style="color: var(--success-color);">${formatNumber(contributor.linesAdded || 0)}</td>
+                    <td style="color: var(--danger-color);">${formatNumber(contributor.linesDeleted || 0)}</td>
+                    <td>${contributor.filesChanged || 0}</td>
+                    <td><span style="background: var(--indigo); color: var(--text-primary); padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.875rem;">${contributor.impactScore || '0.0'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function updateTimeDistribution(timeData) {
+            document.getElementById('morningCommits').textContent = timeData.morning;
+            document.getElementById('afternoonCommits').textContent = timeData.afternoon;
+            document.getElementById('eveningCommits').textContent = timeData.evening;
+            document.getElementById('nightCommits').textContent = timeData.night;
+        }
+
+        function updateFileTypeDistribution(fileTypes) {
+            document.getElementById('javaFiles').textContent = fileTypes.java || 0;
+            document.getElementById('htmlFiles').textContent = fileTypes.html || 0;
+            document.getElementById('cssFiles').textContent = fileTypes.css || 0;
+            document.getElementById('jsFiles').textContent = fileTypes.js || 0;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num;
+        }
+    </script>
+</body>
+</html>
