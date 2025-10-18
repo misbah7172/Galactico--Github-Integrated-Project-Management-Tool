@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - AutoTrack</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%) !important;
+            color: var(--text-primary) !important;
+            min-height: 100vh !important;
+            line-height: 1.6 !important;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .page-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .page-hero-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-hero-content h1 i {
+            color: var(--neon-cyan);
+        }
+
+        .page-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 41, 59, 1);
+            border-color: var(--indigo);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info), #0891b2);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .projects-grid-modern {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .project-card-modern {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--indigo), var(--soft-violet));
+        }
+
+        .project-card-modern:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--indigo);
+        }
+
+        .project-card-header-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-name-modern {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .project-team-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .project-status-badge {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .project-card-body-modern {
+            margin-bottom: 1.5rem;
+        }
+
+        .project-repo-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .repo-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .repo-info i {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .repo-link-modern {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .repo-link-modern:hover {
+            color: var(--indigo);
+        }
+
+        .external-link-btn {
+            color: var(--text-secondary);
+            padding: 0.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .external-link-btn:hover {
+            color: var(--neon-cyan);
+        }
+
+        .project-stats-modern {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-stat-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--indigo));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .stat-value-modern {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-label-modern {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .project-progress-modern {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .progress-percentage {
+            color: var(--neon-cyan);
+            font-weight: 600;
+        }
+
+        .progress-bar-modern {
+            width: 100%;
+            height: 8px;
+            background: var(--slate-700);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill-modern {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--indigo));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text-modern {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .project-card-actions-modern {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .empty-state-modern {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-top: 2rem;
+        }
+
+        .empty-icon-modern {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(135deg, var(--slate-700), var(--slate-600));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 2rem;
+        }
+
+        .empty-title-modern {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-description-modern {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .empty-actions-modern {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .page-hero {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .projects-grid-modern {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .project-stats-modern {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .project-card-actions-modern {
+                flex-direction: column;
+            }
+
+            .project-card-actions-modern .btn {
+                justify-content: center;
+            }
+
+            .empty-actions-modern {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container" style="padding-top: 2rem;">
+        <!-- Page Header -->
+        <div class="page-hero">
+            <div class="page-hero-content">
+                <h1 class="page-title">
+                    <i class="fas fa-rocket"></i>
+                    Projects
+                </h1>
+                <p class="page-description">Manage your GitHub repositories and track development progress</p>
+            </div>
+            <div class="page-hero-actions">
+                <a th:href="@{/projects/create}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create Project
+                </a>
+            </div>
+        </div>
+
+        <div class="projects-grid-modern" th:if="${projects} and not ${#lists.isEmpty(projects)}">
+            <div class="project-card-modern" th:each="project : ${projects}">
+                <div class="project-card-header-modern">
+                    <div class="project-info">
+                        <h3 class="project-name-modern" th:text="${project.name}">Project Name</h3>
+                        <div class="project-team-modern">
+                            <i class="fas fa-users"></i>
+                            <span th:text="${project.team.name}">Team Name</span>
+                        </div>
+                    </div>
+                    <div class="project-status-badge">
+                        <i class="fas fa-circle text-success"></i>
+                        Active
+                    </div>
+                </div>
+                
+                <div class="project-card-body-modern">
+                    <div class="project-repo-modern" th:if="${project.gitHubRepoUrl != null and project.gitHubRepoUrl != ''}">
+                        <div class="repo-info">
+                            <i class="fab fa-github"></i>
+                            <a th:href="${project.gitHubRepoUrl}" target="_blank" class="repo-link-modern" 
+                               th:text="${#strings.substringAfter(project.gitHubRepoUrl, 'github.com/')}">Repository Link</a>
+                        </div>
+                        <a th:href="${project.gitHubRepoUrl}" target="_blank" class="external-link-btn">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="project-stats-modern">
+                        <div class="project-stat-modern">
+                            <div class="stat-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value-modern" th:text="${#lists.size(project.tasks)}">0</div>
+                                <div class="stat-label-modern">Tasks</div>
+                            </div>
+                        </div>
+                        <div class="project-stat-modern">
+                            <div class="stat-icon">
+                                <i class="fas fa-code-branch"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value-modern" th:text="${#lists.size(project.commits)}">0</div>
+                                <div class="stat-label-modern">Commits</div>
+                            </div>
+                        </div>
+                        <div class="project-stat-modern">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value-modern" th:text="${project.createdAt != null ? #temporals.format(project.createdAt, 'MMM yyyy') : 'Unknown'}">Jan 2024</div>
+                                <div class="stat-label-modern">Created</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-progress-modern" th:if="${project.tasks} and not ${#lists.isEmpty(project.tasks)}">
+                        <div class="progress-header">
+                            <span class="progress-label">Progress</span>
+                            <span class="progress-percentage" th:text="${#numbers.formatDecimal(#lists.size(project.tasks.?[status.name() == 'DONE']) * 100 / #lists.size(project.tasks), 0, 0)} + '%'">30%</span>
+                        </div>
+                        <div class="progress-bar-modern">
+                            <div class="progress-fill-modern" th:style="'width: ' + ${#lists.size(project.tasks.?[status.name() == 'DONE'])} * 100 / ${#lists.size(project.tasks)} + '%'"></div>
+                        </div>
+                        <div class="progress-text-modern" th:text="${#lists.size(project.tasks.?[status.name() == 'DONE'])} + ' of ' + ${#lists.size(project.tasks)} + ' tasks completed'">3 of 10 tasks completed</div>
+                    </div>
+                </div>
+                
+                <div class="project-card-actions-modern">
+                    <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-eye"></i>
+                        View Details
+                    </a>
+                    <a th:href="@{/projects/{id}/kanban(id=${project.id})}" class="btn btn-success btn-sm">
+                        <i class="fas fa-columns"></i>
+                        Kanban Board
+                    </a>
+                    <a th:href="@{/projects/{id}/analytics(id=${project.id})}" class="btn btn-info btn-sm">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                    <!-- Delete button - only show for project owner or team leader -->
+                    <button th:if="${project.owner?.id == currentUser?.id or project.team?.owner?.id == currentUser?.id}"
+                            class="btn btn-danger btn-sm delete-project-btn" 
+                            onclick="confirmDeleteProject(this.getAttribute('data-project-id'), this.getAttribute('data-project-name'))"
+                            th:attr="data-project-id=${project.id},data-project-name=${project.name}">
+                        <i class="fas fa-trash"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state-modern" th:if="${projects} == null or ${#lists.isEmpty(projects)}">
+            <div class="empty-icon-modern">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <h3 class="empty-title-modern">No projects yet</h3>
+            <p class="empty-description-modern">Start by creating a team, then add your first project to begin tracking tasks and commits from GitHub.</p>
+            <div class="empty-actions-modern">
+                <a th:href="@{/teams/create}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-users"></i>
+                    Create Team First
+                </a>
+                <a th:href="@{/projects/create}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i>
+                    Create Project
+                </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <!-- JavaScript for Project Management -->
+    <script>
+        function confirmDeleteProject(projectId, projectName) {
+            if (confirm(Are you sure you want to delete the project "${projectName}"?\n\nThis action cannot be undone. All tasks and commits associated with this project will be removed.)) {
+                // Create form to delete project
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = /projects/${projectId}/delete;
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                if (csrfToken) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = csrfToken;
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+</body>
+</html>
