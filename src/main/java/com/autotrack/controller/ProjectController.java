@@ -3,10 +3,13 @@ package com.autotrack.controller;
 import com.autotrack.dto.ProjectDTO;
 import com.autotrack.dto.TeamMemberContributionDTO;
 import com.autotrack.model.Project;
+import com.autotrack.model.Task;
+import com.autotrack.model.TaskStatus;
 import com.autotrack.model.Team;
 import com.autotrack.model.User;
 import com.autotrack.service.LanguageAnalysisService;
 import com.autotrack.service.ProjectService;
+import com.autotrack.service.TaskService;
 import com.autotrack.service.TeamService;
 import com.autotrack.service.UserService;
 import jakarta.validation.Valid;
@@ -19,6 +22,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,13 +36,15 @@ public class ProjectController {
     private final ProjectService projectService;
     private final TeamService teamService;
     private final UserService userService;
+    private final TaskService taskService;
     private final LanguageAnalysisService languageAnalysisService;
 
     public ProjectController(ProjectService projectService, TeamService teamService, 
-                           UserService userService, LanguageAnalysisService languageAnalysisService) {
+                           UserService userService, TaskService taskService, LanguageAnalysisService languageAnalysisService) {
         this.projectService = projectService;
         this.teamService = teamService;
         this.userService = userService;
+        this.taskService = taskService;
         this.languageAnalysisService = languageAnalysisService;
     }
 
@@ -122,6 +128,26 @@ public class ProjectController {
         model.addAttribute("languageAnalysisService", languageAnalysisService); // For color lookup in template
         model.addAttribute("currentUser", currentUser);
         return "project/detail";
+    }
+
+    /**
+     * Show enhanced project details with sprint and backlog management.
+     */
+    @GetMapping("/{id}/enhanced")
+    public String showEnhancedProject(@PathVariable Long id, Model model, @AuthenticationPrincipal OAuth2User principal) {
+        User currentUser = userService.getCurrentUser(principal);
+        Project project = projectService.getProjectById(id);
+        List<TeamMemberContributionDTO> memberContributions = projectService.getTeamMemberContributions(id);
+        
+        // Get language statistics for the project
+        Map<String, Double> languageStats = languageAnalysisService.getLanguageStatistics(project);
+        
+        model.addAttribute("project", project);
+        model.addAttribute("memberContributions", memberContributions);
+        model.addAttribute("languageStats", languageStats);
+        model.addAttribute("languageAnalysisService", languageAnalysisService);
+        model.addAttribute("currentUser", currentUser);
+        return "project/enhanced-detail";
     }
 
     /**
@@ -270,5 +296,34 @@ public class ProjectController {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete project: " + e.getMessage());
             return "redirect:/projects/" + id;
         }
+    }
+
+    /**
+     * Show kanban board for a project.
+     */
+    @GetMapping("/{projectId}/kanban")
+    public String showKanbanBoard(@PathVariable Long projectId, Model model,
+                                 @AuthenticationPrincipal OAuth2User principal) {
+        User currentUser = userService.getCurrentUser(principal);
+        Project project = projectService.getProjectById(projectId);
+        
+        // Get BACKLOG and TODO tasks for the TODO column
+        List<Task> backlogTasks = taskService.getTasksByProjectAndStatus(projectId, TaskStatus.BACKLOG);
+        List<Task> todoTasks = taskService.getTasksByProjectAndStatus(projectId, TaskStatus.TODO);
+        
+        // Combine BACKLOG and TODO tasks for the TODO column
+        List<Task> combinedTodoTasks = new ArrayList<>();
+        combinedTodoTasks.addAll(backlogTasks);
+        combinedTodoTasks.addAll(todoTasks);
+        
+        List<Task> inProgressTasks = taskService.getTasksByProjectAndStatus(projectId, TaskStatus.IN_PROGRESS);
+        List<Task> doneTasks = taskService.getTasksByProjectAndStatus(projectId, TaskStatus.DONE);
+        
+        model.addAttribute("project", project);
+        model.addAttribute("todoTasks", combinedTodoTasks);
+        model.addAttribute("inProgressTasks", inProgressTasks);
+        model.addAttribute("doneTasks", doneTasks);
+        
+        return "kanban";
     }
 }

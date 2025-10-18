@@ -58,6 +58,48 @@ public class Task {
     @Column(name = "decline_reason", columnDefinition = "TEXT")
     private String declineReason;
     
+    // Enhanced fields for sprint and backlog management
+    @Column(name = "story_points")
+    private Integer storyPoints = 0;
+    
+    @Column(name = "business_value")
+    private Integer businessValue = 0;
+    
+    @Column(name = "effort_estimate")
+    private Integer effortEstimate = 0;
+    
+    @Column(name = "acceptance_criteria", columnDefinition = "TEXT")
+    private String acceptanceCriteria;
+    
+    @Column(name = "epic_name")
+    private String epicName;
+    
+    @Column(name = "user_story", columnDefinition = "TEXT")
+    private String userStory;
+    
+    @Column(name = "original_estimate_hours", precision = 8, scale = 2)
+    private java.math.BigDecimal originalEstimateHours = java.math.BigDecimal.ZERO;
+    
+    @Column(name = "remaining_estimate_hours", precision = 8, scale = 2)
+    private java.math.BigDecimal remainingEstimateHours = java.math.BigDecimal.ZERO;
+    
+    @Column(name = "logged_hours", precision = 8, scale = 2)
+    private java.math.BigDecimal loggedHours = java.math.BigDecimal.ZERO;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority_level")
+    private PriorityLevel priorityLevel = PriorityLevel.MEDIUM;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "task_type")
+    private TaskType taskType = TaskType.STORY;
+    
+    @Column(name = "blocked_by", columnDefinition = "JSON")
+    private String blockedBy; // JSON string for blocking dependencies
+    
+    @Column(name = "blocks", columnDefinition = "JSON")
+    private String blocks; // JSON string for what this task blocks
+    
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
@@ -148,6 +190,46 @@ public class Task {
     public String getDeclineReason() { return declineReason; }
     public void setDeclineReason(String declineReason) { this.declineReason = declineReason; }
 
+    // Enhanced fields getters and setters
+    public Integer getStoryPoints() { return storyPoints; }
+    public void setStoryPoints(Integer storyPoints) { this.storyPoints = storyPoints; }
+
+    public Integer getBusinessValue() { return businessValue; }
+    public void setBusinessValue(Integer businessValue) { this.businessValue = businessValue; }
+
+    public Integer getEffortEstimate() { return effortEstimate; }
+    public void setEffortEstimate(Integer effortEstimate) { this.effortEstimate = effortEstimate; }
+
+    public String getAcceptanceCriteria() { return acceptanceCriteria; }
+    public void setAcceptanceCriteria(String acceptanceCriteria) { this.acceptanceCriteria = acceptanceCriteria; }
+
+    public String getEpicName() { return epicName; }
+    public void setEpicName(String epicName) { this.epicName = epicName; }
+
+    public String getUserStory() { return userStory; }
+    public void setUserStory(String userStory) { this.userStory = userStory; }
+
+    public java.math.BigDecimal getOriginalEstimateHours() { return originalEstimateHours; }
+    public void setOriginalEstimateHours(java.math.BigDecimal originalEstimateHours) { this.originalEstimateHours = originalEstimateHours; }
+
+    public java.math.BigDecimal getRemainingEstimateHours() { return remainingEstimateHours; }
+    public void setRemainingEstimateHours(java.math.BigDecimal remainingEstimateHours) { this.remainingEstimateHours = remainingEstimateHours; }
+
+    public java.math.BigDecimal getLoggedHours() { return loggedHours; }
+    public void setLoggedHours(java.math.BigDecimal loggedHours) { this.loggedHours = loggedHours; }
+
+    public PriorityLevel getPriorityLevel() { return priorityLevel; }
+    public void setPriorityLevel(PriorityLevel priorityLevel) { this.priorityLevel = priorityLevel; }
+
+    public TaskType getTaskType() { return taskType; }
+    public void setTaskType(TaskType taskType) { this.taskType = taskType; }
+
+    public String getBlockedBy() { return blockedBy; }
+    public void setBlockedBy(String blockedBy) { this.blockedBy = blockedBy; }
+
+    public String getBlocks() { return blocks; }
+    public void setBlocks(String blocks) { this.blocks = blocks; }
+
     // Utility method to check if task was declined
     public boolean isDeclined() {
         return declinedBy != null && declinedAt != null;
@@ -173,6 +255,14 @@ public class Task {
         private Sprint sprint;
         private List<Commit> commits = new ArrayList<>();
         private List<Notification> notifications = new ArrayList<>();
+        // Enhanced fields
+        private Integer storyPoints;
+        private String acceptanceCriteria;
+        private String epicName;
+        private String userStory;
+        private PriorityLevel priorityLevel;
+        private TaskType taskType;
+
 
         public TaskBuilder id(Long id) { this.id = id; return this; }
         public TaskBuilder featureCode(String featureCode) { this.featureCode = featureCode; return this; }
@@ -188,10 +278,37 @@ public class Task {
         public TaskBuilder sprint(Sprint sprint) { this.sprint = sprint; return this; }
         public TaskBuilder commits(List<Commit> commits) { this.commits = commits; return this; }
         public TaskBuilder notifications(List<Notification> notifications) { this.notifications = notifications; return this; }
+        public TaskBuilder storyPoints(Integer storyPoints) { this.storyPoints = storyPoints; return this; }
+        public TaskBuilder acceptanceCriteria(String acceptanceCriteria) { this.acceptanceCriteria = acceptanceCriteria; return this; }
+        public TaskBuilder epicName(String epicName) { this.epicName = epicName; return this; }
+        public TaskBuilder userStory(String userStory) { this.userStory = userStory; return this; }
+        public TaskBuilder priorityLevel(PriorityLevel priorityLevel) { this.priorityLevel = priorityLevel; return this; }
+        public TaskBuilder taskType(TaskType taskType) { this.taskType = taskType; return this; }
+
 
         public Task build() {
-            return new Task(id, featureCode, title, status, assignee, tagsString, milestone, gitHubIssueUrl,
+            Task task = new Task(id, featureCode, title, status, assignee, tagsString, milestone, gitHubIssueUrl,
                            createdAt, updatedAt, project, sprint, commits, notifications);
+            // Set enhanced fields
+            if (storyPoints != null) {
+                task.setStoryPoints(storyPoints);
+            }
+            if (acceptanceCriteria != null) {
+                task.setAcceptanceCriteria(acceptanceCriteria);
+            }
+            if (epicName != null) {
+                task.setEpicName(epicName);
+            }
+            if (userStory != null) {
+                task.setUserStory(userStory);
+            }
+            if (priorityLevel != null) {
+                task.setPriorityLevel(priorityLevel);
+            }
+            if (taskType != null) {
+                task.setTaskType(taskType);
+            }
+            return task;
         }
     }
     

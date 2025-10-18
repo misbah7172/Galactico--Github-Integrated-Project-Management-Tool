@@ -3,6 +3,8 @@ package com.autotrack.repository;
 import com.autotrack.model.Project;
 import com.autotrack.model.Sprint;
 import com.autotrack.model.SprintStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +24,11 @@ public interface SprintRepository extends JpaRepository<Sprint, Long> {
      * Find all sprints by project
      */
     List<Sprint> findByProjectOrderByStartDateDesc(Project project);
+    
+    /**
+     * Find all sprints by project with pagination
+     */
+    Page<Sprint> findByProjectOrderByStartDateDesc(Project project, Pageable pageable);
     
     /**
      * Find all sprints by project ID

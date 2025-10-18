@@ -97,6 +97,23 @@ public class TaskService {
     }
 
     /**
+     * Get tasks by sprint.
+     */
+    public List<Task> getTasksBySprint(Sprint sprint) {
+        return taskRepository.findBySprintOrderByUpdatedAtDesc(sprint);
+    }
+
+    /**
+     * Get tasks by sprint ID.
+     */
+    public List<Task> getTasksBySprintId(Long sprintId) {
+        if (sprintId == null) {
+            return List.of();
+        }
+        return taskRepository.findBySprintIdOrderByUpdatedAtDesc(sprintId);
+    }
+
+    /**
      * Create a new task.
      */
     @Transactional

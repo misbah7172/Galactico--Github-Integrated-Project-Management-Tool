@@ -3,40 +3,63 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: rgba(99, 102, 241, 0.2);
+        }
+        
+        nav a:hover {
+            color: var(--neon-cyan) !important;
+            background: rgba(6, 182, 212, 0.1) !important;
+        }
+        
+        button:hover {
+            border-color: var(--neon-cyan) !important;
+            color: var(--neon-cyan) !important;
+        }
+        
+        a[href="/login"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4) !important;
+        }
+        
+        @media (max-width: 768px) {
+            nav {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Modern Header Fragment -->
-    <header th:fragment="header" class="header">
-        <div class="header-content">
-            <a th:href="@{/}" class="logo">
-                <svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
-  <!-- Connecting lines -->
-  <line x1="400" y1="160" x2="200" y2="520" stroke="#2a2a2a" stroke-width="40"/>
-  <line x1="400" y1="160" x2="600" y2="520" stroke="#2a2a2a" stroke-width="40"/>
-  <line x1="230" y1="520" x2="570" y2="520" stroke="#2a2a2a" stroke-width="40"/>
-
-  <!-- Top Node -->
-  <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="#3c424b" stroke="#2a2a2a" stroke-width="8"/>
-
-  <!-- Bottom Left Node -->
-  <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac17c" stroke="#2a2a2a" stroke-width="8"/>
-
-  <!-- Bottom Right Node -->
-  <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac6f4" stroke="#2a2a2a" stroke-width="8"/>
-</svg>
-
+    <header th:fragment="header" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 70px;">
+            <a th:href="@{/}" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 1.5rem;">
+                <svg width="32" height="32" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="400" y1="160" x2="200" y2="520" stroke="var(--neon-cyan)" stroke-width="60"/>
+                    <line x1="400" y1="160" x2="600" y2="520" stroke="var(--neon-cyan)" stroke-width="60"/>
+                    <line x1="230" y1="520" x2="570" y2="520" stroke="var(--neon-cyan)" stroke-width="60"/>
+                    <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="var(--indigo)"/>
+                    <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="var(--soft-violet)"/>
+                    <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="var(--neon-cyan)"/>
+                </svg>
                 Galactico
             </a>
             
-            <nav class="navbar" sec:authorize="isAuthenticated()">
-                <a th:href="@{/dashboard}">
+            <nav sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 2rem;">
+                <a th:href="@{/dashboard}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: all 0.3s ease; padding: 0.5rem 1rem; border-radius: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
                     </svg>
                     Dashboard
                 </a>
-                <a th:href="@{/teams}">
+                <a th:href="@{/teams}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: all 0.3s ease; padding: 0.5rem 1rem; border-radius: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
@@ -45,14 +68,14 @@
                     </svg>
                     Teams
                 </a>
-                <a th:href="@{/projects}">
+                <a th:href="@{/projects}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: all 0.3s ease; padding: 0.5rem 1rem; border-radius: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                     </svg>
                     Projects
                 </a>
-                <a th:href="@{/tasks/assigned}">
+                <a th:href="@{/tasks/assigned}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: all 0.3s ease; padding: 0.5rem 1rem; border-radius: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
@@ -60,40 +83,40 @@
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                         <polyline points="10 9 9 9 8 9"></polyline>
                     </svg>
-                    Assigned Tasks
+                    Tasks
                 </a>
-                <a th:href="@{/commit-review}">
+                <a th:href="@{/commit-review}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: all 0.3s ease; padding: 0.5rem 1rem; border-radius: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="4"></circle>
                         <path d="M16 8v5a3 3 0 0 0 6 0v-5a10 10 0 1 0-20 0v5a3 3 0 0 0 6 0v-5"></path>
                     </svg>
-                    Git Review
+                    Review
                 </a>
-                <a th:href="@{/notifications}" class="notifications-link">
+                <a th:href="@{/notifications}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: all 0.3s ease; padding: 0.5rem 1rem; border-radius: 8px; position: relative;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                     </svg>
                     Notifications
-                    <span id="notifications-badge" class="notification-badge" style="display: none;">0</span>
+                    <span id="notifications-badge" style="display: none; position: absolute; top: -8px; right: -8px; background: var(--neon-cyan); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; justify-content: center;">0</span>
                 </a>
             </nav>
             
-            <!-- User Profile Section -->
-            <div class="user-profile" sec:authorize="isAuthenticated()">
+            <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 1rem;">
                 <img th:src="${#authentication.principal.attributes['avatar_url']}" 
-                     class="avatar" 
+                     style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border-color);"
                      alt="User Avatar"
                      onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNGM0Y0RjYiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxMiIgcj0iNSIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNMjYgMjZWMjNBNCA0IDAgMCAwIDIyIDE5SDEwQTQgNCAwIDAgMCA2IDIzVjI2IiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo='"
                 />
-                <div class="user-info">
-                    <div class="user-name" th:text="${#authentication.principal.attributes['login']}">Username</div>
-                    <div class="user-role" sec:authorize="hasAuthority('TEAM_LEAD')">Team Lead</div>
-                    <div class="user-role" sec:authorize="hasAuthority('MEMBER')">Member</div>
+                <div style="display: flex; flex-direction: column;">
+                    <div style="color: var(--text-primary); font-weight: 600; font-size: 0.9rem;" th:text="${#authentication.principal.attributes['login']}">Username</div>
+                    <div style="color: var(--text-secondary); font-size: 0.8rem;" sec:authorize="hasAuthority('TEAM_LEAD')">Team Lead</div>
+                    <div style="color: var(--text-secondary); font-size: 0.8rem;" sec:authorize="hasAuthority('MEMBER')">Member</div>
                 </div>
                 
-                <form th:action="@{/logout}" method="post" style="margin-left: var(--space-4);">
-                    <button type="submit" class="btn btn-secondary btn-sm">
+                <form th:action="@{/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 8px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: all 0.3s ease;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                             <polyline points="16 17 21 12 16 7"></polyline>
@@ -104,9 +127,8 @@
                 </form>
             </div>
             
-            <!-- Login Button for Anonymous Users -->
             <div sec:authorize="isAnonymous()">
-                <a th:href="@{/login}" class="btn btn-primary">
+                <a th:href="@{/login}" style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--neon-cyan), var(--indigo)); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.875rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
                     </svg>
@@ -115,32 +137,45 @@
             </div>
         </div>
     </header>
+</body>
+</html>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                        Login with GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
     
     <script sec:authorize="isAuthenticated()">
-        // Load notification count on page load
+        // Optimized notification loading with better error handling
         document.addEventListener('DOMContentLoaded', function() {
             loadNotificationCount();
             
-            // Refresh notification count every 30 seconds
+            // Refresh notification count every 30 seconds with better performance
             setInterval(loadNotificationCount, 30000);
         });
         
-        function loadNotificationCount() {
-            // Get CSRF token if available
-            const csrfToken = document.querySelector('meta[name="_csrf"]');
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
-            
-            const headers = {};
-            if (csrfToken && csrfHeader) {
-                headers[csrfHeader.getAttribute('content')] = csrfToken.getAttribute('content');
-            }
-            
-            fetch('/team-invitations/pending/count', {
-                headers: headers
-            })
-            .then(response => response.json())
-            .then(count => {
+        async function loadNotificationCount() {
+            try {
+                // Get CSRF token if available
+                const csrfToken = document.querySelector('meta[name="_csrf"]');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+                
+                const headers = {};
+                if (csrfToken && csrfHeader) {
+                    headers[csrfHeader.getAttribute('content')] = csrfToken.getAttribute('content');
+                }
+                
+                const response = await fetch('/team-invitations/pending/count', {
+                    headers: headers
+                });
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const count = await response.json();
                 const badge = document.getElementById('notifications-badge');
+                
                 if (badge) {
                     if (count > 0) {
                         badge.textContent = count;
@@ -149,10 +184,9 @@
                         badge.style.display = 'none';
                     }
                 }
-            })
-            .catch(error => {
-                console.error('Error loading notification count:', error);
-            });
+            } catch (error) {
+                console.warn('Could not load notification count:', error.message);
+            }
         }
     </script>
     

@@ -29,6 +29,8 @@ public interface CommitRepository extends JpaRepository<Commit, Long> {
     
     List<Commit> findByProjectAndAuthorName(Project project, String authorName);
     
+    List<Commit> findByProjectAndAuthorEmail(Project project, String authorEmail);
+    
     List<Commit> findByAuthorName(String authorName);
     
     List<Commit> findByProjectAndCommittedAtAfter(Project project, LocalDateTime startDate);

@@ -1,0 +1,15 @@
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Connecting lines -->
+  <line x1="400" y1="160" x2="200" y2="520" stroke="black" stroke-width="32"/>
+  <line x1="400" y1="160" x2="600" y2="520" stroke="black" stroke-width="32"/>
+  <line x1="200" y1="520" x2="600" y2="520" stroke="black" stroke-width="32"/>
+
+  <!-- Top Node -->
+  <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="#0dff00ff" stroke="black" stroke-width="40"/>
+
+  <!-- Bottom Left Node -->
+  <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="#ff0000ff" stroke="black" stroke-width="40"/>
+
+  <!-- Bottom Right Node -->
+  <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="#0015ffff" stroke="black" stroke-width="40"/>
+</svg>

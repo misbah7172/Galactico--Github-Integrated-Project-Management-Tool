@@ -50,6 +50,27 @@ public class Sprint {
     @ManyToOne
     @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
+    
+    // Enhanced fields for sprint management
+    @Column(name = "sprint_goal", columnDefinition = "TEXT")
+    private String sprintGoal;
+    
+    @Column(name = "planned_velocity")
+    private Integer plannedVelocity = 0;
+    
+    @Column(name = "actual_velocity")
+    private Integer actualVelocity = 0;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sprint_type")
+    private SprintType sprintType = SprintType.REGULAR;
+    
+    @Column(name = "retrospective_notes", columnDefinition = "TEXT")
+    private String retrospectiveNotes;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sprint_health")
+    private SprintHealth sprintHealth = SprintHealth.ON_TRACK;
 
     // Constructors
     public Sprint() {
@@ -157,6 +178,25 @@ public class Sprint {
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
+
+    // Enhanced fields getters and setters
+    public String getSprintGoal() { return sprintGoal; }
+    public void setSprintGoal(String sprintGoal) { this.sprintGoal = sprintGoal; }
+
+    public Integer getPlannedVelocity() { return plannedVelocity; }
+    public void setPlannedVelocity(Integer plannedVelocity) { this.plannedVelocity = plannedVelocity; }
+
+    public Integer getActualVelocity() { return actualVelocity; }
+    public void setActualVelocity(Integer actualVelocity) { this.actualVelocity = actualVelocity; }
+
+    public SprintType getSprintType() { return sprintType; }
+    public void setSprintType(SprintType sprintType) { this.sprintType = sprintType; }
+
+    public String getRetrospectiveNotes() { return retrospectiveNotes; }
+    public void setRetrospectiveNotes(String retrospectiveNotes) { this.retrospectiveNotes = retrospectiveNotes; }
+
+    public SprintHealth getSprintHealth() { return sprintHealth; }
+    public void setSprintHealth(SprintHealth sprintHealth) { this.sprintHealth = sprintHealth; }
 
     // Helper methods
     /**

@@ -1,146 +1,386 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notifications - Galactico</title>
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="stylesheet" href="css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - AutoTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 <body>
-  <!-- Header -->
-  <div id="header">
-    <!-- Replace this with your header content -->
-  </div>
-
-  <div class="container">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="page-header-content">
-        <div>
-          <h1 class="page-title">Notifications</h1>
-          <p class="page-description">Stay updated with team invitations and project updates</p>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container">
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        
+        <div class="page-hero">
+            <div class="page-hero-content">
+                <h1 class="page-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                    </svg>
+                    Notifications
+                </h1>
+                <p class="page-description">Stay updated with team invitations and project updates</p>
+            </div>
         </div>
-      </div>
+        
+        <!-- Notifications Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('invitations')">Team Invitations</button>
+            <button class="tab-button" onclick="showTab('general')">General</button>
+        </div>
+        
+        <!-- Team Invitations Tab -->
+        <div id="invitations-tab" class="tab-content active">
+            <div class="notification-section">
+                <div class="section-header">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Team Invitations
+                    </h2>
+                    <span id="invitations-count" class="count-badge">0</span>
+                </div>
+                
+                <div id="team-invitations" class="notifications-list">
+                    <!-- Team invitations will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- General Notifications Tab -->
+        <div id="general-tab" class="tab-content">
+            <div class="notification-section">
+                <div class="section-header">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 6v6l4 2"></path>
+                        </svg>
+                        General Notifications
+                    </h2>
+                    <span id="general-count" class="count-badge">0</span>
+                </div>
+                
+                <div id="general-notifications" class="notifications-list">
+                    <!-- General notifications will be loaded here -->
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Notifications Tabs -->
-    <div class="tabs">
-      <button class="tab-button active" onclick="showTab('invitations')">Team Invitations</button>
-      <button class="tab-button" onclick="showTab('general')">General</button>
-    </div>
-
-    <!-- Team Invitations Tab -->
-    <div id="invitations-tab" class="tab-content active">
-      <div class="notification-section">
-        <div class="section-header">
-          <h2>Team Invitations</h2>
-          <span id="invitations-count" class="count-badge">0</span>
-        </div>
-
-        <div id="team-invitations" class="notifications-list">
-          <!-- Team invitations will be loaded here -->
-        </div>
-      </div>
-    </div>
-
-    <!-- General Notifications Tab -->
-    <div id="general-tab" class="tab-content">
-      <div class="notification-section">
-        <div class="section-header">
-          <h2>General Notifications</h2>
-          <span id="general-count" class="count-badge">0</span>
-        </div>
-
-        <div id="general-notifications" class="notifications-list">
-          <!-- General notifications will be loaded here -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Tab functionality
-    function showTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
-      });
-
-      document.getElementById(tabName + '-tab').classList.add('active');
-      event.target.classList.add('active');
-    }
-
-    // Load notifications on page load
-    document.addEventListener('DOMContentLoaded', function () {
-      loadTeamInvitations();
-      loadGeneralNotifications();
-    });
-
-    // Load team invitations (frontend demo only)
-    function loadTeamInvitations() {
-      const container = document.getElementById('team-invitations');
-      const countBadge = document.getElementById('invitations-count');
-
-      const invitations = []; // Dummy empty array for frontend
-
-      countBadge.textContent = invitations.length;
-
-      if (invitations.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">No Invitations</div>
-            <h3>No pending invitations</h3>
-            <p>You don't have any team invitations at the moment.</p>
-          </div>
-        `;
-        return;
-      }
-    }
-
-    // Load general notifications (frontend demo only)
-    function loadGeneralNotifications() {
-      const container = document.getElementById('general-notifications');
-      const countBadge = document.getElementById('general-count');
-
-      countBadge.textContent = '0';
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">No Notifications</div>
-          <h3>No notifications</h3>
-          <p>You're all caught up! No new notifications.</p>
-        </div>
-      `;
-    }
-  </script>
-
+    
+    <script>
+        // CSRF token for AJAX requests
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Load notifications on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTeamInvitations();
+            loadGeneralNotifications();
+        });
+        
+        // Load team invitations
+        function loadTeamInvitations() {
+            fetch('/team-invitations/pending', {
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(invitations => {
+                const container = document.getElementById('team-invitations');
+                const countBadge = document.getElementById('invitations-count');
+                
+                countBadge.textContent = invitations.length;
+                
+                if (invitations.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                            </div>
+                            <h3>No pending invitations</h3>
+                            <p>You don't have any team invitations at the moment.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = invitations.map(inv => `
+                    <div class="notification-item invitation-item">
+                        <div class="notification-content">
+                            <div class="notification-header">
+                                <h4>Team Invitation: ${inv.teamName}</h4>
+                                <span class="notification-time">${formatDate(inv.createdAt)}</span>
+                            </div>
+                            <div class="notification-body">
+                                <p><strong>${inv.inviterName}</strong> invited you to join <strong>${inv.teamName}</strong></p>
+                                ${inv.message ? `<p class="invitation-message">"${inv.message}"</p>` : ''}
+                                <p class="invitation-hint">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                    Once you join the team, you'll see all team projects and their GitHub URLs for cloning.
+                                </p>
+                            </div>
+                            <div class="notification-actions">
+                                <button class="btn btn-success btn-sm" onclick="respondToInvitation(${inv.id}, 'accept')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20,6 9,17 4,12"></polyline>
+                                    </svg>
+                                    Accept
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="respondToInvitation(${inv.id}, 'reject')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error loading team invitations:', error);
+                document.getElementById('team-invitations').innerHTML = `
+                    <div class="error-state">
+                        <div class="error-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                                <path d="M12 9v4"></path>
+                                <path d="m12 17 .01 0"></path>
+                            </svg>
+                        </div>
+                        <h3>Error loading invitations</h3>
+                        <p>Please refresh the page to try again.</p>
+                    </div>
+                `;
+            });
+        }
+        
+        // Load general notifications
+        function loadGeneralNotifications() {
+            // For now, show a placeholder
+            const container = document.getElementById('general-notifications');
+            const countBadge = document.getElementById('general-count');
+            
+            countBadge.textContent = '0';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </div>
+                    <h3>No notifications</h3>
+                    <p>You're all caught up! No new notifications.</p>
+                </div>
+            `;
+        }
+        
+        // Respond to team invitation
+        function respondToInvitation(invitationId, action) {
+            const url = `/team-invitations/${invitationId}/${action}`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    // Reload invitations
+                    loadTeamInvitations();
+                }
+            })
+            .catch(error => {
+                console.error('Error responding to invitation:', error);
+                alert('Failed to respond to invitation. Please try again.');
+            });
+        }
+        
+        // Format date helper
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInHours = (now - date) / (1000 * 60 * 60);
+            
+            if (diffInHours < 1) {
+                return 'Just now';
+            } else if (diffInHours < 24) {
+                return `${Math.floor(diffInHours)} hours ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+    </script>
+    
     <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-hero {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .page-hero-content h1.page-title {
+            color: var(--text-primary);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--neon-cyan), var(--soft-violet));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .page-hero-content .page-description {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            margin: 0;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: #6ee7b7;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: #fca5a5;
+        }
+
         .tabs {
             display: flex;
-            border-bottom: 1px solid var(--border-color);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
             margin-bottom: 2rem;
+            overflow: hidden;
         }
         
         .tab-button {
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 2rem;
             border: none;
-            background: none;
+            background: transparent;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
             color: var(--text-secondary);
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+            font-size: 0.875rem;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .tab-button:last-child {
+            border-right: none;
         }
         
         .tab-button:hover {
             color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.1);
         }
         
         .tab-button.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
+            color: white;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
         }
         
         .tab-content {
@@ -159,121 +399,260 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 2rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
         }
         
         .section-header h2 {
             margin: 0;
             color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-header h2 svg {
+            color: var(--neon-cyan);
         }
         
         .count-badge {
-            background: var(--primary-color);
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
             color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
             font-weight: 600;
-            min-width: 1.5rem;
+            min-width: 2.5rem;
             text-align: center;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
         
         .notifications-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
         
         .notification-item {
-            background: var(--surface-color);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         }
         
         .notification-item:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-color: var(--neon-cyan);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
         }
         
         .notification-content {
-            padding: 1.5rem;
+            padding: 2rem;
         }
         
         .notification-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .notification-header h4 {
             margin: 0;
             color: var(--text-primary);
-            font-size: 1.1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
         }
         
         .notification-time {
-            color: var(--text-muted);
+            color: var(--text-secondary);
             font-size: 0.875rem;
+            background: rgba(30, 41, 59, 0.5);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
         
         .notification-body {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .notification-body p {
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 1rem 0;
             color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .notification-body strong {
+            color: var(--text-primary);
         }
         
         .invitation-message {
             font-style: italic;
-            color: var(--text-muted) !important;
-            padding: 0.5rem;
-            background: var(--background-color);
-            border-radius: 4px;
-            border-left: 3px solid var(--primary-color);
+            color: var(--text-secondary);
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            border-left: 3px solid var(--neon-cyan);
+            margin: 1rem 0;
         }
         
         .invitation-hint {
             font-size: 0.875rem;
-            color: var(--text-muted) !important;
-            padding: 0.5rem;
-            background: var(--info-bg);
-            border-radius: 4px;
+            color: var(--text-secondary);
+            padding: 1rem;
+            background: rgba(6, 182, 212, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .invitation-hint svg {
+            color: var(--info);
+            flex-shrink: 0;
+            margin-top: 0.1rem;
         }
         
         .notification-actions {
             display: flex;
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
             gap: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.875rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            border: 1px solid var(--success);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+            border: 1px solid var(--danger);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
         }
         
         .btn-sm {
             padding: 0.5rem 1rem;
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
         }
         
         .empty-state, .error-state {
             text-align: center;
-            padding: 3rem 2rem;
+            padding: 4rem 2rem;
             color: var(--text-secondary);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
         }
         
         .empty-icon, .error-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
         }
         
         .empty-state h3, .error-state h3 {
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 1rem 0;
             color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         
         .empty-state p, .error-state p {
             margin: 0;
-            color: var(--text-muted);
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .page-hero {
+                padding: 2rem 1.5rem;
+            }
+
+            .page-hero-content h1.page-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .tab-button:last-child {
+                border-bottom: none;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .notification-content {
+                padding: 1.5rem;
+            }
+
+            .notification-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+
+            .notification-actions {
+                flex-direction: column;
+            }
+
+            .notification-actions .btn {
+                justify-content: center;
+            }
         }
     </style>
     

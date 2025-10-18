@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  autotrack-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autotrack-app
+    ports:
+      - "5000:5000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      # Database configuration (using external NeonDB)
+      - DB_URL=jdbc:postgresql://ep-royal-dew-ad5ccvfm-pooler.c-2.us-east-1.aws.neon.tech:5432/neondb?sslmode=require
+      - DB_USERNAME=neondb_owner
+      - DB_PASSWORD=npg_OimpNMHWXR39
+      # GitHub OAuth configuration
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      # OAuth redirect URI will be set dynamically or use a default
+      - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI:-https://your-tunnel-url.trycloudflare.com/login/oauth2/code/github}
+      # Email configuration (optional)
+      - SPRING_MAIL_HOST=${SPRING_MAIL_HOST:-smtp.gmail.com}
+      - SPRING_MAIL_PORT=${SPRING_MAIL_PORT:-587}
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+      # Security configuration
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_here_minimum_32_characters}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your_encryption_key_32_chars_here}
+      # Application URL (will be dynamically assigned by Cloudflare)
+      - BASE_URL=${BASE_URL:-https://your-tunnel-url.trycloudflare.com}
+      # Cloudflare tunnel token
+      - TUNNEL_TOKEN=34EiSXp1nxwkIhmbPIOi4JZr3ay_3ZGiXzsZc56w3J81vwzD1
+    restart: unless-stopped
+    volumes:
+      - app-logs:/app/logs
+
+volumes:
+  app-logs:
+    driver: local

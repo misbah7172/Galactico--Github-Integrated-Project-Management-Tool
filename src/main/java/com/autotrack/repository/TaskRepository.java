@@ -31,6 +31,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Sprint-related methods
     List<Task> findBySprintOrderByUpdatedAtDesc(Sprint sprint);
     
+    List<Task> findBySprintIdOrderByUpdatedAtDesc(Long sprintId);
+    
     List<Task> findBySprintAndStatusNot(Sprint sprint, TaskStatus status);
     
     List<Task> findBySprintAndStatus(Sprint sprint, TaskStatus status);

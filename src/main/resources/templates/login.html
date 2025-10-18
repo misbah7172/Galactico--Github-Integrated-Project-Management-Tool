@@ -5,220 +5,466 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Galactico</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
-    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    
     <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --glass-bg: rgba(15, 23, 42, 0.95);
+            --success-color: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-4);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1e293b 50%, var(--midnight-blue) 100%) !important;
+            min-height: 100vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            color: var(--text-primary) !important;
+            overflow-x: hidden !important;
+            position: relative !important;
         }
-        
-        .login-container {
-            background: white;
-            padding: var(--space-12);
-            border-radius: var(--radius-2xl);
-            box-shadow: var(--shadow-xl);
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 480px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }
-        
+
+        .header {
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            padding: 1rem 0 !important;
+            position: relative !important;
+            z-index: 1000 !important;
+        }
+
+        .header-container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 0 1.5rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+
+        .logo {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            text-decoration: none !important;
+            color: var(--text-primary) !important;
+            font-weight: 700 !important;
+            font-size: 1.5rem !important;
+        }
+
+        .logo:hover {
+            color: var(--neon-cyan) !important;
+            transition: color 0.3s ease !important;
+        }
+
+        .main-content {
+            flex: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 2rem 1.5rem !important;
+            position: relative !important;
+            z-index: 1 !important;
+        }
+
+        .login-container {
+            width: 100% !important;
+            max-width: 480px !important;
+            margin: 0 auto !important;
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 24px !important;
+            padding: 3rem !important;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            text-align: center !important;
+        }
+
         .login-container::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-500), var(--primary-600), var(--primary-700));
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
         }
-        
+
         .login-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-3);
-            margin-bottom: var(--space-8);
-            color: var(--primary-600);
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 2.5rem !important;
+            color: var(--text-primary) !important;
         }
         
         .login-logo svg {
-            width: 48px;
-            height: 48px;
+            width: 60px !important;
+            height: 60px !important;
         }
         
         .login-title {
-            font-size: var(--text-3xl);
-            font-weight: 700;
-            color: var(--gray-900);
-            margin-bottom: var(--space-3);
+            font-size: 2rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.5rem !important;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-cyan) 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
         }
         
         .login-subtitle {
-            color: var(--gray-600);
-            margin-bottom: var(--space-8);
-            font-size: var(--text-lg);
+            color: var(--text-secondary) !important;
+            margin-bottom: 2.5rem !important;
+            font-size: 1rem !important;
+            line-height: 1.5 !important;
         }
         
         .github-login-button {
+            width: 100% !important;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--indigo)) !important;
+            color: white !important;
+            border: none !important;
+            padding: 1rem 1.5rem !important;
+            border-radius: 16px !important;
+            font-size: 1rem !important;
+            font-weight: 600 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 1rem !important;
+            transition: all 0.3s ease !important;
+            text-decoration: none !important;
+            margin-bottom: 1.5rem !important;
+            position: relative !important;
+            overflow: hidden !important;
+            cursor: pointer !important;
+        }
+
+        .github-login-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
             width: 100%;
-            background: linear-gradient(135deg, var(--gray-900) 0%, #1a1a1a 100%);
-            color: white;
-            border: none;
-            padding: var(--space-4) var(--space-6);
-            border-radius: var(--radius-lg);
-            font-size: var(--text-lg);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-3);
-            transition: all 0.2s ease;
-            text-decoration: none;
-            margin-bottom: var(--space-6);
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .github-login-button:hover::before {
+            left: 100%;
         }
         
         .github-login-button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            background: linear-gradient(135deg, #000 0%, var(--gray-900) 100%);
-            color: white;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 30px rgba(6, 182, 212, 0.4) !important;
+            color: white !important;
         }
         
-        .github-login-button svg {
-            width: 24px;
-            height: 24px;
+        .github-login-button i {
+            font-size: 1.25rem !important;
         }
         
         .login-features {
-            text-align: left;
-            margin-top: var(--space-8);
-            padding: var(--space-6);
-            background: var(--gray-50);
-            border-radius: var(--radius-lg);
+            text-align: left !important;
+            margin-top: 2rem !important;
+            padding: 1.5rem !important;
+            background: rgba(6, 182, 212, 0.05) !important;
+            border: 1px solid rgba(6, 182, 212, 0.15) !important;
+            border-radius: 16px !important;
         }
         
         .login-features h4 {
-            color: var(--gray-900);
-            margin-bottom: var(--space-4);
-            font-size: var(--text-lg);
-            font-weight: 600;
+            color: var(--text-primary) !important;
+            margin-bottom: 1.25rem !important;
+            font-size: 1rem !important;
+            font-weight: 600 !important;
         }
         
         .feature-list {
-            list-style: none;
-            padding: 0;
+            list-style: none !important;
+            padding: 0 !important;
         }
         
         .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            margin-bottom: var(--space-3);
-            color: var(--gray-600);
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+            color: var(--text-secondary) !important;
+            font-size: 0.9rem !important;
         }
         
         .feature-list li:last-child {
-            margin-bottom: 0;
+            margin-bottom: 0 !important;
         }
         
-        .feature-list svg {
-            width: 18px;
-            height: 18px;
-            color: var(--success-500);
-            flex-shrink: 0;
+        .feature-icon {
+            width: 20px !important;
+            height: 20px !important;
+            border-radius: 50% !important;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--indigo)) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+        }
+
+        .feature-icon i {
+            font-size: 0.75rem !important;
+            color: white !important;
         }
         
         .login-footer {
-            margin-top: var(--space-6);
-            padding-top: var(--space-6);
-            border-top: 1px solid var(--gray-200);
-            color: var(--gray-500);
-            font-size: var(--text-sm);
+            margin-top: 1.5rem !important;
+            padding-top: 1.5rem !important;
+            border-top: 1px solid var(--border-color) !important;
+            color: var(--text-secondary) !important;
+            font-size: 0.875rem !important;
         }
         
         .login-footer a {
-            color: var(--primary-600);
-            text-decoration: none;
+            color: var(--neon-cyan) !important;
+            text-decoration: none !important;
+            transition: color 0.3s ease !important;
         }
         
         .login-footer a:hover {
-            text-decoration: underline;
+            color: var(--indigo) !important;
+            text-decoration: underline !important;
+        }
+
+        .security-badge {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            margin-bottom: 1.5rem !important;
+            padding: 0.75rem 1rem !important;
+            background: rgba(34, 197, 94, 0.1) !important;
+            border: 1px solid rgba(34, 197, 94, 0.2) !important;
+            border-radius: 12px !important;
+            font-size: 0.85rem !important;
+            color: var(--success-color) !important;
+            justify-content: center !important;
+        }
+
+        @media (max-width: 640px) {
+            .login-container {
+                padding: 2rem 1.5rem !important;
+                margin: 1rem !important;
+                border-radius: 20px !important;
+            }
+
+            .login-title {
+                font-size: 1.75rem !important;
+            }
+
+            .login-logo svg {
+                width: 48px !important;
+                height: 48px !important;
+            }
+
+            .github-login-button {
+                padding: 0.875rem 1.25rem !important;
+                font-size: 0.95rem !important;
+            }
+
+            .header-container {
+                padding: 0 1rem !important;
+            }
+
+            .logo {
+                font-size: 1.25rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 1rem !important;
+            }
+
+            .login-container {
+                padding: 1.5rem 1rem !important;
+                margin: 0.5rem !important;
+            }
+
+            .login-features {
+                margin-top: 1.5rem !important;
+                padding: 1.25rem !important;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-container {
+            animation: fadeInUp 0.6s ease-out !important;
         }
     </style>
 </head>
 <body>
-    <div class="login-container fade-in">
-        <div class="login-logo">
-            <svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
-  <!-- Connecting lines -->
-  <line x1="400" y1="160" x2="200" y2="520" stroke="#2a2a2a" stroke-width="40"/>
-  <line x1="400" y1="160" x2="600" y2="520" stroke="#2a2a2a" stroke-width="40"/>
-  <line x1="230" y1="520" x2="570" y2="520" stroke="#2a2a2a" stroke-width="40"/>
-
-  <!-- Top Node -->
-  <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="#3c424b" stroke="#2a2a2a" stroke-width="8"/>
-
-  <!-- Bottom Left Node -->
-  <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac17c" stroke="#2a2a2a" stroke-width="8"/>
-
-  <!-- Bottom Right Node -->
-  <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="#3ac6f4" stroke="#2a2a2a" stroke-width="8"/>
-</svg>
-
-            <span style="font-size: var(--text-2xl); font-weight: 700;">Galactico</span>
+    <header class="header">
+        <div class="header-container">
+            <a href="/" class="logo">
+                <svg width="32" height="32" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="400" y1="160" x2="200" y2="520" stroke="currentColor" stroke-width="60"/>
+                    <line x1="400" y1="160" x2="600" y2="520" stroke="currentColor" stroke-width="60"/>
+                    <line x1="230" y1="520" x2="570" y2="520" stroke="currentColor" stroke-width="60"/>
+                </svg>
+                Galactico
+            </a>
         </div>
-        
-        <h1 class="login-title">Welcome Back</h1>
-        <p class="login-subtitle">Sign in with your GitHub account to continue</p>
-        
-        <a href="/oauth2/authorization/github" class="github-login-button">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-            Continue with GitHub
-        </a>
-        
-        <div class="login-features">
-            <h4>What you get with Galactico:</h4>
-            <ul class="feature-list">
-                <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Automatic task tracking from Git commits
-                </li>
-                <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Beautiful Kanban boards for project management
-                </li>
-                <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Team collaboration and progress insights
-                </li>
-                <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Real-time updates via GitHub webhooks
-                </li>
-            </ul>
+    </header>
+
+    <main class="main-content">
+        <div class="login-container">
+            <div class="login-logo">
+                <svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="400" y1="160" x2="200" y2="520" stroke="var(--neon-cyan)" stroke-width="40"/>
+                    <line x1="400" y1="160" x2="600" y2="520" stroke="var(--neon-cyan)" stroke-width="40"/>
+                    <line x1="230" y1="520" x2="570" y2="520" stroke="var(--neon-cyan)" stroke-width="40"/>
+                    <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="var(--indigo)" stroke="var(--neon-cyan)" stroke-width="8"/>
+                    <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="var(--soft-violet)" stroke="var(--neon-cyan)" stroke-width="8"/>
+                    <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="var(--neon-cyan)" stroke="var(--neon-cyan)" stroke-width="8"/>
+                </svg>
+            </div>
+            
+            <h1 class="login-title">Welcome to Galactico</h1>
+            <p class="login-subtitle">Automated GitHub Project Management<br>Sign in with your GitHub account to continue</p>
+            
+            <a th:href="@{/oauth2/authorization/github}" class="github-login-button">
+                <i class="fab fa-github"></i>
+                Continue with GitHub
+            </a>
+
+            <div class="security-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>Secure OAuth2 Authentication</span>
+            </div>
+            
+            <div class="login-features">
+                <h4>What you get with Galactico:</h4>
+                <ul class="feature-list">
+                    <li>
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        Automatic task tracking from Git commits
+                    </li>
+                    <li>
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        Beautiful Kanban boards for project management
+                    </li>
+                    <li>
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        Team collaboration and progress insights
+                    </li>
+                    <li>
+                        <div class="feature-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        Real-time updates via GitHub webhooks
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="login-footer">
+                <p>By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
+            </div>
         </div>
-        
-        <div class="login-footer">
-            <p>By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
-        </div>
-    </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.querySelector('.github-login-button');
+            
+            loginBtn.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+
+            const featureItems = document.querySelectorAll('.feature-list li');
+            featureItems.forEach((item, index) => {
+                item.style.animationDelay = `${0.2 + index * 0.1}s`;
+                item.style.animation = 'fadeInUp 0.6s ease-out both';
+            });
+        });
+
+        if (window.location.search.includes('error')) {
+            const errorMessage = document.createElement('div');
+            errorMessage.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(239, 68, 68, 0.1);
+                border: 1px solid rgba(239, 68, 68, 0.3);
+                color: #ef4444;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                backdrop-filter: blur(10px);
+                z-index: 10000;
+                font-size: 0.9rem;
+                max-width: 300px;
+            `;
+            errorMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Authentication failed. Please try again.';
+            document.body.appendChild(errorMessage);
+
+            setTimeout(() => {
+                errorMessage.remove();
+            }, 5000);
+        }
+    </script>
 </body>
 </html>

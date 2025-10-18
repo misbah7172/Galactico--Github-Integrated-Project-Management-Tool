@@ -1,395 +1,1092 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commit Review Dashboard - Galactico</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css">
-  <link rel="stylesheet" href="css/commit-review.css">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
- <style>
-        /* Test style to verify CSS loading */
-        .test-css-loaded {
-            content: "CSS_LOADED";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commit Review Dashboard - AutoTrack</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
         }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #f8f9fa;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%) !important;
+            color: var(--text-primary) !important;
+            min-height: 100vh !important;
+            line-height: 1.6 !important;
         }
+
+        .main-content {
+            padding: 2rem 0;
+            min-height: calc(100vh - 80px);
+        }
+
+        .page-header {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .page-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .content-wrapper {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            min-height: 600px;
+        }
+
+        .content-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .content-title {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .g-4 {
+            --bs-gutter-x: 1.5rem;
+            --bs-gutter-y: 1.5rem;
+        }
+
+        .nav-link-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .nav-text {
+            flex: 1;
+        }
+
+        header, .header {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        .container-fluid {
+            max-width: 1400px;
+            width: 100%;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        .card {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet)) !important;
+            color: white !important;
+            border-radius: 16px 16px 0 0 !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            font-weight: 600 !important;
+            padding: 1.5rem !important;
+        }
+
+        .card-body {
+            color: var(--text-primary) !important;
+            padding: 1.5rem !important;
+        }
+
+        .sidebar-card {
+            position: sticky;
+            top: 2rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            height: fit-content;
+        }
+
         .commit-card {
-            border-left: 4px solid #6c757d;
-            transition: all 0.2s ease;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         }
+
         .commit-card.pending {
-            border-left-color: #ffc107;
+            border-left: 4px solid var(--warning);
         }
+
         .commit-card.approved {
-            border-left-color: #198754;
+            border-left: 4px solid var(--success);
         }
+
         .commit-card.rejected {
-            border-left-color: #dc3545;
+            border-left: 4px solid var(--danger);
         }
+
         .commit-card.merged {
-            border-left-color: #0d6efd;
+            border-left: 4px solid var(--indigo);
         }
+
         .commit-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            border-color: var(--neon-cyan);
         }
+
         .status-badge {
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 600;
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
         }
+
         .commit-message {
-            font-family: 'Courier New', monospace;
-            background: #f8f9fa;
-            padding: 0.75rem;
-            border-radius: 0.375rem;
-            border-left: 3px solid #6c757d;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: rgba(15, 23, 42, 0.7);
+            color: var(--neon-cyan);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--indigo);
             font-size: 0.9rem;
             line-height: 1.4;
+            backdrop-filter: blur(20px);
         }
+
         .stats-card {
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet)) !important;
+            color: white !important;
+            border: 1px solid var(--indigo) !important;
+            border-radius: 16px !important;
         }
-        .nav-pills .nav-link {
-            color: #495057;
-            margin-bottom: 0.25rem;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        .nav-pills .nav-link.active {
-            background-color: #667eea;
-            color: white;
-        }
-        .nav-pills .nav-link:hover {
-            background-color: #e9ecef;
-            color: #495057;
-        }
-        .nav-pills .nav-link.active:hover {
-            background-color: #5a6fd8;
-            color: white;
-        }
-        .btn-group .btn {
-            border-radius: 6px;
-            font-weight: 500;
-        }
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .card-header {
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 12px 12px 0 0 !important;
-            border-bottom: none;
-            font-weight: 600;
-        }
+
         .table {
             margin-bottom: 0;
+            color: var(--text-primary) !important;
         }
+
+        .table th {
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+            background: rgba(15, 23, 42, 0.5) !important;
+        }
+
+        .table td {
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+
         .badge {
-            font-weight: 500;
+            font-weight: 600 !important;
+            padding: 0.375rem 0.75rem !important;
+            border-radius: 8px !important;
         }
+
+        .badge.bg-warning {
+            background: var(--warning) !important;
+            color: white !important;
+        }
+
+        .badge.bg-success {
+            background: var(--success) !important;
+            color: white !important;
+        }
+
+        .badge.bg-danger {
+            background: var(--danger) !important;
+            color: white !important;
+        }
+
+        .badge.bg-primary {
+            background: var(--indigo) !important;
+            color: white !important;
+        }
+
         .btn {
-            border-radius: 8px;
-            font-weight: 500;
+            border-radius: 8px !important;
+            font-weight: 500 !important;
+            transition: all 0.3s ease !important;
+            backdrop-filter: blur(20px) !important;
         }
-        .container-fluid {
-            max-width: 1400px;
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet)) !important;
+            border: 1px solid var(--indigo) !important;
+            color: white !important;
         }
-        .sidebar-card {
-            position: sticky;
-            top: 1rem;
+
+        .btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #047857) !important;
+            border: 1px solid var(--success) !important;
+            color: white !important;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4) !important;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+            border: 1px solid var(--danger) !important;
+            color: white !important;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4) !important;
+        }
+
+        .btn-outline-primary {
+            background: transparent !important;
+            border: 1px solid var(--indigo) !important;
+            color: var(--indigo) !important;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--indigo) !important;
+            color: white !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .btn-group-vertical .btn {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .card-title {
+            color: var(--text-primary) !important;
+            font-weight: 600 !important;
+        }
+
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+
+        .text-success {
+            color: var(--success) !important;
+        }
+
+        .text-warning {
+            color: var(--warning) !important;
+        }
+
+        .text-primary {
+            color: var(--indigo) !important;
+        }
+
+        .small {
+            font-size: 0.875rem !important;
+        }
+
+        h4, h5, h6 {
+            color: var(--text-primary) !important;
+        }
+
+        .bg-success {
+            background: linear-gradient(135deg, var(--success), #047857) !important;
+            color: white !important;
+        }
+
+        .bg-warning {
+            background: linear-gradient(135deg, var(--warning), #d97706) !important;
+            color: white !important;
+        }
+
+        .tab-content {
+            margin-top: 1rem;
+        }
+
+        .tab-pane {
+            background: transparent;
+        }
+
+        .mt-4 {
+            margin-top: 1.5rem !important;
+        }
+
+        .mb-0 {
+            margin-bottom: 0 !important;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem !important;
+        }
+
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .me-2 {
+            margin-right: 0.5rem !important;
+        }
+
+        .ms-auto {
+            margin-left: auto !important;
+        }
+
+        .d-flex {
+            display: flex !important;
+        }
+
+        .justify-content-between {
+            justify-content: space-between !important;
+        }
+
+        .align-items-center {
+            align-items: center !important;
+        }
+
+        .align-items-start {
+            align-items: flex-start !important;
+        }
+
+        .text-end {
+            text-align: right !important;
+        }
+
+        .flex-column {
+            flex-direction: column !important;
+        }
+
+        .rounded-pill {
+            border-radius: 50rem !important;
+        }
+
+        .fade {
+            transition: opacity 0.15s linear;
+        }
+
+        .fade:not(.show) {
+            opacity: 0;
+        }
+
+        .tab-content > .tab-pane {
+            display: none;
+        }
+
+        .tab-content > .active {
+            display: block;
+        }
+
+        .p-2 {
+            padding: 0.5rem !important;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            border-radius: 6px !important;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -0.75rem;
+            margin-left: -0.75rem;
+        }
+
+        .col-12 {
+            flex: 0 0 auto;
+            width: 100%;
+        }
+
+        [class*="col-"] {
+            position: relative;
+            width: 100%;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+
+        @media (min-width: 768px) {
+            .col-md-3 {
+                flex: 0 0 auto;
+                width: 25%;
+            }
+            
+            .col-md-4 {
+                flex: 0 0 auto;
+                width: 33.333333%;
+            }
+            
+            .col-md-6 {
+                flex: 0 0 auto;
+                width: 50%;
+            }
+            
+            .col-md-8 {
+                flex: 0 0 auto;
+                width: 66.666667%;
+            }
+            
+            .col-md-9 {
+                flex: 0 0 auto;
+                width: 75%;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .col-lg-2 {
+                flex: 0 0 auto;
+                width: 16.666667%;
+            }
+            
+            .col-lg-10 {
+                flex: 0 0 auto;
+                width: 83.333333%;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .col-xl-3 {
+                flex: 0 0 auto;
+                width: 25%;
+            }
+            
+            .col-xl-9 {
+                flex: 0 0 auto;
+                width: 75%;
+            }
+        }
+
+        @media (max-width: 1199.98px) {
+            .col-xl-3, .col-xl-9 {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
+            .page-header {
+                padding: 1.5rem;
+            }
+            
+            .content-wrapper {
+                padding: 1.5rem;
+            }
+            
+            .sidebar-card {
+                position: static;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .col-md-3, .col-md-4, .col-md-6, .col-md-8, .col-md-9,
+            .col-lg-2, .col-lg-4, .col-lg-8, .col-lg-10,
+            .col-xl-3, .col-xl-9 {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .container-fluid {
+                padding: 0 0.75rem;
+            }
+            
+            .commit-card {
+                margin-bottom: 1rem;
+            }
+            
+            .btn-group-vertical {
+                margin-top: 1rem;
+            }
+            
+            .sidebar-card {
+                position: static;
+                margin-bottom: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem 0;
+            }
+
+            .page-header {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .content-wrapper {
+                padding: 1rem;
+            }
+        }
+
+        .modal-content {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 12px !important;
+            color: var(--text-primary) !important;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color) !important;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet)) !important;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color) !important;
+            background: rgba(15, 23, 42, 0.5) !important;
+            border-radius: 0 0 12px 12px !important;
+        }
+
+        .modal-title {
+            color: white !important;
+        }
+
+        .form-control {
+            background: rgba(15, 23, 42, 0.7) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+            border-radius: 8px !important;
+        }
+
+        .form-control:focus {
+            background: rgba(15, 23, 42, 0.8) !important;
+            border-color: var(--neon-cyan) !important;
+            color: var(--text-primary) !important;
+            box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.25) !important;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary) !important;
+            opacity: 0.7 !important;
+        }
+
+        .form-label {
+            color: var(--text-primary) !important;
+        }
+
+        .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%) !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-illustration {
+            font-size: 4rem;
+            color: var(--indigo);
+            margin-bottom: 1.5rem;
+            opacity: 0.6;
+        }
+
+        .empty-title {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-description {
+            font-size: 1rem;
+            margin-bottom: 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (max-width: 480px) {
+            .card-body {
+                padding: 1rem !important;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.875rem !important;
+            }
+            
+            .commit-message {
+                padding: 0.75rem !important;
+                font-size: 0.8rem !important;
+            }
         }
     </style>
 </head>
 <body>
-  <!-- Header -->
-  <div id="header">
-    <!-- Replace with your static header -->
-  </div>
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
 
-  <div class="container-fluid mt-4">
-    <div class="row">
-      <!-- Sidebar -->
-      <div class="col-md-3 col-lg-2">
-        <div class="card sidebar-card">
-          <div class="card-header">
-            <h6 class="mb-0"><i class="fas fa-code-branch me-2"></i>Git Review</h6>
-          </div>
-          <div class="card-body p-2">
-            <nav class="nav nav-pills flex-column">
-              <a class="nav-link active" href="#pending" data-bs-toggle="pill">
-                <i class="fas fa-clock me-2"></i>Pending Review
-                <span class="badge bg-warning rounded-pill ms-auto">2</span>
-              </a>
-              <a class="nav-link" href="#approved" data-bs-toggle="pill">
-                <i class="fas fa-check me-2"></i>Approved
-                <span class="badge bg-success rounded-pill ms-auto">5</span>
-              </a>
-              <a class="nav-link" href="#my-commits" data-bs-toggle="pill">
-                <i class="fas fa-user me-2"></i>My Commits
-              </a>
-              <a class="nav-link" href="#statistics" data-bs-toggle="pill">
-                <i class="fas fa-chart-bar me-2"></i>Statistics
-              </a>
-            </nav>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Content -->
-      <div class="col-md-9 col-lg-10">
-        <div class="tab-content">
-          <!-- Pending Review Tab -->
-          <div class="tab-pane fade show active" id="pending">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h4><i class="fas fa-clock text-warning me-2"></i>Pending Review</h4>
-              <div class="test-commit-review small">
-                CSS Test: If you see green background, CSS is working!
-              </div>
-              <button class="btn btn-outline-primary" onclick="refreshPendingCommits()">
-                <i class="fas fa-sync-alt me-2"></i>Refresh
-              </button>
-            </div>
-
-            <div id="pending-commits-container">
-              <div class="row">
-                <div class="col-12 mb-3">
-                  <div class="card commit-card pending">
-                    <div class="card-body">
-                      <div class="row">
-                        <div class="col-md-8">
-                          <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="card-title mb-0">Developer A</h6>
-                            <span class="badge bg-warning status-badge">Pending Review</span>
-                          </div>
-                          <div class="commit-message mb-2">
-                            feat: Add authentication system
-                          </div>
-                          <div class="row text-muted small">
-                            <div class="col-md-6"><i class="fas fa-code-branch me-1"></i> feature/auth</div>
-                            <div class="col-md-6"><i class="fas fa-tasks me-1"></i> Task #101</div>
-                          </div>
-                          <div class="row text-muted small mt-1">
-                            <div class="col-md-6"><i class="fas fa-clock me-1"></i> Jan 15, 2025 14:30</div>
-                            <div class="col-md-6"><i class="fas fa-external-link-alt me-1"></i><a href="#" target="_blank">View Commit</a></div>
-                          </div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <!-- Page Header -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="page-icon">
+                            <i class="fas fa-code-branch"></i>
                         </div>
-                        <div class="col-md-4 text-end">
-                          <div class="btn-group-vertical" role="group">
-                            <button type="button" class="btn btn-success btn-sm mb-2"><i class="fas fa-check me-1"></i>Approve</button>
-                            <button type="button" class="btn btn-danger btn-sm"><i class="fas fa-times me-1"></i>Reject</button>
-                          </div>
+                    </div>
+                    <div class="col">
+                        <h2 class="page-title mb-0">Git Review Dashboard</h2>
+                        <p class="page-subtitle mb-0">Review and manage code commits from your team</p>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-outline-primary" onclick="refreshPendingCommits()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Sidebar -->
+                <div class="col-xl-3 col-lg-4">
+                    <div class="card sidebar-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-list-alt me-2"></i>Review Categories</h6>
                         </div>
-                      </div>
+                        <div class="card-body p-3">
+                            <nav class="nav nav-pills flex-column">
+                                <a class="nav-link active" href="#pending" data-bs-toggle="pill">
+                                    <div class="nav-link-content">
+                                        <i class="fas fa-clock me-2"></i>
+                                        <span class="nav-text">Pending Review</span>
+                                        <span class="badge bg-warning rounded-pill ms-auto" th:text="${pendingCount}">0</span>
+                                    </div>
+                                </a>
+                                <a class="nav-link" href="#approved" data-bs-toggle="pill">
+                                    <div class="nav-link-content">
+                                        <i class="fas fa-check me-2"></i>
+                                        <span class="nav-text">Approved</span>
+                                        <span class="badge bg-success rounded-pill ms-auto" th:text="${approvedCount}">0</span>
+                                    </div>
+                                </a>
+                                <a class="nav-link" href="#my-commits" data-bs-toggle="pill">
+                                    <div class="nav-link-content">
+                                        <i class="fas fa-user me-2"></i>
+                                        <span class="nav-text">My Commits</span>
+                                    </div>
+                                </a>
+                                <a class="nav-link" href="#statistics" data-bs-toggle="pill">
+                                    <div class="nav-link-content">
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                        <span class="nav-text">Statistics</span>
+                                    </div>
+                                </a>
+                            </nav>
+                        </div>
                     </div>
-                  </div>
                 </div>
 
-                <!-- Another pending commit example -->
-                <div class="col-12 mb-3">
-                  <div class="card commit-card pending">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h6 class="card-title mb-0">Developer B</h6>
-                        <span class="badge bg-warning status-badge">Pending Review</span>
-                      </div>
-                      <div class="commit-message mb-2">fix: Correct navbar bug</div>
-                      <div class="row text-muted small">
-                        <div class="col-md-6"><i class="fas fa-code-branch me-1"></i> bugfix/navbar</div>
-                        <div class="col-md-6"><i class="fas fa-tasks me-1"></i> Task #102</div>
-                      </div>
-                      <div class="row text-muted small mt-1">
-                        <div class="col-md-6"><i class="fas fa-clock me-1"></i> Jan 18, 2025 09:45</div>
-                        <div class="col-md-6"><i class="fas fa-external-link-alt me-1"></i><a href="#" target="_blank">View Commit</a></div>
-                      </div>
+                <!-- Main Content Area -->
+                <div class="col-xl-9 col-lg-8">
+                    <div class="content-wrapper">
+                        <div class="tab-content">
+                            <!-- Pending Review Tab -->
+                            <div class="tab-pane fade show active" id="pending">
+                                <div class="content-header mb-4">
+                                    <h4 class="content-title"><i class="fas fa-clock text-warning me-2"></i>Pending Review</h4>
+                                </div>
+
+                                <div id="pending-commits-container">
+                            <!-- Empty state when no commits -->
+                            <div class="empty-state" th:if="${#lists.isEmpty(pendingCommits)}">
+                                <div class="empty-illustration">
+                                    <i class="fas fa-code-branch"></i>
+                                </div>
+                                <h5 class="empty-title">No Pending Reviews</h5>
+                                <p class="empty-description">All commits have been reviewed. Great work!</p>
+                            </div>
+
+                            <!-- Commit list -->
+                            <div class="row" th:each="commit : ${pendingCommits}">
+                                <div class="col-12 mb-3">
+                                    <div class="card commit-card pending">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h6 class="card-title mb-0" th:text="${commit.username}">Developer</h6>
+                                                        <span class="badge bg-warning status-badge">Pending Review</span>
+                                                    </div>
+                                                    <div class="commit-message mb-2" th:text="${commit.commitMessage}">
+                                                        feat: Add new feature implementation
+                                                    </div>
+                                                    <div class="row text-muted small">
+                                                        <div class="col-md-6">
+                                                            <i class="fas fa-code-branch me-1"></i>
+                                                            <span th:text="${commit.branch}">feature/new-feature</span>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <i class="fas fa-tasks me-1"></i>
+                                                            <span th:text="${commit.taskId ?: 'No task'}">Task #123</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row text-muted small mt-1">
+                                                        <div class="col-md-6">
+                                                            <i class="fas fa-clock me-1"></i>
+                                                            <span th:text="${#temporals.format(commit.commitTime, 'MMM dd, yyyy HH:mm')}">Dec 15, 2024 14:30</span>
+                                                        </div>
+                                                        <div class="col-md-6" th:if="${commit.commitUrl}">
+                                                            <i class="fas fa-external-link-alt me-1"></i>
+                                                            <a th:href="${commit.commitUrl}" target="_blank" class="text-decoration-none">View Commit</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 text-end">
+                                                    <div class="btn-group-vertical" role="group" th:if="${userRole == 'TEAM_LEAD' or userRole == 'ADMIN'}">
+                                                        <button type="button" class="btn btn-success btn-sm mb-2" 
+                                                                th:onclick="'approveCommit(' + ${commit.id} + ')'">
+                                                            <i class="fas fa-check me-1"></i>Approve
+                                                        </button>
+                                                        <button type="button" class="btn btn-danger btn-sm" 
+                                                                th:onclick="'rejectCommit(' + ${commit.id} + ')'">
+                                                            <i class="fas fa-times me-1"></i>Reject
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
-                </div>
 
-              </div>
-            </div>
-          </div>
+                    <!-- Approved Commits Tab -->
+                    <div class="tab-pane fade" id="approved">
+                        <div class="content-header mb-4">
+                            <h4 class="content-title"><i class="fas fa-check text-success me-2"></i>Approved Commits</h4>
+                        </div>
 
-          <!-- Approved Commits Tab -->
-          <div class="tab-pane fade" id="approved">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h4><i class="fas fa-check text-success me-2"></i>Approved Commits</h4>
-            </div>
-
-            <div class="row">
-              <div class="col-12 mb-3">
-                <div class="card commit-card approved">
-                  <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                      <h6 class="card-title mb-0">Developer C</h6>
-                      <span class="badge bg-success status-badge">Approved</span>
+                        <div class="row" th:each="commit : ${approvedCommits}">
+                            <div class="col-12 mb-3">
+                                <div class="card commit-card approved">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0" th:text="${commit.username}">Developer</h6>
+                                            <span class="badge bg-success status-badge">Approved</span>
+                                        </div>
+                                        <div class="commit-message mb-2" th:text="${commit.commitMessage}">
+                                            feat: Add new feature implementation
+                                        </div>
+                                        <div class="row text-muted small">
+                                            <div class="col-md-4">
+                                                <i class="fas fa-code-branch me-1"></i>
+                                                <span th:text="${commit.originalBranch}">feature/new-feature</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <i class="fas fa-user-check me-1"></i>
+                                                <span th:text="${commit.approvedBy.nickname}">Team Lead</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                <span th:text="${#temporals.format(commit.mergeTime, 'MMM dd, yyyy')}">Dec 15, 2024</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="commit-message mb-2">refactor: Optimize API calls</div>
-                    <div class="row text-muted small">
-                      <div class="col-md-4"><i class="fas fa-code-branch me-1"></i> feature/api</div>
-                      <div class="col-md-4"><i class="fas fa-user-check me-1"></i> Lead</div>
-                      <div class="col-md-4"><i class="fas fa-calendar me-1"></i> Jan 10, 2025</div>
+
+                    <!-- My Commits Tab -->
+                    <div class="tab-pane fade" id="my-commits">
+                        <div class="content-header mb-4">
+                            <h4 class="content-title"><i class="fas fa-user text-primary me-2"></i>My Commits</h4>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card stats-card text-center">
+                                    <div class="card-body">
+                                        <h3 class="mb-0" th:text="${userStats.totalCount}">0</h3>
+                                        <p class="mb-0">Total Commits</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white text-center">
+                                    <div class="card-body">
+                                        <h3 class="mb-0" th:text="${userStats.approvedCount}">0</h3>
+                                        <p class="mb-0">Approved</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-warning text-white text-center">
+                                    <div class="card-body">
+                                        <h3 class="mb-0" th:text="${userStats.pendingCount}">0</h3>
+                                        <p class="mb-0">Pending</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User's commits would be listed here -->
+                        <div class="row" th:each="commit : ${userCommits}">
+                            <div class="col-12 mb-3">
+                                <div class="card commit-card" th:classappend="${commit.status == 'PENDING_REVIEW' ? 'pending' : commit.status == 'APPROVED' ? 'approved' : 'rejected'}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0" th:text="${commit.commitMessage}">Commit message</h6>
+                                            <span class="badge status-badge" 
+                                                  th:classappend="${commit.status == 'PENDING_REVIEW' ? 'bg-warning' : commit.status == 'APPROVED' ? 'bg-success' : 'bg-danger'}"
+                                                  th:text="${commit.status}">Status</span>
+                                        </div>
+                                        <div class="row text-muted small">
+                                            <div class="col-md-6">
+                                                <i class="fas fa-code-branch me-1"></i>
+                                                <span th:text="${commit.branch}">branch</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <i class="fas fa-clock me-1"></i>
+                                                <span th:text="${#temporals.format(commit.commitTime, 'MMM dd, yyyy HH:mm')}">date</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- My Commits Tab -->
-          <div class="tab-pane fade" id="my-commits">
-            <h4><i class="fas fa-user text-primary me-2"></i>My Commits</h4>
-
-            <div class="row mb-4">
-              <div class="col-md-4">
-                <div class="card stats-card text-center">
-                  <div class="card-body">
-                    <h3 class="mb-0">12</h3>
-                    <p class="mb-0">Total Commits</p>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="card bg-success text-white text-center">
-                  <div class="card-body">
-                    <h3 class="mb-0">7</h3>
-                    <p class="mb-0">Approved</p>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="card bg-warning text-white text-center">
-                  <div class="card-body">
-                    <h3 class="mb-0">3</h3>
-                    <p class="mb-0">Pending</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-12 mb-3">
-                <div class="card commit-card pending">
-                  <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                      <h6 class="card-title mb-0">Improve dashboard UI</h6>
-                      <span class="badge bg-warning status-badge">PENDING_REVIEW</span>
+                    <!-- Statistics Tab -->
+                    <div class="tab-pane fade" id="statistics">
+                        <div class="content-header mb-4">
+                            <h4 class="content-title"><i class="fas fa-chart-bar text-info me-2"></i>Commit Statistics</h4>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Recent Activity (Last 30 Days)</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="commitChart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Top Contributors</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Contributors list would go here -->
+                                        <p class="text-muted">Statistics will be available once more commits are processed.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="row text-muted small">
-                      <div class="col-md-6"><i class="fas fa-code-branch me-1"></i> ui/dashboard</div>
-                      <div class="col-md-6"><i class="fas fa-clock me-1"></i> Jan 12, 2025 11:20</div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-              </div>
             </div>
-          </div>
-
-          <!-- Statistics Tab -->
-          <div class="tab-pane fade" id="statistics">
-            <h4><i class="fas fa-chart-bar text-info me-2"></i>Commit Statistics</h4>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-header"><h6 class="mb-0">Recent Activity (Last 30 Days)</h6></div>
-                  <div class="card-body">
-                    <canvas id="commitChart" width="400" height="200"></canvas>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-header"><h6 class="mb-0">Top Contributors</h6></div>
-                  <div class="card-body">
-                    <ul>
-                      <li>Dev A - 8 commits</li>
-                      <li>Dev B - 5 commits</li>
-                      <li>Dev C - 4 commits</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-      </div> <!-- End Main -->
     </div>
-  </div>
 
-  <!-- Rejection Modal -->
-  <div class="modal fade" id="rejectionModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Reject Commit</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="rejectionForm">
-            <input type="hidden" id="rejectCommitId">
-            <div class="mb-3">
-              <label for="rejectionReason" class="form-label">Reason for rejection:</label>
-              <textarea class="form-control" id="rejectionReason" rows="3" required
-                        placeholder="Please provide a clear reason for rejecting this commit..."></textarea>
+    <!-- Rejection Modal -->
+    <div class="modal fade" id="rejectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Commit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rejectionForm">
+                        <input type="hidden" id="rejectCommitId" name="commitId">
+                        <div class="mb-3">
+                            <label for="rejectionReason" class="form-label">Reason for rejection:</label>
+                            <textarea class="form-control" id="rejectionReason" name="rejectionReason" rows="3" required
+                                      placeholder="Please provide a clear reason for rejecting this commit..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="submitRejection()">Reject Commit</button>
+                </div>
             </div>
-          </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger">Reject Commit</button>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    function refreshPendingCommits() {
-      alert("Refreshing pending commits... (frontend only demo)");
-    }
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let currentUser = /*[[${currentUser}]]*/ '';
+        
+        function approveCommit(commitId) {
+            if (confirm('Are you sure you want to approve this commit?')) {
+                fetch('/api/commits/review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        commitId: commitId,
+                        status: 'APPROVED',
+                        reviewedBy: currentUser
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Error approving commit');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error approving commit');
+                });
+            }
+        }
+        
+        function rejectCommit(commitId) {
+            document.getElementById('rejectCommitId').value = commitId;
+            new bootstrap.Modal(document.getElementById('rejectionModal')).show();
+        }
+        
+        function submitRejection() {
+            const commitId = document.getElementById('rejectCommitId').value;
+            const reason = document.getElementById('rejectionReason').value;
+            
+            if (!reason.trim()) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+            
+            fetch('/api/commits/review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    commitId: parseInt(commitId),
+                    status: 'REJECTED',
+                    reviewedBy: currentUser,
+                    rejectionReason: reason
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error rejecting commit');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error rejecting commit');
+            });
+        }
+        
+        function refreshPendingCommits() {
+            location.reload();
+        }
+        
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tabs
+            const tabLinks = document.querySelectorAll('.nav-link[data-bs-toggle="pill"]');
+            const tabPanes = document.querySelectorAll('.tab-pane');
 
-    document.addEventListener("DOMContentLoaded", function () {
-      const ctx = document.getElementById("commitChart");
-      if (ctx) {
-        new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-            datasets: [{
-              label: "Commits",
-              data: [5, 8, 4, 7],
-              backgroundColor: "rgba(54, 162, 235, 0.7)"
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
-          }
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links and panes
+                    tabLinks.forEach(l => l.classList.remove('active'));
+                    tabPanes.forEach(p => {
+                        p.classList.remove('show', 'active');
+                    });
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    // Show corresponding tab pane
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetPane = document.getElementById(targetId);
+                    if (targetPane) {
+                        targetPane.classList.add('show', 'active');
+                    }
+                });
+            });
         });
-      }
-    });
-  </script>
+    </script>
 
-  <!-- Footer -->
-  <div id="footer">
-    <!-- Replace with your static footer -->
-  </div>
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

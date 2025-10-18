@@ -1,13 +1,9 @@
 package com.autotrack.service;
 
-import com.autotrack.model.Commit;
-import com.autotrack.model.Project;
-import com.autotrack.model.Task;
-import com.autotrack.repository.CommitRepository;
-import com.autotrack.repository.ProjectRepository;
+import com.autotrack.model.*;
+import com.autotrack.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,19 +27,30 @@ public class WebhookService {
     private final CommitParserService commitParserService;
     private final TaskService taskService;
     private final GitHubCommitAnalysisService commitAnalysisService;
+    private final FileChangeMetricsRepository fileChangeMetricsRepository;
+    private final ContributorStatsRepository contributorStatsRepository;
+    private final BackgroundDataProcessingService backgroundDataProcessingService;
+    private final AnalyticsCacheService analyticsCacheService;
     private final ObjectMapper objectMapper;
 
-    @Autowired
     public WebhookService(ProjectRepository projectRepository,
                          CommitRepository commitRepository,
                          CommitParserService commitParserService,
                          TaskService taskService,
-                         GitHubCommitAnalysisService commitAnalysisService) {
+                         GitHubCommitAnalysisService commitAnalysisService,
+                         FileChangeMetricsRepository fileChangeMetricsRepository,
+                         ContributorStatsRepository contributorStatsRepository,
+                         BackgroundDataProcessingService backgroundDataProcessingService,
+                         AnalyticsCacheService analyticsCacheService) {
         this.projectRepository = projectRepository;
         this.commitRepository = commitRepository;
         this.commitParserService = commitParserService;
         this.taskService = taskService;
         this.commitAnalysisService = commitAnalysisService;
+        this.fileChangeMetricsRepository = fileChangeMetricsRepository;
+        this.contributorStatsRepository = contributorStatsRepository;
+        this.backgroundDataProcessingService = backgroundDataProcessingService;
+        this.analyticsCacheService = analyticsCacheService;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -127,6 +134,7 @@ public class WebhookService {
         // Parse commit message
         Optional<CommitParserService.CommitInfo> commitInfoOpt = commitParserService.parseCommitMessage(message);
         
+        Commit commit;
         if (commitInfoOpt.isPresent()) {
             CommitParserService.CommitInfo commitInfo = commitInfoOpt.get();
             
@@ -134,7 +142,7 @@ public class WebhookService {
             Task task = taskService.findOrCreateTaskFromCommit(project, commitInfo);
             
             // Create commit record with code statistics
-            Commit commit = Commit.builder()
+            commit = Commit.builder()
                     .sha(sha)
                     .message(message)
                     .authorName(authorName)
@@ -148,11 +156,9 @@ public class WebhookService {
                     .task(task)
                     .project(project)
                     .build();
-            
-            commitRepository.save(commit);
         } else {
             // Still save the commit with code statistics, but without task association
-            Commit commit = Commit.builder()
+            commit = Commit.builder()
                     .sha(sha)
                     .message(message)
                     .authorName(authorName)
@@ -165,8 +171,127 @@ public class WebhookService {
                     .filesChanged(stats.getFilesChanged())
                     .project(project)
                     .build();
+        }
+        
+        // Save the commit
+        commit = commitRepository.save(commit);
+        
+        // Process file-level changes for detailed analytics
+        processFileChanges(commitNode, commit, project);
+        
+        // Update contributor statistics
+        updateContributorStats(commit, stats, project);
+        
+        // Trigger background processing for advanced analytics
+        backgroundDataProcessingService.processCommitAsync(commit);
+        
+        // Invalidate cache for this project to ensure fresh data
+        analyticsCacheService.invalidateProjectCache(project);
+    }
+    
+    /**
+     * Process individual file changes from the commit payload
+     */
+    private void processFileChanges(JsonNode commitNode, Commit commit, Project project) {
+        try {
+            // Process added files
+            JsonNode added = commitNode.get("added");
+            if (added != null && added.isArray()) {
+                for (JsonNode fileNode : added) {
+                    String fileName = fileNode.asText();
+                    createFileChangeMetric(commit, project, fileName, FileChangeMetrics.ChangeType.ADDED, 0, 0, 0);
+                }
+            }
             
-            commitRepository.save(commit);
+            // Process removed files
+            JsonNode removed = commitNode.get("removed");
+            if (removed != null && removed.isArray()) {
+                for (JsonNode fileNode : removed) {
+                    String fileName = fileNode.asText();
+                    createFileChangeMetric(commit, project, fileName, FileChangeMetrics.ChangeType.DELETED, 0, 0, 0);
+                }
+            }
+            
+            // Process modified files
+            JsonNode modified = commitNode.get("modified");
+            if (modified != null && modified.isArray()) {
+                for (JsonNode fileNode : modified) {
+                    String fileName = fileNode.asText();
+                    // For webhook payload, we don't have detailed line counts per file
+                    // We'll estimate based on total commit changes divided by number of files
+                    int estimatedLinesAdded = commit.getFilesChanged() > 0 ? commit.getLinesAdded() / commit.getFilesChanged() : 0;
+                    int estimatedLinesModified = commit.getFilesChanged() > 0 ? commit.getLinesModified() / commit.getFilesChanged() : 0;
+                    int estimatedLinesDeleted = commit.getFilesChanged() > 0 ? commit.getLinesDeleted() / commit.getFilesChanged() : 0;
+                    
+                    createFileChangeMetric(commit, project, fileName, FileChangeMetrics.ChangeType.MODIFIED, 
+                                         estimatedLinesAdded, estimatedLinesModified, estimatedLinesDeleted);
+                }
+            }
+            
+        } catch (Exception e) {
+            // Log error but don't fail the commit processing
+            System.err.println("Error processing file changes for commit " + commit.getSha() + ": " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Create a FileChangeMetrics record
+     */
+    private void createFileChangeMetric(Commit commit, Project project, String fileName, 
+                                      FileChangeMetrics.ChangeType changeType, int linesAdded, int linesModified, int linesDeleted) {
+        FileChangeMetrics fileMetrics = new FileChangeMetrics();
+        fileMetrics.setCommit(commit);
+        fileMetrics.setProject(project);
+        fileMetrics.setFileName(fileName);
+        fileMetrics.setFilePath(fileName);
+        fileMetrics.setChangeType(changeType);
+        fileMetrics.setLinesAdded(linesAdded);
+        fileMetrics.setLinesModified(linesModified);
+        fileMetrics.setLinesDeleted(linesDeleted);
+        
+        fileChangeMetricsRepository.save(fileMetrics);
+    }
+    
+    /**
+     * Update contributor statistics
+     */
+    private void updateContributorStats(Commit commit, GitHubCommitAnalysisService.CommitStats stats, Project project) {
+        try {
+            String email = commit.getAuthorEmail();
+            
+            // Find existing contributor stats or create new one
+            Optional<ContributorStats> existingStatsOpt = contributorStatsRepository.findByProjectAndContributorEmail(project, email);
+            
+            ContributorStats contributorStats;
+            if (existingStatsOpt.isPresent()) {
+                contributorStats = existingStatsOpt.get();
+                
+                // Update existing stats
+                contributorStats.setTotalCommits(contributorStats.getTotalCommits() + 1);
+                contributorStats.setTotalLinesAdded(contributorStats.getTotalLinesAdded() + stats.getLinesAdded());
+                contributorStats.setTotalLinesModified(contributorStats.getTotalLinesModified() + stats.getLinesModified());
+                contributorStats.setTotalLinesDeleted(contributorStats.getTotalLinesDeleted() + stats.getLinesDeleted());
+                contributorStats.setTotalFilesChanged(contributorStats.getTotalFilesChanged() + stats.getFilesChanged());
+                contributorStats.setLastCommitDate(commit.getCommittedAt());
+                
+            } else {
+                // Create new contributor stats
+                contributorStats = new ContributorStats(project, commit.getAuthorName(), email);
+                contributorStats.setTotalCommits(1);
+                contributorStats.setTotalLinesAdded(stats.getLinesAdded());
+                contributorStats.setTotalLinesModified(stats.getLinesModified());
+                contributorStats.setTotalLinesDeleted(stats.getLinesDeleted());
+                contributorStats.setTotalFilesChanged(stats.getFilesChanged());
+                contributorStats.setFirstCommitDate(commit.getCommittedAt());
+                contributorStats.setLastCommitDate(commit.getCommittedAt());
+            }
+            
+            // Calculate and update metrics (this will trigger the @PreUpdate/@PrePersist method)
+            contributorStatsRepository.save(contributorStats);
+            
+        } catch (Exception e) {
+            // Log error but don't fail the commit processing
+            System.err.println("Error updating contributor stats for commit " + commit.getSha() + ": " + e.getMessage());
         }
     }
 

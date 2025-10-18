@@ -31,6 +31,21 @@ public class CommitReviewService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CommitReviewRepository commitReviewRepository;
+
+    @Autowired
+    private CommitRepository commitRepository;
+
+    @Autowired
+    private ContributorStatsRepository contributorStatsRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private UserService userService;
+
     /**
      * Process incoming commit from VS Code extension webhook.
      */
@@ -200,5 +215,191 @@ public class CommitReviewService {
         public long getPendingCount() { return pendingCount; }
         public long getRejectedCount() { return rejectedCount; }
         public long getTotalCount() { return approvedCount + pendingCount + rejectedCount; }
+    }
+
+    // New methods for CommitReview entity integration
+
+    @Transactional
+    public CommitReview submitCommitForReview(Long commitId, Long reviewerId, String comments) {
+        Commit commit = commitRepository.findById(commitId)
+                .orElseThrow(() -> new RuntimeException("Commit not found with id: " + commitId));
+        
+        User reviewer = userService.getUserById(reviewerId);
+        if (reviewer == null) {
+            throw new RuntimeException("Reviewer not found with id: " + reviewerId);
+        }
+
+        // Check if commit is already under review
+        Optional<CommitReview> existingReview = commitReviewRepository.findByCommit(commit);
+        if (existingReview.isPresent()) {
+            throw new RuntimeException("Commit is already under review");
+        }
+
+        // Create commit review
+        CommitReview commitReview = new CommitReview();
+        commitReview.setCommit(commit);
+        commitReview.setReviewer(reviewer);
+        commitReview.setProject(commit.getProject());
+        commitReview.setStatus(CommitReview.ReviewStatus.PENDING);
+        commitReview.setComments(comments);
+
+        commitReview = commitReviewRepository.save(commitReview);
+
+        // Update contributor stats - increment pending commits
+        updateContributorStatsForReview(commit, CommitReview.ReviewStatus.PENDING, null);
+
+        // Send notification to reviewer
+        createReviewNotification(commitReview, "New commit submitted for review");
+
+        return commitReview;
+    }
+
+    @Transactional
+    public CommitReview approveCommitReview(Long reviewId, String approvalComments) {
+        CommitReview commitReview = commitReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
+
+        if (commitReview.getStatus() != CommitReview.ReviewStatus.PENDING) {
+            throw new RuntimeException("Review is not in pending status");
+        }
+
+        // Update review status
+        CommitReview.ReviewStatus previousStatus = commitReview.getStatus();
+        commitReview.setStatus(CommitReview.ReviewStatus.APPROVED);
+        commitReview.setComments(appendComments(commitReview.getComments(), approvalComments));
+
+        commitReview = commitReviewRepository.save(commitReview);
+
+        // Update contributor stats - move from pending to approved
+        updateContributorStatsForReview(commitReview.getCommit(), CommitReview.ReviewStatus.APPROVED, previousStatus);
+
+        // Send notification to commit author
+        createReviewNotification(commitReview, "Your commit has been approved");
+
+        return commitReview;
+    }
+
+    @Transactional
+    public CommitReview rejectCommitReview(Long reviewId, String rejectionComments) {
+        CommitReview commitReview = commitReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
+
+        if (commitReview.getStatus() != CommitReview.ReviewStatus.PENDING) {
+            throw new RuntimeException("Review is not in pending status");
+        }
+
+        // Update review status
+        CommitReview.ReviewStatus previousStatus = commitReview.getStatus();
+        commitReview.setStatus(CommitReview.ReviewStatus.REJECTED);
+        commitReview.setComments(appendComments(commitReview.getComments(), rejectionComments));
+
+        commitReview = commitReviewRepository.save(commitReview);
+
+        // Update contributor stats - move from pending to rejected
+        updateContributorStatsForReview(commitReview.getCommit(), CommitReview.ReviewStatus.REJECTED, previousStatus);
+
+        // Send notification to commit author
+        createReviewNotification(commitReview, "Your commit has been rejected");
+
+        return commitReview;
+    }
+
+    public List<CommitReview> getCommitReviewsForReviewer(Long reviewerId) {
+        User reviewer = userService.getUserById(reviewerId);
+        if (reviewer == null) {
+            throw new RuntimeException("Reviewer not found with id: " + reviewerId);
+        }
+
+        return commitReviewRepository.findByReviewerAndStatus(reviewer, CommitReview.ReviewStatus.PENDING);
+    }
+
+    public List<CommitReview> getPendingCommitReviewsForProject(Long projectId) {
+        return commitReviewRepository.findByProjectIdAndStatus(projectId, CommitReview.ReviewStatus.PENDING);
+    }
+
+    public List<CommitReview> getCommitReviewsByAuthor(String authorEmail, Long projectId) {
+        return commitReviewRepository.findByCommitAuthorEmailAndProjectId(authorEmail, projectId);
+    }
+
+    public List<CommitReview> getCommitReviewHistoryForProject(Long projectId, LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate != null && endDate != null) {
+            return commitReviewRepository.findByProjectIdAndReviewDateBetween(projectId, startDate, endDate);
+        } else {
+            return commitReviewRepository.findByProjectIdOrderByReviewDateDesc(projectId);
+        }
+    }
+
+    private void updateContributorStatsForReview(Commit commit, CommitReview.ReviewStatus newStatus, CommitReview.ReviewStatus previousStatus) {
+        try {
+            Optional<ContributorStats> statsOpt = contributorStatsRepository.findByProjectAndContributorEmail(
+                    commit.getProject(), commit.getAuthorEmail());
+
+            if (statsOpt.isPresent()) {
+                ContributorStats stats = statsOpt.get();
+
+                // Update counts based on status changes
+                if (previousStatus == CommitReview.ReviewStatus.PENDING) {
+                    stats.setPendingCommits(Math.max(0, stats.getPendingCommits() - 1));
+                } else if (previousStatus == CommitReview.ReviewStatus.APPROVED) {
+                    stats.setApprovedCommits(Math.max(0, stats.getApprovedCommits() - 1));
+                } else if (previousStatus == CommitReview.ReviewStatus.REJECTED) {
+                    stats.setRejectedCommits(Math.max(0, stats.getRejectedCommits() - 1));
+                }
+
+                if (newStatus == CommitReview.ReviewStatus.PENDING) {
+                    stats.setPendingCommits(stats.getPendingCommits() + 1);
+                } else if (newStatus == CommitReview.ReviewStatus.APPROVED) {
+                    stats.setApprovedCommits(stats.getApprovedCommits() + 1);
+                } else if (newStatus == CommitReview.ReviewStatus.REJECTED) {
+                    stats.setRejectedCommits(stats.getRejectedCommits() + 1);
+                }
+
+                contributorStatsRepository.save(stats);
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating contributor stats for review: " + e.getMessage());
+        }
+    }
+
+    private void createReviewNotification(CommitReview commitReview, String message) {
+        try {
+            String notificationMessage = String.format("%s - Commit: %s", message, 
+                commitReview.getCommit().getMessage().substring(0, Math.min(50, commitReview.getCommit().getMessage().length())));
+            
+            // Send appropriate notification based on review status
+            if (commitReview.getStatus() == CommitReview.ReviewStatus.APPROVED) {
+                notificationService.notifyCommitApproved(commitReview);
+            } else if (commitReview.getStatus() == CommitReview.ReviewStatus.REJECTED) {
+                notificationService.notifyCommitRejected(commitReview);
+            } else {
+                // For pending or initial review submission
+                notificationService.createCommitReviewNotification(commitReview, notificationMessage);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error creating review notification: " + e.getMessage());
+        }
+    }
+
+    private String appendComments(String existingComments, String newComments) {
+        if (existingComments == null || existingComments.trim().isEmpty()) {
+            return newComments;
+        }
+        if (newComments == null || newComments.trim().isEmpty()) {
+            return existingComments;
+        }
+        return existingComments + "\n\n---\n\n" + newComments;
+    }
+
+    public Optional<CommitReview> getCommitReviewByCommit(Commit commit) {
+        return commitReviewRepository.findByCommit(commit);
+    }
+
+    public long getPendingCommitReviewCount(Long reviewerId) {
+        User reviewer = userService.getUserById(reviewerId);
+        if (reviewer == null) {
+            return 0;
+        }
+        return commitReviewRepository.countByReviewerAndStatus(reviewer, CommitReview.ReviewStatus.PENDING);
     }
 }

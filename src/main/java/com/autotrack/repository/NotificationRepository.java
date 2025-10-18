@@ -18,4 +18,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByUserAndReadFalseOrderByCreatedAtDesc(User user);
     
     long countByUserAndReadFalse(User user);
+    
+    List<Notification> findByTeamInvitation(com.autotrack.model.TeamInvitation teamInvitation);
 }
