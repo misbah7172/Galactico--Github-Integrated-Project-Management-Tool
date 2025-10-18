@@ -1,21 +1,263 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Project - AutoTrack</title>
-    <link rel="stylesheet" href="/css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: #6ee7b7;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: #fca5a5;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .page-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .form-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--indigo), var(--soft-violet));
+        }
+
+        .form-card {
+            padding: 2rem;
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-subtitle {
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--indigo);
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        .form-help {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .form-error {
+            color: var(--danger);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 41, 59, 1);
+            border-color: var(--indigo);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .form-card {
+                padding: 1.5rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <!-- Include your static header here -->
-    </div>
+    <div th:replace="~{fragments/header :: header}"></div>
     
     <div class="container">
         <!-- Alert Messages -->
-        <div class="alert alert-success" style="display:none;">Success message here</div>
-        <div class="alert alert-danger" style="display:none;">Error message here</div>
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
         
         <!-- Page Header -->
         <div class="page-header">
@@ -35,38 +277,37 @@
                     <p class="form-subtitle">Set up your GitHub repository for automated task tracking</p>
                 </div>
                 
-                <form action="/projects/create" method="post" class="form">
+                <form th:action="@{/projects/create}" th:object="${projectDTO}" method="post" class="form">
                     <!-- Project Name -->
                     <div class="form-group">
                         <label for="name" class="form-label">Project Name *</label>
-                        <input type="text" id="name" name="name" class="form-control" 
+                        <input type="text" id="name" th:field="*{name}" class="form-control" 
                                placeholder="Enter a descriptive project name" required>
-                        <div class="form-error">Error for project name</div>
+                        <div class="form-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
                     </div>
                     
                     <!-- GitHub Repository URL -->
                     <div class="form-group">
                         <label for="gitHubRepoUrl" class="form-label">GitHub Repository URL *</label>
-                        <input type="url" id="gitHubRepoUrl" name="gitHubRepoUrl" class="form-control" 
+                        <input type="url" id="gitHubRepoUrl" th:field="*{gitHubRepoUrl}" class="form-control" 
                                placeholder="https://github.com/username/repository" required>
                         <p class="form-help">
                             Enter the full URL to your GitHub repository. This will be used to track commits and manage tasks.
                         </p>
-                        <div class="form-error">Error for repository URL</div>
+                        <div class="form-error" th:if="${#fields.hasErrors('gitHubRepoUrl')}" th:errors="*{gitHubRepoUrl}"></div>
                     </div>
                     
                     <!-- Team Assignment (Optional) -->
                     <div class="form-group">
                         <label for="teamId" class="form-label">Assign to Team (Optional)</label>
-                        <select id="teamId" name="teamId" class="form-control">
+                        <select id="teamId" th:field="*{teamId}" class="form-control">
                             <option value="">-- No team (assign later) --</option>
-                            <option value="1">Team Alpha</option>
-                            <option value="2">Team Beta</option>
+                            <option th:each="team : ${teams}" th:value="${team.id}" th:text="${team.name}">Team Name</option>
                         </select>
                         <p class="form-help">
                             You can assign this project to a team now or later. Team members will be able to commit to this project.
                         </p>
-                        <div class="form-error">Error for team selection</div>
+                        <div class="form-error" th:if="${#fields.hasErrors('teamId')}" th:errors="*{teamId}"></div>
                     </div>
                     
                     <!-- Form Actions -->
@@ -77,16 +318,14 @@
                             </svg>
                             Create Project
                         </button>
-                        <a href="/projects" class="btn btn-secondary">Cancel</a>
+                        <a th:href="@{/projects}" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
     
-    <!-- Footer -->
-    <div class="footer">
-        <!-- Include your static footer here -->
-    </div>
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
