@@ -4,12 +4,52 @@
     <meta charset="UTF-8">
 </head>
 <body>
-    <!-- Footer Fragment -->
-    <footer th:fragment="footer" class="footer">
-        <div class="container">
-            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2023</span> Galactico. All rights reserved.</p>
-            <p>Automated task tracking through GitHub commit messages with Kanban-style project management.</p>
+    <footer th:fragment="footer" class="galactico-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <svg width="24" height="24" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="400" y1="160" x2="200" y2="520" stroke="#06b6d4" stroke-width="60"/>
+                    <line x1="400" y1="160" x2="600" y2="520" stroke="#06b6d4" stroke-width="60"/>
+                    <line x1="230" y1="520" x2="570" y2="520" stroke="#06b6d4" stroke-width="60"/>
+                    <rect x="320" y="80" width="160" height="160" rx="40" ry="40" fill="#6366f1"/>
+                    <rect x="120" y="480" width="160" height="160" rx="40" ry="40" fill="#8b5cf6"/>
+                    <rect x="520" y="480" width="160" height="160" rx="40" ry="40" fill="#06b6d4"/>
+                </svg>
+                <span>Galactico</span>
+            </div>
+            <p class="footer-text">&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2024</span> Galactico &middot; GitHub-integrated project management with intelligent commit tracking</p>
         </div>
     </footer>
+    <style>
+        .galactico-footer {
+            background: #0c1322;
+            border-top: 1px solid rgba(99, 102, 241, 0.12);
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        .footer-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .footer-text {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin: 0;
+            text-align: center;
+        }
+    </style>
 </body>
 </html>

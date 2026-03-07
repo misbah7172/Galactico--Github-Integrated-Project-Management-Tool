@@ -284,7 +284,7 @@ export class AutoTrackCommitService {
     private async getAssignee(): Promise<string | undefined> {
         return await vscode.window.showInputBox({
             prompt: 'Assignee username (optional)',
-            placeHolder: 'misbah7172'
+            placeHolder: 'e.g., github-username'
         });
     }
 

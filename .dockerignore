@@ -1,0 +1,11 @@
+target/
+Extension/node_modules/
+Extension/out/
+.git/
+.env
+*.md
+*.bat
+*.sh
+.vscode/
+*.iml
+.idea/

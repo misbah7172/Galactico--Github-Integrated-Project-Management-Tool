@@ -13,6 +13,7 @@ env:
   NODE_VERSION: '18'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  DOCKERHUB_IMAGE: galactico
 
 jobs:
   # Test and Build Backend
@@ -294,7 +295,7 @@ jobs:
         if [ -n "$SONAR_TOKEN" ]; then
           echo "Running SonarCloud analysis..."
           mvn clean verify sonar:sonar \
-            -Dsonar.projectKey=misbah7172_AutoTrack-Smart-GitHub-Integrated-Project-Management-Tool \
+            -Dsonar.projectKey=misbah7172_Galactico--Github-Integrated-Project-Management-Tool \
             -Dsonar.organization=misbah7172 \
             -Dsonar.host.url=https://sonarcloud.io
         else
@@ -346,7 +347,7 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=raw,value=latest,enable={{is_default_branch}}
 
-    - name: Build and push Docker image
+    - name: Build and push to GitHub Container Registry
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -354,6 +355,36 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Log in to Docker Hub
+      if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract Docker Hub metadata
+      if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+      id: meta-dockerhub
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Push to Docker Hub
+      if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64
+        push: true
+        tags: ${{ steps.meta-dockerhub.outputs.tags }}
+        labels: ${{ steps.meta-dockerhub.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -373,33 +404,83 @@ jobs:
         # Example: SSH into server and pull latest image
         # ssh user@dev-server "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop && docker-compose up -d"
 
-  # Deploy to Staging
+  # Deploy to Staging (Azure App Service - Korea Central)
   deploy-staging:
-    name: Deploy to Staging
+    name: Deploy to Staging (Azure)
     runs-on: ubuntu-latest
     needs: [docker-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: staging
 
     steps:
-    - name: Deploy to staging server
-      run: |
-        echo "Deploying to staging environment..."
-        # Add your deployment scripts here
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  # Deploy to Production
+    - name: Configure App Service settings
+      uses: azure/appservice-settings@v1
+      with:
+        app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+        app-settings-json: |
+          [
+            { "name": "GITHUB_CLIENT_ID",     "value": "${{ secrets.GITHUB_CLIENT_ID }}",     "slotSetting": false },
+            { "name": "GITHUB_CLIENT_SECRET", "value": "${{ secrets.GITHUB_CLIENT_SECRET }}", "slotSetting": false },
+            { "name": "JWT_SECRET",           "value": "${{ secrets.JWT_SECRET }}",           "slotSetting": false },
+            { "name": "ENCRYPTION_KEY",       "value": "${{ secrets.ENCRYPTION_KEY }}",       "slotSetting": false },
+            { "name": "DB_URL",               "value": "${{ secrets.DB_URL }}",               "slotSetting": false },
+            { "name": "DB_USERNAME",          "value": "${{ secrets.DB_USERNAME }}",          "slotSetting": false },
+            { "name": "DB_PASSWORD",          "value": "${{ secrets.DB_PASSWORD }}",          "slotSetting": false },
+            { "name": "BASE_URL",             "value": "${{ secrets.BASE_URL }}",             "slotSetting": false },
+            { "name": "OAUTH_REDIRECT_URI",   "value": "${{ secrets.OAUTH_REDIRECT_URI }}",   "slotSetting": false },
+            { "name": "WEBSITES_PORT",        "value": "5000",                               "slotSetting": false },
+            { "name": "SPRING_PROFILES_ACTIVE", "value": "postgresql",                      "slotSetting": false }
+          ]
+
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
+
+  # Deploy to Production (Azure App Service - Korea Central)
   deploy-production:
-    name: Deploy to Production
+    name: Deploy to Production (Azure)
     runs-on: ubuntu-latest
     needs: [docker-build]
     if: github.event_name == 'release'
     environment: production
 
     steps:
-    - name: Deploy to production server
-      run: |
-        echo "Deploying to production environment..."
-        # Add your deployment scripts here
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Configure App Service settings
+      uses: azure/appservice-settings@v1
+      with:
+        app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+        app-settings-json: |
+          [
+            { "name": "GITHUB_CLIENT_ID",     "value": "${{ secrets.GITHUB_CLIENT_ID }}",     "slotSetting": false },
+            { "name": "GITHUB_CLIENT_SECRET", "value": "${{ secrets.GITHUB_CLIENT_SECRET }}", "slotSetting": false },
+            { "name": "JWT_SECRET",           "value": "${{ secrets.JWT_SECRET }}",           "slotSetting": false },
+            { "name": "ENCRYPTION_KEY",       "value": "${{ secrets.ENCRYPTION_KEY }}",       "slotSetting": false },
+            { "name": "DB_URL",               "value": "${{ secrets.DB_URL }}",               "slotSetting": false },
+            { "name": "DB_USERNAME",          "value": "${{ secrets.DB_USERNAME }}",          "slotSetting": false },
+            { "name": "DB_PASSWORD",          "value": "${{ secrets.DB_PASSWORD }}",          "slotSetting": false },
+            { "name": "BASE_URL",             "value": "${{ secrets.BASE_URL }}",             "slotSetting": false },
+            { "name": "OAUTH_REDIRECT_URI",   "value": "${{ secrets.OAUTH_REDIRECT_URI }}",   "slotSetting": false },
+            { "name": "WEBSITES_PORT",        "value": "5000",                               "slotSetting": false },
+            { "name": "SPRING_PROFILES_ACTIVE", "value": "postgresql",                      "slotSetting": false }
+          ]
+
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
 
   # Publish VS Code Extension
   publish-extension:

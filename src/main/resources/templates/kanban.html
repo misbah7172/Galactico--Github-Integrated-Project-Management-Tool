@@ -434,18 +434,13 @@
             const taskCard = button.closest('.task-card');
             const taskId = taskCard.getAttribute('data-task-id');
             
-            // Show confirmation dialog
             if (confirm('Are you sure you want to decline this commit?\n\nThis will move the task back to "To Do" and notify the team member that their work needs to be improved.')) {
-                
-                // Show loading state
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Declining...';
+                button.textContent = 'Declining...';
                 button.disabled = true;
                 
-                // Get CSRF token
                 const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
                 const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
                 
-                // Send decline request
                 fetch(`/api/tasks/${taskId}/decline`, {
                     method: 'POST',
                     headers: {
@@ -458,56 +453,45 @@
                 })
                 .then(response => {
                     if (response.ok) {
-                        // Show success message
-                        showNotification('Task declined successfully. The team member has been notified.', 'success');
-                        
-                        // Refresh the page to update the board
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
+                        showKanbanNotification('Task declined successfully.', 'success');
+                        setTimeout(() => location.reload(), 1500);
                     } else {
                         throw new Error('Failed to decline task');
                     }
                 })
                 .catch(error => {
                     console.error('Error declining task:', error);
-                    showNotification('Failed to decline task. Please try again.', 'error');
-                    
-                    // Reset button state
-                    button.innerHTML = '<i class="fas fa-times-circle"></i> Decline Commit';
+                    showKanbanNotification('Failed to decline task. Please try again.', 'error');
+                    button.textContent = 'Decline Commit';
                     button.disabled = false;
                 });
             }
         }
         
-        // Function to show notifications
-        function showNotification(message, type) {
+        // Safe notification function (no innerHTML with user data)
+        function showKanbanNotification(message, type) {
             const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                <span>${message}</span>
-            `;
-            
-            // Add to page
+            notification.className = 'kanban-notification ' + type;
+            const icon = document.createElement('i');
+            icon.className = 'fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle');
+            const span = document.createElement('span');
+            span.textContent = message;
+            notification.appendChild(icon);
+            notification.appendChild(span);
             document.body.appendChild(notification);
-            
-            // Show notification
             setTimeout(() => notification.classList.add('show'), 100);
-            
-            // Hide notification after 3 seconds
             setTimeout(() => {
                 notification.classList.remove('show');
-                setTimeout(() => document.body.removeChild(notification), 300);
+                setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
         
-        // Auto-refresh every 30 seconds to show new commits
+        // Soft auto-refresh every 60 seconds (non-disruptive)
         setInterval(() => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'visible' && !document.querySelector('.dragging') && !document.querySelector('.side-panel.open')) {
                 location.reload();
             }
-        }, 30000);
+        }, 60000);
     </script>
     
     <style>
@@ -530,11 +514,7 @@
             --info: #06b6d4;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif !important;
@@ -544,11 +524,9 @@
             line-height: 1.6 !important;
         }
 
-        .container-fluid {
-            max-width: 100%;
-            padding: 0 1rem;
-        }
+        .container-fluid { max-width: 100%; padding: 0 1rem; }
 
+        /* ── Project Header ── */
         .project-header {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
@@ -556,1041 +534,335 @@
             border-radius: 16px;
             padding: 2rem;
             margin: 2rem 0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,.3);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1.5rem;
         }
-
-        .project-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
+        .project-title { display: flex; align-items: center; gap: 1rem; }
         .project-icon {
-            width: 48px;
-            height: 48px;
+            width: 48px; height: 48px;
             background: linear-gradient(135deg, var(--neon-cyan), var(--soft-violet));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.5rem;
         }
-
-        .project-title h1 {
-            color: var(--text-primary);
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .project-stats {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .stat-item i {
-            color: var(--neon-cyan);
-        }
-
-        .project-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
+        .project-title h1 { color: var(--text-primary); font-size: 2rem; font-weight: 700; margin: 0; }
+        .project-stats { display: flex; gap: 2rem; align-items: center; }
+        .stat-item { display: flex; align-items: center; gap: .5rem; color: var(--text-secondary); font-size: .875rem; }
+        .stat-item i { color: var(--neon-cyan); }
+        .project-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
         .action-btn {
-            padding: 0.75rem 1.5rem;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            backdrop-filter: blur(20px);
+            padding: .75rem 1.5rem; background: rgba(30,41,59,.5); border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all .3s ease;
+            display: flex; align-items: center; gap: .5rem; font-size: .875rem; backdrop-filter: blur(20px);
         }
-
-        .action-btn:hover {
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--text-primary);
-            border-color: var(--neon-cyan);
-            transform: translateY(-2px);
-        }
-
+        .action-btn:hover { background: rgba(99,102,241,.1); color: var(--text-primary); border-color: var(--neon-cyan); transform: translateY(-2px); }
         .real-time-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid var(--success);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            color: var(--success);
-            font-size: 0.875rem;
-            font-weight: 500;
+            display: flex; align-items: center; gap: .5rem;
+            background: rgba(16,185,129,.1); border: 1px solid var(--success);
+            padding: .5rem 1rem; border-radius: 20px; color: var(--success); font-size: .875rem; font-weight: 500;
         }
 
+        /* ── Sprint Section ── */
         .sprint-info-section {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            margin: 0 0 2rem 0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 2rem; margin: 0 0 2rem 0; box-shadow: 0 8px 32px rgba(0,0,0,.3);
         }
+        .sprint-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 2rem; }
+        .sprint-details h3 { color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin-bottom: .5rem; }
+        .sprint-details p { color: var(--text-secondary); margin: 0; }
+        .sprint-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+        .sprint-progress { display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+        .progress-item { flex: 1; display: flex; align-items: center; gap: 1rem; }
+        .progress-bar { width: 100%; height: 8px; background: rgba(30,41,59,.5); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--neon-cyan), var(--soft-violet)); transition: width .5s ease; }
+        .progress-stats { display: flex; gap: 2rem; margin-top: 1rem; }
+        .stat { text-align: center; }
+        .stat-number { display: block; font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .stat-label { font-size: .75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
 
-        .sprint-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-            gap: 2rem;
-        }
-
-        .sprint-details h3 {
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .sprint-details p {
-            color: var(--text-secondary);
-            margin: 0;
-        }
-
-        .sprint-actions {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .kanban-board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-bottom: 2rem;
-            min-height: 70vh;
-        }
-
+        /* ── Kanban Board ── */
+        .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 2rem; min-height: 70vh; }
         .kanban-column {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            min-height: 600px;
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.3); display: flex; flex-direction: column; min-height: 600px;
         }
+        .column-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .column-header-content { display: flex; justify-content: space-between; align-items: center; }
+        .column-title { display: flex; align-items: center; gap: .75rem; }
+        .column-title h3 { color: var(--text-primary); font-size: 1.125rem; font-weight: 600; margin: 0; }
+        .column-icon { font-size: .875rem; }
+        .todo .column-icon { color: var(--info); }
+        .in-progress .column-icon { color: var(--warning); }
+        .done .column-icon { color: var(--success); }
+        .column-meta { display: flex; align-items: center; gap: .25rem; color: var(--text-secondary); font-size: .875rem; }
+        .task-count { font-weight: 600; color: var(--text-primary); }
 
-        .column-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .column-header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .column-title {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .column-title h3 {
-            color: var(--text-primary);
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .column-icon {
-            font-size: 0.875rem;
-        }
-
-        .todo .column-icon {
-            color: var(--info);
-        }
-
-        .progress .column-icon {
-            color: var(--warning);
-        }
-
-        .done .column-icon {
-            color: var(--success);
-        }
-
-        .column-meta {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .task-count {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .task-list {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
+        /* ── Task Cards ── */
+        .task-list { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
         .task-card {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            cursor: grab;
+            background: rgba(15,23,42,.7); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem;
+            transition: all .3s ease; cursor: grab; position: relative;
         }
-
-        .task-card:hover {
-            border-color: var(--neon-cyan);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        .task-card.dragging {
-            transform: rotate(5deg);
-            cursor: grabbing;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-            gap: 1rem;
-        }
-
+        .task-card:hover { border-color: var(--neon-cyan); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+        .task-card.dragging { transform: rotate(5deg); cursor: grabbing; box-shadow: 0 12px 32px rgba(0,0,0,.5); }
+        .task-card.declined { border-left: 4px solid var(--danger); background: rgba(239,68,68,.1); }
+        .task-card.declined .task-title::after { content: " (Declined)"; color: var(--danger); font-size: .8em; font-weight: normal; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; gap: 1rem; }
+        .card-left, .card-right { display: flex; align-items: center; gap: .5rem; }
+        .task-type-icon { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: .7rem; }
+        .task-type-icon.task { background: rgba(99,102,241,.2); color: var(--indigo); }
+        .task-id { font-size: .75rem; color: var(--text-secondary); font-weight: 600; }
         .task-feature-code {
             background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
+            color: white; padding: .25rem .75rem; border-radius: 6px; font-size: .75rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: .025em;
         }
-
-        .task-title {
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 0.5rem 0;
-            line-height: 1.4;
-        }
-
-        .task-assignee {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .assignee-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 2px solid var(--border-color);
-        }
-
+        .task-title { color: var(--text-primary); font-size: 1rem; font-weight: 600; margin: .5rem 0; line-height: 1.4; }
+        .card-content { margin-bottom: .75rem; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .card-footer-left { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+        .card-footer-right { display: flex; align-items: center; gap: .5rem; }
+        .tag { background: rgba(99,102,241,.15); color: var(--neon-cyan); padding: .15rem .5rem; border-radius: 4px; font-size: .7rem; }
+        .assignee-avatar { width: 24px; height: 24px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-color); }
+        .assignee-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .avatar-placeholder {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+            width: 24px; height: 24px; border-radius: 50%;
             background: linear-gradient(45deg, var(--indigo), var(--soft-violet));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 600;
+            display: flex; align-items: center; justify-content: center; color: white; font-size: .75rem; font-weight: 600;
         }
-
-        .assignee-name {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 3rem 1rem;
-            color: var(--text-secondary);
-            min-height: 300px;
-        }
-
-        .empty-illustration {
-            font-size: 3rem;
-            color: var(--text-secondary);
-            opacity: 0.5;
-            margin-bottom: 1rem;
-        }
-
-        .empty-message {
-            font-size: 1.125rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .empty-submessage {
-            margin-bottom: 1rem;
-        }
-
-        .commit-example {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        }
-
-        .commit-example code {
-            color: var(--neon-cyan);
-            font-size: 0.875rem;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            font-size: 0.875rem;
-            backdrop-filter: blur(20px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
-            color: white;
-            border: 1px solid var(--indigo);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(100, 116, 139, 0.2);
-            color: var(--text-primary);
-            border: 1px solid var(--text-secondary);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(100, 116, 139, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success), #059669);
-            color: white;
-            border: 1px solid var(--success);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--neon-cyan), var(--soft-violet));
-            transition: width 0.5s ease;
-        }
-
-        .progress-stats {
-            display: flex;
-            gap: 2rem;
-            margin-top: 1rem;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-number {
-            display: block;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .leader-actions {
-            border-top: 1px solid var(--border-color);
-            padding-top: 1rem;
-            margin-top: 1rem;
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .decline-action {
-            background: rgba(239, 68, 68, 0.1) !important;
-            color: var(--danger) !important;
-            border: 1px solid var(--danger) !important;
-        }
-
-        .decline-action:hover {
-            background: rgba(239, 68, 68, 0.2) !important;
-            transform: translateY(-2px);
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-            z-index: 1000;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            min-width: 300px;
-            color: var(--text-primary);
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-        
-        .notification.success {
-            border-left-color: #10b981;
-            color: #065f46;
-        }
-        
-        .notification.success i {
-            color: #10b981;
-        }
-        
-        .notification.error {
-            border-left-color: #dc2626;
-            color: #7f1d1d;
-        }
-        
-        .notification.error i {
-            color: #dc2626;
-        }
-        
-        /* Enhanced task card for declined status */
-        .task-card.declined {
-            border-left: 4px solid #dc2626;
-            background: #fef2f2;
-        }
-        
-        .task-card.declined .task-title::after {
-            content: " (Declined)";
-            color: #dc2626;
-            font-size: 0.8em;
-            font-weight: normal;
-        }
-          /* Team leader badge */
-        .team-leader-badge {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-        }
-        
-        /* Decline badge */
+        .priority-indicator { width: 8px; height: 8px; border-radius: 50%; }
+        .priority-indicator.medium { background: var(--warning); }
+        .priority-indicator.high { background: var(--danger); }
+        .priority-indicator.low { background: var(--success); }
+        .completion-badge { color: var(--success); font-size: .875rem; }
+        .completion-date { display: flex; align-items: center; gap: .25rem; font-size: .75rem; color: var(--text-secondary); }
+        .progress-container { margin-top: .5rem; }
+        .progress-label { display: flex; align-items: center; gap: .5rem; font-size: .75rem; color: var(--warning); }
+        .status-badge { padding: .15rem .5rem; border-radius: 10px; font-size: .7rem; font-weight: 600; }
+        .status-badge.backlog { background: rgba(99,102,241,.15); color: var(--indigo); }
         .decline-badge {
-            background: #fef2f2;
-            color: #dc2626;
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-            border: 1px solid #fecaca;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
+            background: rgba(239,68,68,.1); color: var(--danger); padding: .25rem .75rem; border-radius: 12px;
+            font-size: .7rem; font-weight: 600; margin-left: .5rem; border: 1px solid var(--danger);
+            display: inline-flex; align-items: center; gap: .25rem;
         }
-        
-        .decline-badge i {
-            font-size: 0.65rem;
+        .team-leader-badge {
+            background: linear-gradient(135deg, var(--warning), #d97706); color: white;
+            padding: .25rem .75rem; border-radius: 12px; font-size: .75rem; font-weight: 600; margin-left: .5rem;
         }
 
-        /* Sprint Info Section Styles */
-        .sprint-info-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        /* ── Quick Actions Menu ── */
+        .quick-actions-menu { display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 1rem; }
+        .quick-action {
+            display: flex; align-items: center; gap: .5rem; width: 100%; padding: .5rem .75rem;
+            background: transparent; border: none; color: var(--text-secondary); cursor: pointer;
+            font-size: .8rem; border-radius: 6px; transition: all .2s ease;
         }
+        .quick-action:hover { background: rgba(99,102,241,.1); color: var(--text-primary); }
+        .card-action-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: .25rem; }
+        .card-action-btn:hover { color: var(--text-primary); }
+        .leader-actions { border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; display: flex; gap: .5rem; }
+        .decline-action { background: rgba(239,68,68,.1) !important; color: var(--danger) !important; border: 1px solid var(--danger) !important; }
+        .decline-action:hover { background: rgba(239,68,68,.2) !important; }
 
-        .sprint-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
+        /* ── Empty States ── */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 1rem; color: var(--text-secondary); min-height: 300px; }
+        .empty-illustration { font-size: 3rem; color: var(--text-secondary); opacity: .5; margin-bottom: 1rem; }
+        .empty-message { font-size: 1.125rem; font-weight: 500; color: var(--text-primary); margin-bottom: .5rem; }
+        .empty-submessage { margin-bottom: 1rem; }
+        .commit-example { background: rgba(30,41,59,.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; font-family: 'Monaco','Menlo','Ubuntu Mono',monospace; }
+        .commit-example code { color: var(--neon-cyan); font-size: .875rem; }
 
-        .sprint-details h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.5rem;
-        }
+        /* ── Real-time Info ── */
+        .realtime-info { background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .info-section h4 { color: var(--text-primary); margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+        .info-section p { color: var(--text-secondary); font-size: .875rem; }
+        .commit-examples { display: flex; flex-direction: column; gap: .75rem; }
+        .example { background: rgba(15,23,42,.5); border: 1px solid var(--border-color); border-radius: 8px; padding: .75rem 1rem; }
+        .example strong { color: var(--text-primary); font-size: .8rem; display: block; margin-bottom: .25rem; }
+        .example code { color: var(--neon-cyan); font-size: .8rem; }
 
-        .sprint-details p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 1rem;
-        }
-
-        .sprint-actions {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .sprint-progress {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .progress-item {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: white;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-stats {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .progress-stats .stat {
-            text-align: center;
-        }
-
-        .progress-stats .stat-number {
-            display: block;
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 0.25rem;
-        }
-
-        .progress-stats .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        /* Side Panel Styles */
-        .side-panel {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 400px;
-            height: 100vh;
-            background: white;
-            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
-            transition: right 0.3s ease;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .side-panel.open {
-            right: 0;
-        }
-
-        .side-panel-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f9fafb;
-        }
-
-        .side-panel-content {
-            padding: 1.5rem;
-        }
-
-        .close-panel {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #6b7280;
-        }
-
-        .close-panel:hover {
-            color: #374151;
-        }
-
-        /* Overlay */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Backlog Item Styles */
-        .backlog-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 0.75rem;
-            background: white;
-            cursor: grab;
-        }
-
-        .backlog-item:hover {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .backlog-item-content {
-            flex: 1;
-        }
-
-        .backlog-item-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .backlog-item-meta {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-
-        .priority-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .priority-high { background: #fee2e2; color: #dc2626; }
-        .priority-medium { background: #fef3c7; color: #d97706; }
-        .priority-low { background: #d1fae5; color: #059669; }
-
+        /* ── Buttons ── */
         .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
-            text-decoration: none;
+            padding: .75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600;
+            text-decoration: none; display: inline-flex; align-items: center; gap: .5rem;
+            transition: all .3s ease; cursor: pointer; font-size: .875rem;
         }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+        .btn-sm { padding: .5rem .75rem; font-size: .8rem; }
+        .btn-primary { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); color: white; border: 1px solid var(--indigo); }
+        .btn-primary:hover { box-shadow: 0 8px 24px rgba(99,102,241,.4); }
+        .btn-secondary { background: rgba(100,116,139,.2); color: var(--text-primary); border: 1px solid rgba(148,163,184,.3); }
+        .btn-secondary:hover { background: rgba(100,116,139,.4); }
+        .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: white; border: 1px solid var(--success); }
+        .btn-success:hover { box-shadow: 0 8px 24px rgba(16,185,129,.4); }
+        .btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-outline:hover { background: rgba(30,41,59,.5); border-color: var(--neon-cyan); }
 
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #4b5563;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification-success {
-            border-left: 4px solid var(--success);
-        }
-
-        .notification-error {
-            border-left: 4px solid var(--danger);
-        }
-
-        .notification-info {
-            border-left: 4px solid var(--info);
-        }
-
-        .notification-warning {
-            border-left: 4px solid var(--warning);
-        }
-
-        .notification-icon {
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .notification-success .notification-icon {
-            color: var(--success);
-        }
-
-        .notification-error .notification-icon {
-            color: var(--danger);
-        }
-
-        .notification-info .notification-icon {
-            color: var(--info);
-        }
-
-        .notification-warning .notification-icon {
-            color: var(--warning);
-        }
-
-        .notification-close {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-            margin-left: auto;
-            flex-shrink: 0;
-            transition: color 0.3s ease;
-        }
-
-        .notification-close:hover {
-            color: var(--text-primary);
-        }
-
-        .btn-work {
-            background: linear-gradient(135deg, var(--indigo), #1d4ed8);
-            color: white;
-            border: 1px solid var(--indigo);
-        }
-
-        .btn-done {
-            background: linear-gradient(135deg, var(--success), #047857);
-            color: white;
-            border: 1px solid var(--success);
-        }
-
-        .btn-test {
-            background: linear-gradient(135deg, var(--warning), #d97706);
-            color: white;
-            border: 1px solid var(--warning);
-        }
-
-        .btn-review {
-            background: linear-gradient(135deg, var(--soft-violet), #7c3aed);
-            color: white;
-            border: 1px solid var(--soft-violet);
-        }
-
-        .btn-work:hover,
-        .btn-done:hover,
-        .btn-test:hover,
-        .btn-review:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-outline:hover {
-            background: rgba(30, 41, 59, 0.5);
-            border-color: var(--neon-cyan);
-            transform: translateY(-2px);
-        }
-
+        /* ── Forms (dark theme) ── */
         .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            background: rgba(15, 23, 42, 0.7);
-            color: var(--text-primary);
-            backdrop-filter: blur(20px);
-            transition: all 0.3s ease;
+            width: 100%; padding: .75rem; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: .875rem; background: rgba(15,23,42,.7); color: var(--text-primary);
+            backdrop-filter: blur(20px); transition: all .3s ease;
         }
+        .form-control::placeholder { color: var(--text-secondary); opacity: .7; }
+        .form-control:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+        .form-label { display: block; margin-bottom: .5rem; font-size: .875rem; font-weight: 500; color: var(--text-primary); }
 
-        .form-control::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.7;
+        /* ── Badge ── */
+        .badge { display: inline-block; padding: .375rem .75rem; font-size: .75rem; font-weight: 600; line-height: 1; border-radius: 6px; text-transform: uppercase; letter-spacing: .025em; }
+        .badge-primary { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); color: white; }
+        .priority-badge { padding: .25rem .5rem; border-radius: 12px; font-size: .7rem; font-weight: 600; }
+        .priority-low { background: rgba(16,185,129,.15); color: var(--success); }
+        .priority-medium { background: rgba(245,158,11,.15); color: var(--warning); }
+        .priority-high { background: rgba(239,68,68,.15); color: var(--danger); }
+        .priority-critical { background: rgba(239,68,68,.25); color: #f87171; }
+
+        /* ── Notifications ── */
+        .kanban-notification {
+            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 1rem 1.5rem; box-shadow: 0 12px 32px rgba(0,0,0,.4);
+            transform: translateX(400px); transition: transform .3s ease;
+            display: flex; align-items: center; gap: .75rem; min-width: 300px; color: var(--text-primary);
         }
+        .kanban-notification.show { transform: translateX(0); }
+        .kanban-notification.success { border-left: 4px solid var(--success); }
+        .kanban-notification.success i { color: var(--success); }
+        .kanban-notification.error { border-left: 4px solid var(--danger); }
+        .kanban-notification.error i { color: var(--danger); }
 
-        .form-control:focus {
-            outline: none;
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            line-height: 1;
-            border-radius: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .badge-primary {
-            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
-            color: white;
-        }
-
-        .team-leader-badge {
-            background: linear-gradient(135deg, var(--warning), #d97706);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-        }
-
-        .decline-badge {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-            border: 1px solid var(--danger);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .task-card.declined {
-            border-left: 4px solid var(--danger);
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        .task-card.declined .task-title::after {
-            content: " (Declined)";
-            color: var(--danger);
-            font-size: 0.8em;
-            font-weight: normal;
-        }
-
+        /* ── Side Panels (dark theme) ── */
         .side-panel {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 400px;
-            height: 100vh;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid var(--border-color);
-            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
-            transition: right 0.3s ease;
-            z-index: 1000;
-            overflow-y: auto;
+            position: fixed; top: 0; right: -420px; width: 420px; height: 100vh;
+            background: var(--slate-900); border-left: 1px solid var(--border-color);
+            box-shadow: -4px 0 24px rgba(0,0,0,.5); transition: right .3s ease;
+            z-index: 1000; overflow-y: auto; color: var(--text-primary);
         }
-
-        .side-panel.open {
-            right: 0;
-        }
-
+        .side-panel.open { right: 0; }
         .side-panel-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 23, 42, 0.5);
+            padding: 1.5rem; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15,23,42,.5); position: sticky; top: 0; z-index: 1;
         }
+        .side-panel-header h3 { color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: .5rem; }
+        .side-panel-content { padding: 1.5rem; }
+        .close-panel { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); transition: color .3s ease; }
+        .close-panel:hover { color: var(--text-primary); }
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); z-index: 999; opacity: 0; visibility: hidden; transition: all .3s ease; }
+        .overlay.show { opacity: 1; visibility: visible; }
 
-        .side-panel-content {
-            padding: 1.5rem;
+        /* Side panel internal overrides for dark theme */
+        .side-panel .backlog-stats,
+        .side-panel .sprint-info-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        .side-panel .backlog-stats span,
+        .side-panel .stats-row span { color: var(--text-secondary); }
+        .side-panel .stats-row span:last-child { color: var(--text-primary); font-weight: 600; }
+        .side-panel .sprint-info-card h4 { color: var(--text-primary); }
+        .side-panel .sprint-info-card p { color: var(--text-secondary); }
+        .side-panel .metric-card { background: rgba(15,23,42,.5); border: 1px solid var(--border-color); border-radius: 6px; padding: .75rem; text-align: center; }
+        .side-panel .metric-card div:first-child { color: var(--neon-cyan); }
+        .side-panel .metric-card div:last-child { color: var(--text-secondary); font-size: .75rem; }
+        .side-panel select,
+        .side-panel input[type="text"],
+        .side-panel input[type="date"],
+        .side-panel textarea {
+            background: rgba(15,23,42,.7); color: var(--text-primary); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: .75rem; font-size: .95rem; width: 100%;
         }
+        .side-panel select:focus,
+        .side-panel input:focus,
+        .side-panel textarea:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+        .side-panel label { color: var(--text-primary); }
 
-        .close-panel {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: color 0.3s ease;
+        /* Backlog items in side panel */
+        .backlog-item {
+            background: rgba(15,23,42,.5); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 1rem; margin-bottom: .75rem; cursor: grab; transition: all .2s ease;
         }
+        .backlog-item:hover { border-color: var(--neon-cyan); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+        .backlog-item.selected { border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(99,102,241,.2); }
+        .backlog-item-title { font-weight: 600; color: var(--text-primary); }
 
-        .close-panel:hover {
-            color: var(--text-primary);
+        /* Timeline in side panel */
+        .side-panel .timeline-filters { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+        .side-panel .timeline-filters h4 { color: var(--text-primary); }
+        .side-panel .timeline-filters label { color: var(--text-primary); }
+        .side-panel .timeline-stats { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: white; }
+        .timeline-item { display: flex; margin-bottom: 1.5rem; position: relative; padding-left: 3rem; }
+        .timeline-item::before { content: ''; position: absolute; left: 1rem; top: 0; bottom: -1.5rem; width: 2px; background: var(--border-color); }
+        .timeline-item:last-child::before { bottom: 1rem; }
+        .timeline-avatar {
+            position: absolute; left: .25rem; top: .25rem; width: 1.5rem; height: 1.5rem;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: .7rem; font-weight: 600; z-index: 1;
         }
+        .timeline-content { flex: 1; background: var(--card-bg); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); }
+        .timeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+        .timeline-user { font-weight: 600; color: var(--text-primary); }
+        .timeline-time { font-size: .8rem; color: var(--text-secondary); }
+        .timeline-action { color: var(--text-secondary); font-size: .9rem; }
+        .timeline-action-icon { display: inline-block; width: 1.2rem; height: 1.2rem; border-radius: 3px; text-align: center; line-height: 1.2rem; font-size: .7rem; margin-right: .5rem; color: white; }
+        .timeline-empty { text-align: center; color: var(--text-secondary); padding: 3rem 1rem; }
+        .timeline-empty h3 { color: var(--text-primary); }
 
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+        /* ── Modals (dark theme) ── */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.6); display: flex; justify-content: center; align-items: center;
+            z-index: 9999; backdrop-filter: blur(4px);
         }
-
-        .overlay.show {
-            opacity: 1;
-            visibility: visible;
+        .modal-content.jira-modal {
+            background: var(--slate-800); border: 1px solid var(--border-color);
+            border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.5);
+            max-height: 90vh; overflow-y: auto; color: var(--text-primary);
         }
+        .modal-content .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.5rem; border-bottom: 1px solid var(--border-color);
+        }
+        .modal-content .modal-header h3 { color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: .5rem; }
+        .modal-content .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+        .modal-content .close-modal:hover { color: var(--text-primary); }
+        .modal-content form { padding: 1.5rem; }
+        .modal-content .form-group { margin-bottom: 1.5rem; }
+        .modal-content .form-group label { display: block; margin-bottom: .5rem; font-weight: 600; color: var(--text-primary); }
+        .modal-content .form-group input,
+        .modal-content .form-group select,
+        .modal-content .form-group textarea {
+            width: 100%; padding: .75rem; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: .95rem; background: rgba(15,23,42,.7); color: var(--text-primary);
+        }
+        .modal-content .form-group input:focus,
+        .modal-content .form-group select:focus,
+        .modal-content .form-group textarea:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+        .modal-content .form-row { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+        .modal-content .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+        .jira-btn { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); border: none; border-radius: 8px; padding: .75rem 1.5rem; font-weight: 600; color: white; transition: all .2s ease; }
+        .jira-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,.4); }
 
+        /* ── Spinner ── */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ── Responsive ── */
         @media (max-width: 768px) {
-            .kanban-board {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .project-header {
-                padding: 1.5rem;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .project-stats {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .sprint-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
-            }
-
-            .side-panel {
-                width: 90%;
-                right: -90%;
-            }
+            .kanban-board { grid-template-columns: 1fr; gap: 1rem; }
+            .project-header { padding: 1.5rem; flex-direction: column; align-items: flex-start; }
+            .project-stats { width: 100%; justify-content: space-between; }
+            .sprint-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .side-panel { width: 90%; right: -90%; }
+            .realtime-info { grid-template-columns: 1fr; }
+            .modal-content.jira-modal { width: 90% !important; margin: 1rem; }
+            .modal-content .form-row { grid-template-columns: 1fr !important; }
         }
-
         @media (max-width: 480px) {
-            .project-stats {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
-            }
-            
-            .action-btn {
-                padding: 0.5rem 1rem;
-                font-size: 0.8rem;
-            }
-            
-            .task-card {
-                padding: 1rem;
-            }
+            .project-stats { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .action-btn { padding: .5rem 1rem; font-size: .8rem; }
+            .task-card { padding: 1rem; }
         }
     </style>
 
@@ -1611,18 +883,18 @@
             </div>
             
             <!-- Backlog Statistics -->
-            <div class="backlog-stats" style="margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+            <div class="backlog-stats" style="margin-bottom: 1.5rem;">
                 <div class="stats-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span style="font-size: 0.9rem; color: #64748b;">Total Issues:</span>
-                    <span id="totalBacklogItems" style="font-weight: 600;">0</span>
+                    <span>Total Issues:</span>
+                    <span id="totalBacklogItems">0</span>
                 </div>
                 <div class="stats-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span style="font-size: 0.9rem; color: #64748b;">Story Points:</span>
-                    <span id="totalStoryPoints" style="font-weight: 600;">0</span>
+                    <span>Story Points:</span>
+                    <span id="totalStoryPoints">0</span>
                 </div>
                 <div class="stats-row" style="display: flex; justify-content: space-between;">
-                    <span style="font-size: 0.9rem; color: #64748b;">Ready for Sprint:</span>
-                    <span id="readyForSprint" style="font-weight: 600; color: #059669;">0</span>
+                    <span>Ready for Sprint:</span>
+                    <span id="readyForSprint" style="color: var(--success);">0</span>
                 </div>
             </div>
 
@@ -1644,7 +916,7 @@
         <div class="side-panel-content">
             <div class="sprint-selector" style="margin-bottom: 1.5rem;">
                 <label for="sprintSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Active Sprint:</label>
-                <select id="sprintSelect" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem;">
+                <select id="sprintSelect">
                     <option value="">No Sprint Selected</option>
                 </select>
             </div>
@@ -1663,36 +935,36 @@
 
             <div id="sprintDetails">
                 <div id="sprintDetailsContent" style="display: none;">
-                    <div class="sprint-info-card" style="background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                        <h4 id="currentSprintName" style="margin: 0 0 0.5rem 0; color: #1e293b;">Sprint Name</h4>
-                        <p id="currentSprintGoal" style="margin: 0 0 1rem 0; color: #64748b; font-size: 0.9rem;">Sprint Goal</p>
+                    <div class="sprint-info-card">
+                        <h4 id="currentSprintName" style="margin: 0 0 0.5rem 0;">Sprint Name</h4>
+                        <p id="currentSprintGoal" style="margin: 0 0 1rem 0; font-size: 0.9rem;">Sprint Goal</p>
                         
                         <div class="sprint-progress" style="margin-bottom: 1rem;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <span style="font-size: 0.9rem; font-weight: 600;">Progress</span>
                                 <span id="sprintProgressText" style="font-size: 0.9rem;">0%</span>
                             </div>
-                            <div style="background: #e2e8f0; border-radius: 4px; height: 8px; overflow: hidden;">
-                                <div id="sprintProgressBar" style="height: 100%; background: linear-gradient(90deg, #3b82f6, #06b6d4); width: 0%; transition: width 0.3s ease;"></div>
+                            <div class="progress-bar">
+                                <div id="sprintProgressBar" class="progress-fill" style="width: 0%;"></div>
                             </div>
                         </div>
                         
                         <div class="sprint-metrics" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="metric-card" style="text-align: center; padding: 0.75rem; background: white; border-radius: 6px;">
-                                <div id="sprintTotalTasks" style="font-size: 1.2rem; font-weight: 700; color: #3b82f6;">0</div>
-                                <div style="font-size: 0.75rem; color: #64748b;">Total Tasks</div>
+                            <div class="metric-card">
+                                <div id="sprintTotalTasks" style="font-size: 1.2rem; font-weight: 700;">0</div>
+                                <div>Total Tasks</div>
                             </div>
-                            <div class="metric-card" style="text-align: center; padding: 0.75rem; background: white; border-radius: 6px;">
-                                <div id="sprintCompletedTasks" style="font-size: 1.2rem; font-weight: 700; color: #059669;">0</div>
-                                <div style="font-size: 0.75rem; color: #64748b;">Completed</div>
+                            <div class="metric-card">
+                                <div id="sprintCompletedTasks" style="font-size: 1.2rem; font-weight: 700;">0</div>
+                                <div>Completed</div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div id="noSprintSelected" style="text-align: center; color: #6b7280; padding: 2rem;">
-                    <i class="fas fa-rocket" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p>Select or create a sprint to get started</p>
+                <div id="noSprintSelected" style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-rocket" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5; display: block; color: var(--text-secondary);"></i>
+                    <p style="color: var(--text-secondary);">Select or create a sprint to get started</p>
                 </div>
             </div>
         </div>
@@ -1706,59 +978,59 @@
         </div>
         <div class="side-panel-content">
             <!-- Jira-like Timeline Filters -->
-            <div class="timeline-filters jira-filters" style="margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+            <div class="timeline-filters" style="margin-bottom: 1.5rem;">
                 <div class="filter-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                    <h4 style="margin: 0; font-size: 0.95rem; color: #1e293b;">
-                        <i class="fas fa-filter" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+                    <h4 style="margin: 0; font-size: 0.95rem;">
+                        <i class="fas fa-filter" style="margin-right: 0.5rem; color: var(--neon-cyan);"></i>
                         Filters
                     </h4>
-                    <button class="btn btn-sm" onclick="clearTimelineFilters()" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Clear</button>
+                    <button class="btn btn-sm btn-outline" onclick="clearTimelineFilters()">Clear</button>
                 </div>
                 
                 <div class="filter-group" style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: #374151;">Activity Type</label>
-                    <select id="timelineActionFilter" class="jira-select" style="width: 100%; padding: 0.5rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;">
-                        <option value="">🔍 All Activities</option>
-                        <option value="TASK_CREATED">📝 Task Created</option>
-                        <option value="STATUS_CHANGED">🔄 Status Changed</option>
-                        <option value="ASSIGNED">👤 Assignment</option>
-                        <option value="PRIORITY_CHANGED">⚡ Priority Changed</option>
-                        <option value="SPRINT_CHANGED">🏃‍♂️ Sprint Changed</option>
-                        <option value="COMMENT_ADDED">💬 Comment Added</option>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Activity Type</label>
+                    <select id="timelineActionFilter" onchange="applyTimelineFilters()">
+                        <option value="">All Activities</option>
+                        <option value="TASK_CREATED">Task Created</option>
+                        <option value="STATUS_CHANGED">Status Changed</option>
+                        <option value="ASSIGNED">Assignment</option>
+                        <option value="PRIORITY_CHANGED">Priority Changed</option>
+                        <option value="SPRINT_CHANGED">Sprint Changed</option>
+                        <option value="COMMENT_ADDED">Comment Added</option>
                     </select>
                 </div>
                 
                 <div class="date-range-group">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: #374151;">Date Range</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Date Range</label>
                     <div class="date-range" style="display: flex; gap: 0.5rem;">
-                        <input type="date" id="timelineStartDate" class="jira-input" style="flex: 1; padding: 0.5rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;">
-                        <input type="date" id="timelineEndDate" class="jira-input" style="flex: 1; padding: 0.5rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;">
+                        <input type="date" id="timelineStartDate" onchange="applyTimelineFilters()">
+                        <input type="date" id="timelineEndDate" onchange="applyTimelineFilters()">
                     </div>
                 </div>
             </div>
             
-            <!-- Jira-like Timeline Statistics -->
-            <div class="timeline-stats jira-stats" style="margin-bottom: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+            <!-- Timeline Statistics -->
+            <div class="timeline-stats" style="margin-bottom: 1.5rem;">
                 <h4 style="margin: 0 0 1rem 0; font-size: 0.95rem; display: flex; align-items: center;">
                     <i class="fas fa-chart-line" style="margin-right: 0.5rem;"></i>
                     Activity Overview (Last 30 days)
                 </h4>
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                    <div class="stat-card jira-stat-card" style="text-align: center;">
-                        <div class="stat-number" id="totalActivities" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">0</div>
-                        <div class="stat-label" style="font-size: 0.8rem; opacity: 0.9;">Total Events</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div style="text-align: center;">
+                        <div id="totalActivities" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">0</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Total Events</div>
                     </div>
-                    <div class="stat-card jira-stat-card" style="text-align: center;">
-                        <div class="stat-number" id="todayActivities" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">0</div>
-                        <div class="stat-label" style="font-size: 0.8rem; opacity: 0.9;">Today's Activity</div>
+                    <div style="text-align: center;">
+                        <div id="todayActivities" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">0</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Today's Activity</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Jira-like Timeline Content -->
-            <div id="timelineContent" class="jira-timeline">
-                <div class="timeline-loading" style="text-align: center; color: #64748b; padding: 3rem 1rem;">
-                    <div class="spinner" style="width: 2rem; height: 2rem; border: 3px solid #e2e8f0; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+            <!-- Timeline Content -->
+            <div id="timelineContent">
+                <div style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+                    <div style="width: 2rem; height: 2rem; border: 3px solid var(--border-color); border-top: 3px solid var(--neon-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
                     <p style="margin: 0; font-size: 0.95rem;">Loading activity timeline...</p>
                 </div>
             </div>
@@ -1864,10 +1136,12 @@
         }
 
         function updateSprintProgress(sprint) {
-            // Mock progress calculation - replace with actual API call
-            const totalPoints = 21;
-            const completedPoints = 13;
-            const progress = Math.round((completedPoints / totalPoints) * 100);
+            // Calculate progress from actual task counts on the board
+            const allCards = document.querySelectorAll('.task-card');
+            const doneCards = document.querySelectorAll('#doneColumn .task-card, [data-status="DONE"] .task-card');
+            const totalPoints = allCards.length;
+            const completedPoints = doneCards.length;
+            const progress = totalPoints > 0 ? Math.round((completedPoints / totalPoints) * 100) : 0;
 
             document.getElementById('sprintProgressBar').style.width = progress + '%';
             document.getElementById('sprintProgressText').textContent = progress + '%';
@@ -1897,7 +1171,7 @@
             .catch(error => {
                 console.error('Error loading backlog:', error);
                 document.getElementById('backlogItems').innerHTML = 
-                    '<p style="text-align: center; color: #dc2626;">Failed to load backlog items</p>';
+                    '<p style="text-align: center; color: var(--text-secondary);">Failed to load backlog items</p>';
             });
         }
 
@@ -1906,11 +1180,11 @@
             
             if (backlogItems.length === 0) {
                 container.innerHTML = `
-                    <div class="backlog-empty" style="text-align: center; color: #64748b; padding: 3rem 1rem;">
-                        <div style="width: 3rem; height: 3rem; margin: 0 auto 1rem; background: linear-gradient(135deg, #e2e8f0, #cbd5e1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-list-alt" style="font-size: 1.2rem; color: #94a3b8;"></i>
+                    <div class="backlog-empty" style="text-align: center; color: var(--text-secondary); padding: 3rem 1rem;">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 1rem; background: var(--slate-700); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-list-alt" style="font-size: 1.2rem; color: var(--text-secondary);"></i>
                         </div>
-                        <h4 style="margin: 0 0 0.5rem 0; color: #475569;">Product Backlog is Empty</h4>
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">Product Backlog is Empty</h4>
                         <p style="margin: 0; font-size: 0.9rem;">Create your first issue to start building your product backlog.</p>
                     </div>
                 `;
@@ -1920,33 +1194,38 @@
             // Update statistics
             updateBacklogStats(backlogItems);
 
-            const itemsHtml = backlogItems.map(item => `
+            const itemsHtml = backlogItems.map(item => {
+                const safeTitle = (item.title || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                const rawDesc = item.description || '';
+                const safeDesc = rawDesc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                const truncDesc = safeDesc.length > 100 ? safeDesc.substring(0, 100) + '...' : safeDesc;
+                return `
                 <div class="backlog-item" draggable="true" data-item-id="${item.id}" onclick="selectBacklogItem(${item.id})">
                     <div class="backlog-item-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                        <div class="issue-type-icon" style="width: 1.5rem; height: 1.5rem; background: #3b82f6; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 600;">
+                        <div class="issue-type-icon" style="width: 1.5rem; height: 1.5rem; background: var(--indigo); border-radius: 3px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 600;">
                             ${getIssueTypeIcon(item.issueType || 'TASK')}
                         </div>
-                        <div class="backlog-item-title" style="flex: 1; font-weight: 600; color: #1e293b; font-size: 0.95rem;">${item.title}</div>
-                        <div class="story-points-badge" style="background: #f1f5f9; color: #475569; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                        <div class="backlog-item-title" style="flex: 1; font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">${safeTitle}</div>
+                        <div class="story-points-badge" style="background: var(--slate-700); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
                             ${item.storyPoints} SP
                         </div>
                     </div>
                     
-                    ${item.description ? `
-                        <div class="backlog-item-description" style="color: #64748b; font-size: 0.85rem; margin-bottom: 0.75rem; line-height: 1.4;">
-                            ${item.description.length > 100 ? item.description.substring(0, 100) + '...' : item.description}
+                    ${rawDesc ? `
+                        <div class="backlog-item-description" style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.75rem; line-height: 1.4;">
+                            ${truncDesc}
                         </div>
                     ` : ''}
                     
                     <div class="backlog-item-footer" style="display: flex; justify-content: space-between; align-items: center;">
                         <div class="backlog-item-meta" style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span class="priority-badge priority-${(item.priorityLevel || 'MEDIUM').toLowerCase()}">${getPriorityIcon(item.priorityLevel || 'MEDIUM')} ${item.priorityLevel || 'Medium'}</span>
-                            <span class="status-badge" style="background: #f0f9ff; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">
+                            <span class="priority-badge priority-${(item.priorityLevel || 'MEDIUM').toLowerCase()}">${getPriorityIcon(item.priorityLevel || 'MEDIUM')} ${(item.priorityLevel || 'Medium').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>
+                            <span class="status-badge" style="background: rgba(6, 182, 212, 0.15); color: var(--neon-cyan); padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">
                                 ${(item.backlogStatus || 'TODO').replace('_', ' ')}
                             </span>
                         </div>
                         <div class="backlog-actions" style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn-sm" onclick="editBacklogItem(${item.id}); event.stopPropagation();" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">
+                            <button class="btn btn-sm" onclick="editBacklogItem(${item.id}); event.stopPropagation();" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: var(--slate-700); color: var(--text-secondary); border: 1px solid var(--border-color);">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-primary btn-sm" onclick="assignToCurrentSprint(${item.id}); event.stopPropagation();" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" ${!currentSprint ? 'disabled' : ''}>
@@ -1955,7 +1234,7 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
             container.innerHTML = itemsHtml;
         }
@@ -2315,11 +1594,11 @@
             
             if (activities.length === 0) {
                 container.innerHTML = `
-                    <div class="timeline-empty" style="text-align: center; color: #64748b; padding: 3rem 1rem;">
-                        <div style="width: 4rem; height: 4rem; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #e2e8f0, #cbd5e1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-history" style="font-size: 1.5rem; color: #94a3b8;"></i>
+                    <div class="timeline-empty" style="text-align: center; color: var(--text-secondary); padding: 3rem 1rem;">
+                        <div style="width: 4rem; height: 4rem; margin: 0 auto 1.5rem; background: var(--slate-700); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-history" style="font-size: 1.5rem; color: var(--text-secondary);"></i>
                         </div>
-                        <h3 style="margin: 0 0 0.5rem 0; color: #475569;">No Activity Yet</h3>
+                        <h3 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">No Activity Yet</h3>
                         <p style="margin: 0; font-size: 0.9rem;">When team members take actions on this project, you'll see them here.</p>
                     </div>
                 `;
@@ -2335,9 +1614,9 @@
                 timeline += `
                     <div class="timeline-date-group" style="margin-bottom: 2rem;">
                         <div class="timeline-date-header" style="display: flex; align-items: center; margin-bottom: 1rem; padding: 0 1rem;">
-                            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
-                            <span style="padding: 0 1rem; background: white; color: #64748b; font-size: 0.8rem; font-weight: 600;">${formatDate(date)}</span>
-                            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+                            <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+                            <span style="padding: 0 1rem; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">${formatDate(date)}</span>
+                            <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
                         </div>
                         ${dateActivities.map(activity => createJiraTimelineItem(activity)).join('')}
                     </div>
@@ -2368,19 +1647,19 @@
                         </div>
                         
                         ${activity.description ? `
-                            <div class="timeline-description" style="margin-top: 0.5rem; color: #475569; font-size: 0.9rem;">
+                            <div class="timeline-description" style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
                                 ${activity.description}
                             </div>
                         ` : ''}
                         
                         ${activity.task ? `
-                            <div class="timeline-task-link" style="margin-top: 0.75rem; padding: 0.75rem; background: #f1f5f9; border-radius: 6px; border-left: 3px solid ${actionColor};">
+                            <div class="timeline-task-link" style="margin-top: 0.75rem; padding: 0.75rem; background: var(--slate-800); border-radius: 6px; border-left: 3px solid ${actionColor};">
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                     <i class="fas fa-tasks" style="color: ${actionColor}; font-size: 0.9rem;"></i>
-                                    <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">${activity.task.title}</span>
+                                    <span style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${activity.task.title}</span>
                                 </div>
                                 ${activity.task.assignedUser ? `
-                                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #64748b;">
+                                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
                                         <i class="fas fa-user"></i> Assigned to ${activity.task.assignedUser.nickname}
                                     </div>
                                 ` : ''}
@@ -2388,7 +1667,7 @@
                         ` : ''}
                         
                         ${activity.oldValue && activity.newValue ? `
-                            <div class="timeline-change-details" style="margin-top: 0.75rem; font-size: 0.8rem; color: #64748b; background: #f8fafc; padding: 0.5rem; border-radius: 4px;">
+                            <div class="timeline-change-details" style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary); background: var(--slate-800); padding: 0.5rem; border-radius: 4px;">
                                 <strong>From:</strong> <span style="color: #dc2626;">${activity.oldValue}</span> 
                                 <strong>To:</strong> <span style="color: #059669;">${activity.newValue}</span>
                             </div>
@@ -2521,46 +1800,35 @@
     <!-- Create Sprint Modal -->
     <div id="createSprintModal" class="modal-overlay" style="display: none;">
         <div class="modal-content jira-modal" style="width: 500px;">
-            <div class="modal-header" style="display: flex; justify-content: between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
-                <h3 style="margin: 0; display: flex; align-items: center;">
-                    <i class="fas fa-rocket" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-rocket" style="color: var(--neon-cyan);"></i>
                     Create Sprint
                 </h3>
-                <button class="close-modal" onclick="closeModal('createSprintModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                <button class="close-modal" onclick="closeModal('createSprintModal')">&times;</button>
             </div>
-            <form id="sprintForm" onsubmit="submitSprintForm(event)" style="padding: 1.5rem;">
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="sprintName" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Sprint Name *</label>
-                    <input type="text" id="sprintName" name="sprintName" required 
-                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;"
-                           placeholder="e.g., Sprint 1, Feature Development Sprint">
+            <form id="sprintForm" onsubmit="submitSprintForm(event)">
+                <div class="form-group">
+                    <label for="sprintName">Sprint Name *</label>
+                    <input type="text" id="sprintName" name="sprintName" required placeholder="e.g., Sprint 1, Feature Development Sprint">
                 </div>
-                
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="sprintGoal" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Sprint Goal</label>
-                    <textarea id="sprintGoal" name="sprintGoal" rows="3"
-                              style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical;"
-                              placeholder="What do you want to achieve in this sprint?"></textarea>
+                <div class="form-group">
+                    <label for="sprintGoal">Sprint Goal</label>
+                    <textarea id="sprintGoal" name="sprintGoal" rows="3" placeholder="What do you want to achieve in this sprint?"></textarea>
                 </div>
-                
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-row" style="grid-template-columns: 1fr 1fr;">
                     <div class="form-group">
-                        <label for="sprintStartDate" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Start Date</label>
-                        <input type="date" id="sprintStartDate" name="sprintStartDate"
-                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;">
+                        <label for="sprintStartDate">Start Date</label>
+                        <input type="date" id="sprintStartDate" name="sprintStartDate">
                     </div>
                     <div class="form-group">
-                        <label for="sprintEndDate" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">End Date</label>
-                        <input type="date" id="sprintEndDate" name="sprintEndDate"
-                               style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;">
+                        <label for="sprintEndDate">End Date</label>
+                        <input type="date" id="sprintEndDate" name="sprintEndDate">
                     </div>
                 </div>
-                
-                <div class="modal-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('createSprintModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary jira-btn">
-                        <i class="fas fa-rocket"></i> Create Sprint
-                    </button>
+                    <button type="submit" class="btn jira-btn"><i class="fas fa-rocket"></i> Create Sprint</button>
                 </div>
             </form>
         </div>
@@ -2569,43 +1837,35 @@
     <!-- Create Backlog Item Modal -->
     <div id="createBacklogModal" class="modal-overlay" style="display: none;">
         <div class="modal-content jira-modal" style="width: 600px;">
-            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
-                <h3 style="margin: 0; display: flex; align-items: center;">
-                    <i class="fas fa-plus-circle" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-plus-circle" style="color: var(--neon-cyan);"></i>
                     Create Issue
                 </h3>
-                <button class="close-modal" onclick="closeModal('createBacklogModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                <button class="close-modal" onclick="closeModal('createBacklogModal')">&times;</button>
             </div>
-            <form id="backlogForm" onsubmit="submitBacklogForm(event)" style="padding: 1.5rem;">
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="backlogTitle" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Summary *</label>
-                    <input type="text" id="backlogTitle" name="backlogTitle" required 
-                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;"
-                           placeholder="Brief description of the issue">
+            <form id="backlogForm" onsubmit="submitBacklogForm(event)">
+                <div class="form-group">
+                    <label for="backlogTitle">Summary *</label>
+                    <input type="text" id="backlogTitle" name="backlogTitle" required placeholder="Brief description of the issue">
                 </div>
-                
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="backlogDescription" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Description</label>
-                    <textarea id="backlogDescription" name="backlogDescription" rows="4"
-                              style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical;"
-                              placeholder="Detailed description of the work to be done..."></textarea>
+                <div class="form-group">
+                    <label for="backlogDescription">Description</label>
+                    <textarea id="backlogDescription" name="backlogDescription" rows="4" placeholder="Detailed description of the work to be done..."></textarea>
                 </div>
-                
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
                     <div class="form-group">
-                        <label for="backlogPriority" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Priority</label>
-                        <select id="backlogPriority" name="backlogPriority"
-                                style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;">
-                            <option value="LOW">🟢 Low</option>
-                            <option value="MEDIUM" selected>🟡 Medium</option>
-                            <option value="HIGH">🟠 High</option>
-                            <option value="CRITICAL">🔴 Critical</option>
+                        <label for="backlogPriority">Priority</label>
+                        <select id="backlogPriority" name="backlogPriority">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="backlogStoryPoints" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Story Points</label>
-                        <select id="backlogStoryPoints" name="backlogStoryPoints"
-                                style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;">
+                        <label for="backlogStoryPoints">Story Points</label>
+                        <select id="backlogStoryPoints" name="backlogStoryPoints">
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3" selected>3</option>
@@ -2616,278 +1876,22 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="backlogType" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Issue Type</label>
-                        <select id="backlogType" name="backlogType"
-                                style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem;">
-                            <option value="STORY">📖 Story</option>
-                            <option value="TASK">✓ Task</option>
-                            <option value="BUG">🐛 Bug</option>
-                            <option value="EPIC">🎯 Epic</option>
+                        <label for="backlogType">Issue Type</label>
+                        <select id="backlogType" name="backlogType">
+                            <option value="STORY">Story</option>
+                            <option value="TASK">Task</option>
+                            <option value="BUG">Bug</option>
+                            <option value="EPIC">Epic</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="modal-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('createBacklogModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary jira-btn">
-                        <i class="fas fa-plus"></i> Create Issue
-                    </button>
+                    <button type="submit" class="btn jira-btn"><i class="fas fa-plus"></i> Create Issue</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Add Enhanced Jira-like Styles -->
-    <style>
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-content.jira-modal {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .jira-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            border: none;
-            border-radius: 6px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-        }
-
-        .jira-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-        }
-
-        /* Jira-like Timeline Styles */
-        .jira-timeline {
-            padding: 1rem 0;
-        }
-
-        .timeline-item {
-            display: flex;
-            margin-bottom: 1.5rem;
-            position: relative;
-            padding-left: 3rem;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 1rem;
-            top: 0;
-            bottom: -1.5rem;
-            width: 2px;
-            background: #e2e8f0;
-        }
-
-        .timeline-item:last-child::before {
-            bottom: 1rem;
-        }
-
-        .timeline-avatar {
-            position: absolute;
-            left: 0.25rem;
-            top: 0.25rem;
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 600;
-            z-index: 1;
-        }
-
-        .timeline-content {
-            flex: 1;
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 1rem;
-            border: 1px solid #e2e8f0;
-        }
-
-        .timeline-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-user {
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .timeline-time {
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
-        .timeline-action {
-            color: #475569;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        .timeline-action-icon {
-            display: inline-block;
-            width: 1.2rem;
-            height: 1.2rem;
-            border-radius: 3px;
-            text-align: center;
-            line-height: 1.2rem;
-            font-size: 0.7rem;
-            margin-right: 0.5rem;
-            color: white;
-        }
-
-        /* Activity type colors */
-        .action-created { background: #059669; }
-        .action-status { background: #3b82f6; }
-        .action-assigned { background: #f59e0b; }
-        .action-priority { background: #dc2626; }
-        .action-sprint { background: #8b5cf6; }
-        .action-comment { background: #06b6d4; }
-
-        /* Spinner animation */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Enhanced button styles */
-        .btn-sm {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-        }
-
-        /* Form enhancements */
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            outline: none;
-        }
-
-        /* Backlog item enhancements */
-        .backlog-item {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            transition: all 0.2s ease;
-            cursor: grab;
-        }
-
-        .backlog-item:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.1);
-        }
-
-        .backlog-item-title {
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-        }
-
-        .backlog-item-meta {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.8rem;
-        }
-
-        .priority-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.7rem;
-        }
-
-        .priority-low { background: #dcfce7; color: #166534; }
-        .priority-medium { background: #fef3c7; color: #92400e; }
-        .priority-high { background: #fed7aa; color: #c2410c; }
-        .priority-critical { background: #fecaca; color: #991b1b; }
-
-        /* Backlog Item Selection */
-        .backlog-item.selected {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-            background: #f8fafc;
-        }
-
-        /* Enhanced Side Panel Styles */
-        .side-panel {
-            background: white;
-            border-left: 1px solid #e2e8f0;
-        }
-
-        .side-panel-header {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .side-panel-header h3 {
-            color: #1e293b;
-        }
-
-        /* Status Badge Styles */
-        .status-badge {
-            text-transform: capitalize;
-        }
-
-        /* Enhanced Button Hover Effects */
-        .btn:hover {
-            transform: translateY(-1px);
-            transition: transform 0.1s ease;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        /* Timeline Enhancement */
-        .timeline-loading .spinner {
-            animation: spin 1s linear infinite;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .modal-content.jira-modal {
-                width: 90%;
-                margin: 1rem;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr !important;
-            }
-        }
-    </style>
 </body>
 </html>

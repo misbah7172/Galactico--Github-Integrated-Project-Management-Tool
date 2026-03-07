@@ -102,35 +102,50 @@
     "menus": {
       "view/title": [
         {
-          "command": "autotrack.authenticate",
-          "when": "view == autotrackView",
+          "command": "githubAuthExtension.galacticoAuth",
+          "when": "view == githubAuthView",
           "group": "navigation@0"
         },
         {
-          "command": "autotrack.openDashboard",
-          "when": "view == autotrackView",
+          "command": "githubAuthExtension.openGalacticoDashboard",
+          "when": "view == githubAuthView",
           "group": "navigation@1"
         },
         {
-          "command": "autotrack.refresh",
-          "when": "view == autotrackView",
+          "command": "githubAuthExtension.refresh",
+          "when": "view == githubAuthView",
           "group": "navigation@2"
         }
       ],
       "commandPalette": [
         {
-          "command": "autotrack.createCommit",
+          "command": "githubAuthExtension.galacticoCommit",
           "when": "true"
         },
         {
-          "command": "autotrack.quickSprint",
+          "command": "githubAuthExtension.autoTrackQuickSprint",
           "when": "true"
         },
         {
-          "command": "autotrack.quickBacklog",
+          "command": "githubAuthExtension.autoTrackQuickBacklog",
           "when": "true"
         }
       ]
+    },
+    "configuration": {
+      "title": "Galactico",
+      "properties": {
+        "galactico.baseUrl": {
+          "type": "string",
+          "default": "http://localhost:5000",
+          "description": "Base URL of the running Galactico web application."
+        },
+        "galactico.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable verbose debug logging for the Galactico extension."
+        }
+      }
     }
   },
   "scripts": {
@@ -155,11 +170,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/misbah7172/AutoTrack-Smart-GitHub-Integrated-Project-Management-Tool.git"
+    "url": "git+https://github.com/misbah7172/Galactico--Github-Integrated-Project-Management-Tool.git"
   },
   "author": "Galactico Team",
   "bugs": {
-    "url": "https://github.com/misbah7172/AutoTrack-Smart-GitHub-Integrated-Project-Management-Tool/issues"
+    "url": "https://github.com/misbah7172/Galactico--Github-Integrated-Project-Management-Tool/issues"
   },
-  "homepage": "https://github.com/misbah7172/AutoTrack-Smart-GitHub-Integrated-Project-Management-Tool#readme"
+  "homepage": "https://github.com/misbah7172/Galactico--Github-Integrated-Project-Management-Tool#readme"
 }

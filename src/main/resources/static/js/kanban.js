@@ -328,49 +328,57 @@ function updateTaskCounts() {
 }
 
 /**
- * Show notification message with modern styling
+ * Show notification message with modern styling (dark theme)
  */
 function showNotification(message, type) {
     // Remove existing notifications
-    document.querySelectorAll('.notification').forEach(n => n.remove());
-    
+    document.querySelectorAll('.kanban-notification').forEach(n => n.remove());
+
     const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
-            <span>${message}</span>
-            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    
-    // Style the notification
+    notification.className = 'kanban-notification';
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-' + (type === 'error' ? 'exclamation-circle' : 'check-circle');
+
+    const span = document.createElement('span');
+    span.textContent = message;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.style.cssText = 'background:none;border:none;color:inherit;cursor:pointer;margin-left:12px;font-size:1rem;';
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    closeBtn.addEventListener('click', () => notification.remove());
+
+    notification.appendChild(icon);
+    notification.appendChild(span);
+    notification.appendChild(closeBtn);
+
     Object.assign(notification.style, {
         position: 'fixed',
         top: '20px',
         right: '20px',
-        background: type === 'error' ? '#fee2e2' : '#d1fae5',
-        color: type === 'error' ? '#dc2626' : '#059669',
+        background: type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+        color: type === 'error' ? '#f87171' : '#34d399',
         padding: '12px 16px',
         borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
         zIndex: '9999',
-        border: `1px solid ${type === 'error' ? '#fca5a5' : '#a7f3d0'}`,
-        maxWidth: '400px'
+        border: '1px solid ' + (type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'),
+        maxWidth: '400px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontWeight: '500',
+        backdropFilter: 'blur(8px)'
     });
-    
+
     document.body.appendChild(notification);
-    
-    // Auto remove after 5 seconds
+
     setTimeout(() => {
         if (notification.parentElement) {
             notification.remove();
         }
     }, 5000);
-    
-    // Fade in animation
+
     notification.style.opacity = '0';
     notification.style.transform = 'translateX(100%)';
     setTimeout(() => {

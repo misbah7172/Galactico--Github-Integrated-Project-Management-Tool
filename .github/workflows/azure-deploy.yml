@@ -1,0 +1,94 @@
+name: Azure App Service Deploy (Korea Central)
+
+# Deploys the Docker image to Azure App Service in the Korea Central region.
+# Triggered manually or on push to main (after the main CI/CD pipeline
+# has already pushed the image to GHCR).
+#
+# Required GitHub repository secrets:
+#   AZURE_CREDENTIALS         - Service principal JSON (see README)
+#   AZURE_APP_SERVICE_NAME    - Azure App Service name (e.g. galactico-app)
+#   GITHUB_CLIENT_ID          - GitHub OAuth app client ID
+#   GITHUB_CLIENT_SECRET      - GitHub OAuth app client secret
+#   JWT_SECRET                - Signing key (min 32 chars)
+#   ENCRYPTION_KEY            - Encryption key (exactly 32 chars)
+#   DB_URL                    - JDBC URL for the production database
+#   DB_USERNAME               - Database username
+#   DB_PASSWORD               - Database password
+#   BASE_URL                  - Public app URL (e.g. https://galactico-app.azurewebsites.net)
+#   OAUTH_REDIRECT_URI        - GitHub OAuth callback URL
+#
+# One-time Azure setup (run once locally):
+#   az group create --name galactico-rg --location koreacentral
+#   az appservice plan create --name galactico-plan --resource-group galactico-rg \
+#       --is-linux --sku B2
+#   az webapp create --name galactico-app --resource-group galactico-rg \
+#       --plan galactico-plan --deployment-container-image-name \
+#       ghcr.io/misbah7172/galactico--github-integrated-project-management-tool:latest
+#   az ad sp create-for-rbac --name galactico-deploy --role contributor \
+#       --scopes /subscriptions/<SUB_ID>/resourceGroups/galactico-rg \
+#       --sdk-auth
+#   (Paste the JSON output as the AZURE_CREDENTIALS secret)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (default: main)'
+        required: false
+        default: 'main'
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    branches: [main]
+    types: [completed]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    name: Deploy to Azure App Service
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+
+    steps:
+    - name: Determine image tag
+      id: tag
+      run: |
+        TAG="${{ github.event.inputs.image_tag }}"
+        echo "image_tag=${TAG:-main}" >> "$GITHUB_OUTPUT"
+
+    - name: Log in to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Configure App Service settings
+      uses: azure/appservice-settings@v1
+      with:
+        app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+        app-settings-json: |
+          [
+            { "name": "GITHUB_CLIENT_ID",      "value": "${{ secrets.GITHUB_CLIENT_ID }}",      "slotSetting": false },
+            { "name": "GITHUB_CLIENT_SECRET",  "value": "${{ secrets.GITHUB_CLIENT_SECRET }}",  "slotSetting": false },
+            { "name": "JWT_SECRET",            "value": "${{ secrets.JWT_SECRET }}",            "slotSetting": false },
+            { "name": "ENCRYPTION_KEY",        "value": "${{ secrets.ENCRYPTION_KEY }}",        "slotSetting": false },
+            { "name": "DB_URL",                "value": "${{ secrets.DB_URL }}",                "slotSetting": false },
+            { "name": "DB_USERNAME",           "value": "${{ secrets.DB_USERNAME }}",           "slotSetting": false },
+            { "name": "DB_PASSWORD",           "value": "${{ secrets.DB_PASSWORD }}",           "slotSetting": false },
+            { "name": "BASE_URL",              "value": "${{ secrets.BASE_URL }}",              "slotSetting": false },
+            { "name": "OAUTH_REDIRECT_URI",    "value": "${{ secrets.OAUTH_REDIRECT_URI }}",    "slotSetting": false },
+            { "name": "WEBSITES_PORT",         "value": "5000",                                "slotSetting": false },
+            { "name": "SPRING_PROFILES_ACTIVE","value": "postgresql",                          "slotSetting": false }
+          ]
+
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.image_tag }}
+
+    - name: Log out of Azure
+      if: always()
+      run: az logout

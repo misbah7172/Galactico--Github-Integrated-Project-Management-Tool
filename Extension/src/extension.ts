@@ -6,6 +6,7 @@ import { DashboardService } from './dashboardService';
 import { GalacticoAuthService } from './galacticoAuthService';
 import { CICDService } from './cicdService';
 import { AutoTrackCommitService } from './autoTrackCommitService';
+import { ExtensionConfig } from './config';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -508,7 +509,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Add command to open Galactico web dashboard
     const openGalacticoDashboardCommand = vscode.commands.registerCommand('githubAuthExtension.openGalacticoDashboard', async () => {
-        const dashboardUrl = 'https://misbah7172.loca.lt/dashboard';
+        const dashboardUrl = ExtensionConfig.GALACTICO_BASE_URL + '/dashboard';
         await vscode.env.openExternal(vscode.Uri.parse(dashboardUrl));
         vscode.window.showInformationMessage('Galactico Dashboard opened in browser!');
     });
@@ -649,7 +650,7 @@ export function activate(context: vscode.ExtensionContext) {
     async function configureGitCredentials() {
         const userName = await vscode.window.showInputBox({
             prompt: 'Enter your GitHub username',
-            placeHolder: 'e.g., misbah7172'
+            placeHolder: 'e.g., your-username'
         });
 
         if (!userName) {

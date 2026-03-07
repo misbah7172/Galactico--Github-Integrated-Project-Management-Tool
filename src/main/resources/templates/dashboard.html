@@ -27,13 +27,7 @@
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, var(--midnight-blue) 0%, #1e293b 50%, var(--midnight-blue) 100%);
@@ -41,317 +35,118 @@
             min-height: 100vh;
             line-height: 1.6;
         }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
+        .alert { padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; border: 1px solid transparent; }
+        .alert-success { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); color: var(--success-color); }
+        .alert-danger { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: var(--danger-color); }
         
-        .alert {
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid transparent;
-        }
-        
-        .alert-success {
-            background: rgba(34, 197, 94, 0.1);
-            border-color: rgba(34, 197, 94, 0.3);
-            color: var(--success-color);
-        }
-        
-        .alert-danger {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.3);
-            color: var(--danger-color);
-        }
-        
+        /* Hero */
         .dashboard-hero {
             background: var(--card-bg);
             backdrop-filter: blur(10px);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 3rem;
-            margin-bottom: 3rem;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 3rem;
-            align-items: center;
-        }
-        
-        .hero-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-cyan) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-        }
-        
-        .hero-stats {
-            display: flex;
-            gap: 2rem;
-        }
-        
-        .stat-card {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-            min-width: 120px;
-            transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--neon-cyan);
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
+            padding: 2.5rem;
             margin-bottom: 2rem;
-            overflow: hidden;
-        }
-        
-        .card-header {
-            padding: 2rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .card-header-content {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-        }
-        
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .card-description {
-            color: var(--text-secondary);
-            margin: 0;
-        }
-        
-        .card-body {
-            padding: 2rem;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.875rem;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--neon-cyan), var(--indigo));
-            color: white;
-            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-secondary);
-            border-color: var(--border-color);
-        }
-        
-        .btn-secondary:hover {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, var(--success-color), #16a34a);
-            color: white;
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
-        }
-        
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
-        }
-        
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-        
-        .empty-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-        
-        .empty-description {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            font-size: 1rem;
-        }
-        
-        .team-grid, .project-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .team-card, .project-card {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .team-card:hover, .project-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border-color: rgba(99, 102, 241, 0.4);
-        }
-        
-        .team-card-header, .project-card-header {
-            margin-bottom: 1rem;
-        }
-        
-        .team-name, .project-name {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-        
-        .team-members-count, .project-team {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-        
-        .project-card-body {
-            margin-bottom: 1.5rem;
-        }
-        
-        .project-repo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-        
-        .repo-link {
-            color: var(--neon-cyan);
-            text-decoration: none;
-        }
-        
-        .repo-link:hover {
-            text-decoration: underline;
-        }
-        
-        .team-card-actions, .project-card-actions {
-            display: flex;
-            gap: 0.75rem;
+            gap: 2rem;
             flex-wrap: wrap;
         }
+        .hero-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--text-primary), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero-subtitle { font-size: 1rem; color: var(--text-secondary); }
+        .hero-stats { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+        .stat-card { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem 1.5rem; text-align: center; min-width: 100px; transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3); }
+        .stat-number { font-size: 2rem; font-weight: 700; color: var(--neon-cyan); line-height: 1.2; }
+        .stat-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+        
+        /* Quick Access Grid */
+        .section-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .quick-access { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+        .qa-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .qa-card:hover { transform: translateY(-4px); border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3); }
+        .qa-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; color: #fff;
+        }
+        .qa-icon.cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .qa-icon.indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .qa-icon.violet { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .qa-icon.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .qa-icon.amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .qa-icon.rose { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        .qa-icon.sky { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        .qa-icon.emerald { background: linear-gradient(135deg, #10b981, #059669); }
+        .qa-label { font-weight: 600; font-size: 0.875rem; }
+        .qa-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; }
+        
+        /* Content cards */
+        .card { background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 2rem; overflow: hidden; }
+        .card-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .card-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; }
+        .card-desc { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; }
+        .card-body { padding: 1.5rem 2rem; }
+        
+        .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.25rem; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.8rem; border: 2px solid transparent; transition: all 0.2s; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, var(--neon-cyan), var(--indigo)); color: #fff; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(6, 182, 212, 0.35); }
+        .btn-secondary { background: transparent; color: var(--text-secondary); border-color: var(--border-color); }
+        .btn-secondary:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+        .btn-success { background: linear-gradient(135deg, var(--success-color), #16a34a); color: #fff; }
+        .btn-sm { padding: 0.4rem 0.85rem; font-size: 0.75rem; }
+        
+        .empty-state { text-align: center; padding: 3rem 2rem; }
+        .empty-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .empty-description { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+        .item-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .item-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3); border-color: rgba(99, 102, 241, 0.35); }
+        .item-name { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; }
+        .item-meta { display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 1rem; }
+        .item-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .repo-link { color: var(--neon-cyan); text-decoration: none; font-size: 0.8rem; }
+        .repo-link:hover { text-decoration: underline; }
         
         @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .dashboard-hero {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-                padding: 2rem;
-                text-align: center;
-            }
-            
-            .hero-stats {
-                justify-content: center;
-            }
-            
-            .hero-title {
-                font-size: 2rem;
-            }
-            
-            .card-header-content {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
-            }
-            
-            .team-grid, .project-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .hero-stats {
-                flex-direction: column;
-                gap: 1rem;
-            }
+            .container { padding: 1rem; }
+            .dashboard-hero { flex-direction: column; text-align: center; padding: 1.5rem; }
+            .hero-stats { justify-content: center; }
+            .hero-title { font-size: 1.5rem; }
+            .quick-access { grid-template-columns: repeat(2, 1fr); }
+            .item-grid { grid-template-columns: 1fr; }
+            .card-header { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
 <body>
-    <!-- Header Fragment -->
     <div th:replace="~{fragments/header :: header}"></div>
     
     <div class="container">
-        <!-- Alert Messages -->
+        <!-- Alerts -->
         <div th:if="${successMessage}" class="alert alert-success">
             <i class="fas fa-check-circle"></i>
             <span th:text="${successMessage}"></span>
@@ -361,9 +156,9 @@
             <span th:text="${errorMessage}"></span>
         </div>
         
-        <!-- Welcome Section -->
+        <!-- Welcome Hero -->
         <div class="dashboard-hero">
-            <div class="hero-content">
+            <div>
                 <h1 class="hero-title">Welcome back, <span th:text="${user.nickname}">User</span>!</h1>
                 <p class="hero-subtitle">Track your progress and manage your teams from your dashboard</p>
             </div>
@@ -383,50 +178,84 @@
             </div>
         </div>
         
+        <!-- Quick Access -->
+        <h2 class="section-title"><i class="fas fa-th-large"></i> Quick Access</h2>
+        <div class="quick-access">
+            <a th:href="@{/projects}" class="qa-card">
+                <div class="qa-icon indigo"><i class="fas fa-columns"></i></div>
+                <div class="qa-label">Kanban Board</div>
+                <div class="qa-desc">Drag &amp; drop task management</div>
+            </a>
+            <a th:href="@{/teams/create}" class="qa-card">
+                <div class="qa-icon cyan"><i class="fas fa-users"></i></div>
+                <div class="qa-label">Create Team</div>
+                <div class="qa-desc">Build your dev team</div>
+            </a>
+            <a th:href="@{/projects/create}" class="qa-card">
+                <div class="qa-icon violet"><i class="fas fa-rocket"></i></div>
+                <div class="qa-label">Create Project</div>
+                <div class="qa-desc">Link a GitHub repository</div>
+            </a>
+            <a th:href="@{/notifications}" class="qa-card">
+                <div class="qa-icon amber"><i class="fas fa-bell"></i></div>
+                <div class="qa-label">Notifications</div>
+                <div class="qa-desc">Team invites &amp; updates</div>
+            </a>
+            <a th:href="@{/projects}" class="qa-card">
+                <div class="qa-icon green"><i class="fas fa-chart-line"></i></div>
+                <div class="qa-label">Project Analytics</div>
+                <div class="qa-desc">Commit stats &amp; insights</div>
+            </a>
+            <a th:href="@{/projects}" class="qa-card">
+                <div class="qa-icon sky"><i class="fas fa-tasks"></i></div>
+                <div class="qa-label">Project Tracking</div>
+                <div class="qa-desc">Progress &amp; task status</div>
+            </a>
+            <a th:href="@{/teams}" class="qa-card">
+                <div class="qa-icon emerald"><i class="fas fa-code-branch"></i></div>
+                <div class="qa-label">Team Contributions</div>
+                <div class="qa-desc">Member activity &amp; stats</div>
+            </a>
+            <a th:href="@{/commit-review}" class="qa-card">
+                <div class="qa-icon rose"><i class="fas fa-code-commit"></i></div>
+                <div class="qa-label">Commit Tracking</div>
+                <div class="qa-desc">Review &amp; approve commits</div>
+            </a>
+        </div>
+        
         <!-- Teams Section -->
         <div class="card">
             <div class="card-header">
-                <div class="card-header-content">
-                    <div>
-                        <h2 class="card-title">
-                            <i class="fas fa-users"></i>
-                            Your Teams
-                        </h2>
-                        <p class="card-description">Collaborate with your team members</p>
-                    </div>
-                    <a th:href="@{/teams/create}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Create Team
-                    </a>
+                <div>
+                    <h2 class="card-title"><i class="fas fa-users"></i> Your Teams</h2>
+                    <p class="card-desc">Collaborate with your team members</p>
                 </div>
+                <a th:href="@{/teams/create}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Create Team
+                </a>
             </div>
             <div class="card-body">
                 <div th:if="${#lists.isEmpty(teams)}" class="empty-state">
                     <h3 class="empty-title">No teams yet</h3>
                     <p class="empty-description">Create your first team to start collaborating</p>
                     <a th:href="@{/teams/create}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Create Your First Team
+                        <i class="fas fa-plus"></i> Create Your First Team
                     </a>
                 </div>
-                <div th:unless="${#lists.isEmpty(teams)}" class="team-grid">
-                    <div th:each="team : ${teams}" class="team-card">
-                        <div class="team-card-header">
-                            <h3 class="team-name" th:text="${team.name}">Team Name</h3>
-                            <div class="team-members-count">
-                                <i class="fas fa-user"></i>
-                                <span th:text="${team.members.size()} + ' members'">0 members</span>
-                            </div>
+                <div th:unless="${#lists.isEmpty(teams)}" class="item-grid">
+                    <div th:each="team : ${teams}" class="item-card">
+                        <h3 class="item-name" th:text="${team.name}">Team Name</h3>
+                        <div class="item-meta">
+                            <i class="fas fa-user"></i>
+                            <span th:text="${team.members.size()} + ' members'">0 members</span>
                         </div>
-                        <div class="team-card-actions">
+                        <div class="item-actions">
                             <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-eye"></i>
-                                View Details
+                                <i class="fas fa-eye"></i> View
                             </a>
                             <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
                                th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-edit"></i>
-                                Edit
+                                <i class="fas fa-edit"></i> Edit
                             </a>
                         </div>
                     </div>
@@ -437,20 +266,14 @@
         <!-- Projects Section -->
         <div class="card">
             <div class="card-header">
-                <div class="card-header-content">
-                    <div>
-                        <h2 class="card-title">
-                            <i class="fas fa-rocket"></i>
-                            Your Projects
-                        </h2>
-                        <p class="card-description">Manage your project repositories</p>
-                    </div>
-                    <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
-                       th:href="@{/projects/create}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Create Project
-                    </a>
+                <div>
+                    <h2 class="card-title"><i class="fas fa-rocket"></i> Your Projects</h2>
+                    <p class="card-desc">Manage your project repositories</p>
                 </div>
+                <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
+                   th:href="@{/projects/create}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Create Project
+                </a>
             </div>
             <div class="card-body">
                 <div th:if="${#lists.isEmpty(projects)}" class="empty-state">
@@ -458,34 +281,30 @@
                     <p class="empty-description">Create your first project to start tracking tasks</p>
                     <a th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" 
                        th:href="@{/projects/create}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Create Your First Project
+                        <i class="fas fa-plus"></i> Create Your First Project
                     </a>
                 </div>
-                <div th:unless="${#lists.isEmpty(projects)}" class="project-grid">
-                    <div th:each="project : ${projects}" class="project-card">
-                        <div class="project-card-header">
-                            <h3 class="project-name" th:text="${project.name}">Project Name</h3>
-                            <div class="project-team">
-                                <i class="fas fa-users"></i>
-                                <span th:text="${project.team.name}">Team Name</span>
-                            </div>
+                <div th:unless="${#lists.isEmpty(projects)}" class="item-grid">
+                    <div th:each="project : ${projects}" class="item-card">
+                        <h3 class="item-name" th:text="${project.name}">Project Name</h3>
+                        <div class="item-meta">
+                            <i class="fas fa-users"></i>
+                            <span th:text="${project.team.name}">Team Name</span>
                         </div>
-                        <div class="project-card-body">
-                            <div class="project-repo">
-                                <i class="fab fa-github"></i>
-                                <a th:href="${project.gitHubRepoUrl}" target="_blank" class="repo-link" 
-                                   th:text="${#strings.abbreviate(project.gitHubRepoUrl, 35)}">Repository URL</a>
-                            </div>
+                        <div class="item-meta" style="margin-bottom: 1rem;">
+                            <i class="fab fa-github"></i>
+                            <a th:href="${project.gitHubRepoUrl}" target="_blank" rel="noopener noreferrer" class="repo-link" 
+                               th:text="${#strings.abbreviate(project.gitHubRepoUrl, 35)}">Repository URL</a>
                         </div>
-                        <div class="project-card-actions">
+                        <div class="item-actions">
                             <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-eye"></i>
-                                View Details
+                                <i class="fas fa-eye"></i> Details
                             </a>
                             <a th:href="@{/tasks/project/{id}(id=${project.id})}" class="btn btn-success btn-sm">
-                                <i class="fas fa-columns"></i>
-                                Kanban Board
+                                <i class="fas fa-columns"></i> Kanban
+                            </a>
+                            <a th:href="@{/projects/{id}/analytics(id=${project.id})}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-chart-bar"></i> Analytics
                             </a>
                         </div>
                     </div>
@@ -494,12 +313,6 @@
         </div>
     </div>
     
-    <footer style="background: var(--midnight-blue); border-top: 1px solid var(--border-color); padding: 3rem 0; margin-top: 4rem;">
-        <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
-            <p style="text-align: center; color: var(--text-secondary); margin: 0; font-size: 0.875rem;">
-                &copy; 2024 Galactico. Streamline your development workflow with intelligent task tracking.
-            </p>
-        </div>
-    </footer>
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
