@@ -35,7 +35,7 @@ public class ExtensionAuthController {
         // Generate a unique state parameter for security with extension prefix
         String state = "extension_" + UUID.randomUUID().toString();
         String baseUrl = System.getenv("APP_BASE_URL") != null ? 
-            System.getenv("APP_BASE_URL") : "https://misbah7172.loca.lt";
+            System.getenv("APP_BASE_URL") : "https://galactico-app.azurewebsites.net";
         String loginUrl = baseUrl + "/oauth2/authorization/github?state=" + state;
         
         Map<String, Object> response = new HashMap<>();

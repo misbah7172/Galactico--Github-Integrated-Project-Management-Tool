@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         String baseUrl = System.getenv("APP_BASE_URL") != null ? 
-            System.getenv("APP_BASE_URL") : "https://misbah7172.loca.lt";
+            System.getenv("APP_BASE_URL") : "https://galactico-app.azurewebsites.net";
         
         registry.addMapping("/api/**")
                 .allowedOriginPatterns("http://localhost:*", baseUrl, "vscode-webview://*")

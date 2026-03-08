@@ -13,7 +13,7 @@ export class ExtensionConfig {
 
     /** Base URL of the Galactico web application */
     public static get GALACTICO_BASE_URL(): string {
-        return this.getConfig().get<string>('baseUrl', 'http://localhost:5000');
+        return this.getConfig().get<string>('baseUrl', 'https://galactico-app.azurewebsites.net');
     }
 
     /** OAuth redirect URI (server-side) */

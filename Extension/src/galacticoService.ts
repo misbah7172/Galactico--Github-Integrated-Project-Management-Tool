@@ -119,16 +119,20 @@ export class GalacticoService {
     }
 
     /**
-     * Create a formatted commit message based on task
+     * Create a formatted commit message for Galactico contribution tracking.
+     * Format: "FeatureCode : message -> username -> status"
      */
-    public formatCommitMessage(userMessage: string, task: TaskInfo): string {
-        return `[${task.id}] ${userMessage}
-
-Task: ${task.title}
-Project: ${task.projectName}
-Status: ${task.status}
-
-Description: ${task.description}`;
+    public formatCommitMessage(userMessage: string, task: TaskInfo, username: string): string {
+        // Map task status to commit status keyword
+        const statusMap: Record<string, string> = {
+            'TODO': 'todo',
+            'IN_PROGRESS': 'in-progress',
+            'DONE': 'done',
+            'COMPLETED': 'done',
+            'IN PROGRESS': 'in-progress'
+        };
+        const status = statusMap[task.status?.toUpperCase()] || 'in-progress';
+        return `${task.id} : ${userMessage} -> ${username} -> ${status}`;
     }
 
     /**
@@ -152,16 +156,27 @@ Description: ${task.description}`;
                 }
             }
 
+            // Pick status for this commit
+            const statusPick = await vscode.window.showQuickPick(
+                [
+                    { label: 'in-progress', description: 'Task is being worked on' },
+                    { label: 'done', description: 'Task is completed' },
+                    { label: 'todo', description: 'Task is planned but not started' }
+                ],
+                { placeHolder: `Set status for task ${this.selectedTask!.id}` }
+            );
+            if (!statusPick) { return false; }
+
+            // Override task status with user's choice
+            this.selectedTask!.status = statusPick.label;
+
             // Get commit message from user
             const userMessage = await vscode.window.showInputBox({
-                prompt: `Enter commit message for task ${this.selectedTask!.id}`,
-                placeHolder: 'Brief description of changes made',
+                prompt: `Commit message for ${this.selectedTask!.id}`,
+                placeHolder: 'e.g. implement login page',
                 validateInput: (value) => {
                     if (!value || value.trim().length === 0) {
                         return 'Commit message cannot be empty';
-                    }
-                    if (value.length > 100) {
-                        return 'Commit message should be under 100 characters';
                     }
                     return null;
                 }
@@ -172,8 +187,8 @@ Description: ${task.description}`;
                 return false;
             }
 
-            // Format the commit message
-            const formattedMessage = this.formatCommitMessage(userMessage, this.selectedTask!);
+            // Format: "Feature01 : login page -> misbah7172 -> in-progress"
+            const formattedMessage = this.formatCommitMessage(userMessage, this.selectedTask!, userInfo.login);
 
             // Perform git operations
             const success = await this.executeGalacticoCommitWorkflow(

@@ -1015,14 +1015,6 @@ export function activate(context: vscode.ExtensionContext) {
         await autoTrackCommitService.createAutoTrackCommit();
     });
 
-    const autoTrackQuickSprintCommand = vscode.commands.registerCommand('githubAuthExtension.autoTrackQuickSprint', async () => {
-        await autoTrackCommitService.quickSprintAssignment();
-    });
-
-    const autoTrackQuickBacklogCommand = vscode.commands.registerCommand('githubAuthExtension.autoTrackQuickBacklog', async () => {
-        await autoTrackCommitService.quickBacklogAddition();
-    });
-
     // Add all commands to context subscriptions for proper cleanup
     context.subscriptions.push(
         startAuthCommand,
@@ -1051,8 +1043,6 @@ export function activate(context: vscode.ExtensionContext) {
         gitAutoToRepoCommand,
         createRepoCommand,
         autoTrackCreateCommitCommand,
-        autoTrackQuickSprintCommand,
-        autoTrackQuickBacklogCommand,
         treeView
     );
 }

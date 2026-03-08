@@ -45,8 +45,6 @@
     "onCommand:githubAuthExtension.gitPushToRepo",
     "onCommand:githubAuthExtension.gitAutoToRepo",
     "onCommand:githubAuthExtension.autoTrackCreateCommit",
-    "onCommand:githubAuthExtension.autoTrackQuickSprint",
-    "onCommand:githubAuthExtension.autoTrackQuickBacklog",
     "onView:githubAuthView"
   ],
   "main": "./out/extension.js",
@@ -77,8 +75,6 @@
       { "command": "githubAuthExtension.gitPushToRepo", "title": "Push to Repository", "icon": "$(cloud-upload)" },
       { "command": "githubAuthExtension.gitAutoToRepo", "title": "Auto Push to Repo", "icon": "$(rocket)" },
       { "command": "githubAuthExtension.autoTrackCreateCommit", "title": "AutoTrack Create Commit", "icon": "$(git-commit)" },
-      { "command": "githubAuthExtension.autoTrackQuickSprint", "title": "Quick Sprint Assignment", "icon": "$(rocket)" },
-      { "command": "githubAuthExtension.autoTrackQuickBacklog", "title": "Quick Backlog Addition", "icon": "$(list-unordered)" },
       { "command": "githubAuthView.openItem", "title": "Open View Item", "icon": "$(eye)" }
     ],
     "viewsContainers": {
@@ -121,14 +117,6 @@
         {
           "command": "githubAuthExtension.galacticoCommit",
           "when": "true"
-        },
-        {
-          "command": "githubAuthExtension.autoTrackQuickSprint",
-          "when": "true"
-        },
-        {
-          "command": "githubAuthExtension.autoTrackQuickBacklog",
-          "when": "true"
         }
       ]
     },
@@ -137,7 +125,7 @@
       "properties": {
         "galactico.baseUrl": {
           "type": "string",
-          "default": "http://localhost:5000",
+          "default": "https://galactico-app.azurewebsites.net",
           "description": "Base URL of the running Galactico web application."
         },
         "galactico.debug": {

@@ -38,6 +38,27 @@ export class CICDService {
      */
     public async configureCICD(): Promise<void> {
         try {
+            // Check if user is authenticated and has Team Leader / Owner role
+            const userInfo = await this.galacticoAuth.getUserInfoIfAuthenticated();
+            if (!userInfo) {
+                vscode.window.showErrorMessage('Please authenticate with Galactico first.');
+                return;
+            }
+
+            const role = (userInfo as any).role?.toUpperCase() || '';
+            if (role !== 'TEAM_LEAD' && role !== 'OWNER' && role !== 'ADMIN') {
+                // Also check via API if the role isn't in the token response
+                const meResponse = await this.galacticoAuth.makeAuthenticatedRequest('/api/auth/me');
+                if (meResponse.ok) {
+                    const meData = await meResponse.json() as any;
+                    const apiRole = (meData.role || '').toUpperCase();
+                    if (apiRole !== 'TEAM_LEAD' && apiRole !== 'OWNER' && apiRole !== 'ADMIN') {
+                        vscode.window.showErrorMessage('CI/CD configuration is restricted to Team Leaders and Project Owners.');
+                        return;
+                    }
+                }
+            }
+
             // First, let user select a project
             const projects = await this.getProjects();
             if (!projects || projects.length === 0) {
