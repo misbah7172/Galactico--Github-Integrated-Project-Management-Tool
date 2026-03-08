@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'Kanban Board - ' + project.name}">Kanban Board - Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container-fluid">
+        <!-- Project Header -->
+        <div class="project-header">
+            <div class="project-title">
+                <div class="project-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h1 th:text="${project.name}">Project Galactico</h1>
+            </div>
+            <div class="project-stats">
+                <div class="stat-item">
+                    <i class="fas fa-clipboard"></i>
+                    <span th:text="${todoTasks.size() + inProgressTasks.size() + doneTasks.size()}">0</span>
+                    <span>Issues</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <span th:text="${project.team.members.size()}">0</span>
+                    <span>Members</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-code-branch"></i>
+                    <span>Real-time</span>
+                </div>
+            </div>
+            <div class="project-actions">
+                <button class="action-btn" onclick="openBacklogPanel()">
+                    <i class="fas fa-list-alt"></i>
+                    Product Backlog
+                </button>
+                <button class="action-btn" onclick="openSprintPanel()">
+                    <i class="fas fa-clock"></i>
+                    Sprint Management
+                </button>
+                <button class="action-btn" onclick="openFilterPanel()">
+                    <i class="fas fa-filter"></i>
+                    Filter
+                </button>
+                <button class="action-btn" onclick="openTimelinePanel()">
+                    <i class="fas fa-history"></i>
+                    Timeline
+                </button>
+                <button class="action-btn">
+                    <i class="fas fa-search"></i>
+                    Search
+                </button>
+                <div class="real-time-indicator">
+                    <i class="fas fa-circle" style="color: #10b981;"></i>
+                    <span>Live</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sprint Information Section -->
+        <div class="sprint-info-section" id="sprintInfoSection">
+            <div class="sprint-header">
+                <div class="sprint-details">
+                    <h3 id="currentSprintName">No Active Sprint</h3>
+                    <p id="currentSprintGoal">Select or create a sprint to start tracking progress</p>
+                </div>
+                <div class="sprint-actions">
+                    <button class="btn btn-secondary" onclick="createNewSprint()">
+                        <i class="fas fa-plus"></i> Create Sprint
+                    </button>
+                    <button class="btn btn-primary" onclick="startSprint()" id="startSprintBtn" style="display: none;">
+                        <i class="fas fa-play"></i> Start Sprint
+                    </button>
+                    <button class="btn btn-success" onclick="completeSprint()" id="completeSprintBtn" style="display: none;">
+                        <i class="fas fa-check"></i> Complete Sprint
+                    </button>
+                </div>
+            </div>
+            <div class="sprint-progress" id="sprintProgress" style="display: none;">
+                <div class="progress-item">
+                    <span>Progress:</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="sprintProgressBar"></div>
+                    </div>
+                    <span id="sprintProgressText">0%</span>
+                </div>
+                <div class="progress-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="totalStoryPoints">0</span>
+                        <span class="stat-label">Story Points</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="completedPoints">0</span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="remainingDays">0</span>
+                        <span class="stat-label">Days Left</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="kanban-board">
+            <!-- TODO Column -->
+            <div class="kanban-column todo">
+                <div class="column-header">
+                    <div class="column-header-content">
+                        <div class="column-title">
+                            <i class="fas fa-circle column-icon"></i>
+                            <h3>To Do</h3>
+                        </div>
+                        <div class="column-meta">
+                            <span class="task-count" th:text="${todoTasks.size()}">0</span>
+                            <span class="wip-limit">/ 10</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-list" data-status="TODO">
+                    <div th:if="${todoTasks.empty}" class="empty-state">
+                        <div class="empty-illustration">
+                            <i class="fas fa-clipboard"></i>
+                        </div>
+                        <p class="empty-message">No tasks to do</p>
+                        <p class="empty-submessage">Tasks will appear here when created from commits</p>
+                        <div class="commit-example">
+                            <code>Feature01: build login form -> Misbah -> todo</code>
+                        </div>
+                    </div>
+                      <div th:each="task : ${todoTasks}" 
+                         class="task-card" 
+                         th:classappend="${task.declined} ? 'declined' : ''"
+                         th:data-task-id="${task.id}"
+                         th:data-status="${task.status}"
+                         draggable="true">
+                        
+                        <div class="card-header">
+                            <div class="card-left">
+                                <div class="task-type-icon task">
+                                    <i class="fas fa-check-square"></i>
+                                </div>
+                                <span class="task-id" th:text="${task.featureCode ?: 'AT-' + task.id}">AT-123</span>
+                                <!-- Show status badge for BACKLOG tasks -->
+                                <span th:if="${task.status.name() == 'BACKLOG'}" class="status-badge backlog" title="Backlog">
+                                    <i class="fas fa-list"></i> Backlog
+                                </span>
+                                <!-- Show decline indicator -->
+                                <span th:if="${task.declined}" class="decline-badge" th:title="'Declined by ' + ${task.declinedBy?.nickname} + ' on ' + ${#temporals.format(task.declinedAt, 'MMM dd, yyyy')}">
+                                    <i class="fas fa-times-circle"></i> Declined
+                                </span>
+                            </div>
+                            <div class="card-right">
+                                <div class="priority-indicator medium"></div>
+                                <div class="card-actions">
+                                    <button class="card-action-btn" title="Quick actions">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <h4 class="task-title" th:text="${task.title}">Task Title</h4>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="card-footer-left">
+                                <div class="task-tags" th:if="${task.tags != null and !task.tags.isEmpty()}">
+                                    <span th:each="tag : ${task.tags.split(',')}" 
+                                          class="tag" 
+                                          th:text="${tag.trim()}">tag</span>
+                                </div>
+                            </div>
+                            <div class="card-footer-right">
+                                <div class="assignee-avatar" th:if="${task.assignee != null}" th:title="${task.assignee.nickname}">
+                                    <img th:src="${task.assignee.avatarUrl}" 
+                                         th:alt="${task.assignee.nickname}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="avatar-placeholder" style="display:none;" th:text="${task.assignee.nickname?.substring(0,1)?.toUpperCase()}">A</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick action menu -->
+                        <div class="quick-actions-menu">
+                            <button class="quick-action" onclick="moveTask(this, 'IN_PROGRESS')">
+                                <i class="fas fa-arrow-right"></i> Start Progress
+                            </button>
+                            <button class="quick-action" onclick="deleteTask(this)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IN_PROGRESS Column -->
+            <div class="kanban-column in-progress">
+                <div class="column-header">
+                    <div class="column-header-content">
+                        <div class="column-title">
+                            <i class="fas fa-clock column-icon"></i>
+                            <h3>In Progress</h3>
+                        </div>
+                        <div class="column-meta">
+                            <span class="task-count" th:text="${inProgressTasks.size()}">0</span>
+                            <span class="wip-limit">/ 5</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-list" data-status="IN_PROGRESS">
+                    <div th:if="${inProgressTasks.empty}" class="empty-state">
+                        <div class="empty-illustration">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <p class="empty-message">No tasks in progress</p>
+                        <p class="empty-submessage">Tasks move here when work begins</p>
+                        <div class="commit-example">
+                            <code>Feature01: added form validation -> Rakib</code>
+                        </div>
+                    </div>
+                    
+                    <div th:each="task : ${inProgressTasks}" 
+                         class="task-card" 
+                         th:data-task-id="${task.id}"
+                         draggable="true">
+                        
+                        <div class="card-header">
+                            <div class="card-left">
+                                <div class="task-type-icon task">
+                                    <i class="fas fa-check-square"></i>
+                                </div>
+                                <span class="task-id" th:text="${task.featureCode ?: 'AT-' + task.id}">AT-123</span>
+                            </div>
+                            <div class="card-right">
+                                <div class="priority-indicator medium"></div>
+                                <div class="card-actions">
+                                    <button class="card-action-btn" title="Quick actions">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <h4 class="task-title" th:text="${task.title}">Task Title</h4>
+                            
+                            <!-- Progress indicator for in-progress tasks -->
+                            <div class="progress-container">
+                                <div class="progress-label">
+                                    <span>In Progress</span>
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="card-footer-left">
+                                <div class="task-tags" th:if="${task.tags != null and !task.tags.isEmpty()}">
+                                    <span th:each="tag : ${task.tags.split(',')}" 
+                                          class="tag" 
+                                          th:text="${tag.trim()}">tag</span>
+                                </div>
+                            </div>
+                            <div class="card-footer-right">
+                                <div class="assignee-avatar" th:if="${task.assignee != null}" th:title="${task.assignee.nickname}">
+                                    <img th:src="${task.assignee.avatarUrl}" 
+                                         th:alt="${task.assignee.nickname}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="avatar-placeholder" style="display:none;" th:text="${task.assignee.nickname?.substring(0,1)?.toUpperCase()}">A</div>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Quick action menu -->
+                        <div class="quick-actions-menu">
+                            <button class="quick-action" onclick="moveTask(this, 'DONE')">
+                                <i class="fas fa-check"></i> Mark Done
+                            </button>
+                            <button class="quick-action" onclick="moveTask(this, 'TODO')">
+                                <i class="fas fa-arrow-left"></i> Move to To Do
+                            </button>
+                            <!-- Team Leader Actions -->
+                            <div sec:authorize="hasRole('TEAM_LEADER')" class="leader-actions">
+                                <button class="quick-action decline-action" onclick="declineTask(this)" title="Decline this commit - Team Leader only">
+                                    <i class="fas fa-times-circle"></i> Decline Commit
+                                </button>
+                            </div>
+                            <button class="quick-action" onclick="deleteTask(this)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DONE Column -->
+            <div class="kanban-column done">
+                <div class="column-header">
+                    <div class="column-header-content">
+                        <div class="column-title">
+                            <i class="fas fa-check-circle column-icon"></i>
+                            <h3>Done</h3>
+                        </div>
+                        <div class="column-meta">
+                            <span class="task-count" th:text="${doneTasks.size()}">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-list" data-status="DONE">
+                    <div th:if="${doneTasks.empty}" class="empty-state">
+                        <div class="empty-illustration">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <p class="empty-message">No completed tasks yet</p>
+                        <p class="empty-submessage">Completed tasks will appear here</p>
+                        <div class="commit-example">
+                            <code>Feature01: login completed -> Rakib -> done</code>
+                        </div>
+                    </div>
+                    
+                    <div th:each="task : ${doneTasks}" 
+                         class="task-card completed" 
+                         th:data-task-id="${task.id}"
+                         draggable="true">
+                        
+                        <div class="card-header">
+                            <div class="card-left">
+                                <div class="task-type-icon task">
+                                    <i class="fas fa-check-square"></i>
+                                </div>
+                                <span class="task-id" th:text="${task.featureCode ?: 'AT-' + task.id}">AT-123</span>
+                            </div>
+                            <div class="card-right">
+                                <div class="completion-badge">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="card-action-btn" title="Quick actions">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <h4 class="task-title" th:text="${task.title}">Task Title</h4>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="card-footer-left">
+                                <div class="task-tags" th:if="${task.tags != null and !task.tags.isEmpty()}">
+                                    <span th:each="tag : ${task.tags.split(',')}" 
+                                          class="tag" 
+                                          th:text="${tag.trim()}">tag</span>
+                                </div>
+                                <div class="completion-date" th:if="${task.updatedAt}">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span th:text="${#temporals.format(task.updatedAt, 'MMM dd')}">Dec 15</span>
+                                </div>
+                            </div>
+                            <div class="card-footer-right">
+                                <div class="assignee-avatar" th:if="${task.assignee != null}" th:title="${task.assignee.nickname}">
+                                    <img th:src="${task.assignee.avatarUrl}" 
+                                         th:alt="${task.assignee.nickname}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="avatar-placeholder" style="display:none;" th:text="${task.assignee.nickname?.substring(0,1)?.toUpperCase()}">A</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick action menu -->
+                        <div class="quick-actions-menu">
+                            <button class="quick-action" onclick="moveTask(this, 'IN_PROGRESS')">
+                                <i class="fas fa-undo"></i> Reopen
+                            </button>
+                            <button class="quick-action" onclick="deleteTask(this)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Status Info -->
+        <div class="realtime-info">
+            <div class="info-section">
+                <h4><i class="fas fa-info-circle"></i> How It Works</h4>
+                <p>This Kanban board is fully real-time and driven by commit messages. Tasks are automatically created and updated based on your Git commits.</p>
+            </div>
+            <div class="info-section">
+                <h4><i class="fas fa-code-branch"></i> Commit Examples</h4>
+                <div class="commit-examples">
+                    <div class="example">
+                        <strong>Create Task:</strong>
+                        <code>Feature01: build login form -> Misbah -> todo</code>
+                    </div>
+                    <div class="example">
+                        <strong>Start Work:</strong>
+                        <code>Feature01: added form validation -> Misbah</code>
+                    </div>
+                    <div class="example">
+                        <strong>Complete Task:</strong>
+                        <code>Feature01: login completed -> Misbah -> done</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+      <!-- JavaScript -->
+    <script th:src="@{/js/kanban.js}"></script>
+
+    <!-- Additional JavaScript for Team Leader Features -->
+    <script>
+        // Function to decline a task commit (Team Leader only)
+        function declineTask(button) {
+            const taskCard = button.closest('.task-card');
+            const taskId = taskCard.getAttribute('data-task-id');
+            
+            if (confirm('Are you sure you want to decline this commit?\n\nThis will move the task back to "To Do" and notify the team member that their work needs to be improved.')) {
+                button.textContent = 'Declining...';
+                button.disabled = true;
+                
+                const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                
+                fetch(`/api/tasks/${taskId}/decline`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [header]: token
+                    },
+                    body: JSON.stringify({
+                        reason: 'Task does not meet quality standards. Please review and improve before resubmitting.'
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showKanbanNotification('Task declined successfully.', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        throw new Error('Failed to decline task');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error declining task:', error);
+                    showKanbanNotification('Failed to decline task. Please try again.', 'error');
+                    button.textContent = 'Decline Commit';
+                    button.disabled = false;
+                });
+            }
+        }
+        
+        // Safe notification function (no innerHTML with user data)
+        function showKanbanNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = 'kanban-notification ' + type;
+            const icon = document.createElement('i');
+            icon.className = 'fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle');
+            const span = document.createElement('span');
+            span.textContent = message;
+            notification.appendChild(icon);
+            notification.appendChild(span);
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Soft auto-refresh every 60 seconds (non-disruptive)
+        setInterval(() => {
+            if (document.visibilityState === 'visible' && !document.querySelector('.dragging') && !document.querySelector('.side-panel.open')) {
+                location.reload();
+            }
+        }, 60000);
+    </script>
+    
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%) !important;
+            color: var(--text-primary) !important;
+            min-height: 100vh !important;
+            line-height: 1.6 !important;
+        }
+
+        .container-fluid { max-width: 100%; padding: 0 1rem; }
+
+        /* ── Project Header ── */
+        .project-header {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,.3);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1.5rem;
+        }
+        .project-title { display: flex; align-items: center; gap: 1rem; }
+        .project-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--soft-violet));
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.5rem;
+        }
+        .project-title h1 { color: var(--text-primary); font-size: 2rem; font-weight: 700; margin: 0; }
+        .project-stats { display: flex; gap: 2rem; align-items: center; }
+        .stat-item { display: flex; align-items: center; gap: .5rem; color: var(--text-secondary); font-size: .875rem; }
+        .stat-item i { color: var(--neon-cyan); }
+        .project-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+        .action-btn {
+            padding: .75rem 1.5rem; background: rgba(30,41,59,.5); border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all .3s ease;
+            display: flex; align-items: center; gap: .5rem; font-size: .875rem; backdrop-filter: blur(20px);
+        }
+        .action-btn:hover { background: rgba(99,102,241,.1); color: var(--text-primary); border-color: var(--neon-cyan); transform: translateY(-2px); }
+        .real-time-indicator {
+            display: flex; align-items: center; gap: .5rem;
+            background: rgba(16,185,129,.1); border: 1px solid var(--success);
+            padding: .5rem 1rem; border-radius: 20px; color: var(--success); font-size: .875rem; font-weight: 500;
+        }
+
+        /* ── Sprint Section ── */
+        .sprint-info-section {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 2rem; margin: 0 0 2rem 0; box-shadow: 0 8px 32px rgba(0,0,0,.3);
+        }
+        .sprint-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 2rem; }
+        .sprint-details h3 { color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin-bottom: .5rem; }
+        .sprint-details p { color: var(--text-secondary); margin: 0; }
+        .sprint-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+        .sprint-progress { display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+        .progress-item { flex: 1; display: flex; align-items: center; gap: 1rem; }
+        .progress-bar { width: 100%; height: 8px; background: rgba(30,41,59,.5); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--neon-cyan), var(--soft-violet)); transition: width .5s ease; }
+        .progress-stats { display: flex; gap: 2rem; margin-top: 1rem; }
+        .stat { text-align: center; }
+        .stat-number { display: block; font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .stat-label { font-size: .75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+
+        /* ── Kanban Board ── */
+        .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 2rem; min-height: 70vh; }
+        .kanban-column {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.3); display: flex; flex-direction: column; min-height: 600px;
+        }
+        .column-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .column-header-content { display: flex; justify-content: space-between; align-items: center; }
+        .column-title { display: flex; align-items: center; gap: .75rem; }
+        .column-title h3 { color: var(--text-primary); font-size: 1.125rem; font-weight: 600; margin: 0; }
+        .column-icon { font-size: .875rem; }
+        .todo .column-icon { color: var(--info); }
+        .in-progress .column-icon { color: var(--warning); }
+        .done .column-icon { color: var(--success); }
+        .column-meta { display: flex; align-items: center; gap: .25rem; color: var(--text-secondary); font-size: .875rem; }
+        .task-count { font-weight: 600; color: var(--text-primary); }
+
+        /* ── Task Cards ── */
+        .task-list { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        .task-card {
+            background: rgba(15,23,42,.7); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem;
+            transition: all .3s ease; cursor: grab; position: relative;
+        }
+        .task-card:hover { border-color: var(--neon-cyan); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+        .task-card.dragging { transform: rotate(5deg); cursor: grabbing; box-shadow: 0 12px 32px rgba(0,0,0,.5); }
+        .task-card.declined { border-left: 4px solid var(--danger); background: rgba(239,68,68,.1); }
+        .task-card.declined .task-title::after { content: " (Declined)"; color: var(--danger); font-size: .8em; font-weight: normal; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; gap: 1rem; }
+        .card-left, .card-right { display: flex; align-items: center; gap: .5rem; }
+        .task-type-icon { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: .7rem; }
+        .task-type-icon.task { background: rgba(99,102,241,.2); color: var(--indigo); }
+        .task-id { font-size: .75rem; color: var(--text-secondary); font-weight: 600; }
+        .task-feature-code {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white; padding: .25rem .75rem; border-radius: 6px; font-size: .75rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: .025em;
+        }
+        .task-title { color: var(--text-primary); font-size: 1rem; font-weight: 600; margin: .5rem 0; line-height: 1.4; }
+        .card-content { margin-bottom: .75rem; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .card-footer-left { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+        .card-footer-right { display: flex; align-items: center; gap: .5rem; }
+        .tag { background: rgba(99,102,241,.15); color: var(--neon-cyan); padding: .15rem .5rem; border-radius: 4px; font-size: .7rem; }
+        .assignee-avatar { width: 24px; height: 24px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-color); }
+        .assignee-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-placeholder {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: linear-gradient(45deg, var(--indigo), var(--soft-violet));
+            display: flex; align-items: center; justify-content: center; color: white; font-size: .75rem; font-weight: 600;
+        }
+        .priority-indicator { width: 8px; height: 8px; border-radius: 50%; }
+        .priority-indicator.medium { background: var(--warning); }
+        .priority-indicator.high { background: var(--danger); }
+        .priority-indicator.low { background: var(--success); }
+        .completion-badge { color: var(--success); font-size: .875rem; }
+        .completion-date { display: flex; align-items: center; gap: .25rem; font-size: .75rem; color: var(--text-secondary); }
+        .progress-container { margin-top: .5rem; }
+        .progress-label { display: flex; align-items: center; gap: .5rem; font-size: .75rem; color: var(--warning); }
+        .status-badge { padding: .15rem .5rem; border-radius: 10px; font-size: .7rem; font-weight: 600; }
+        .status-badge.backlog { background: rgba(99,102,241,.15); color: var(--indigo); }
+        .decline-badge {
+            background: rgba(239,68,68,.1); color: var(--danger); padding: .25rem .75rem; border-radius: 12px;
+            font-size: .7rem; font-weight: 600; margin-left: .5rem; border: 1px solid var(--danger);
+            display: inline-flex; align-items: center; gap: .25rem;
+        }
+        .team-leader-badge {
+            background: linear-gradient(135deg, var(--warning), #d97706); color: white;
+            padding: .25rem .75rem; border-radius: 12px; font-size: .75rem; font-weight: 600; margin-left: .5rem;
+        }
+
+        /* ── Quick Actions Menu ── */
+        .quick-actions-menu { display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 1rem; }
+        .quick-action {
+            display: flex; align-items: center; gap: .5rem; width: 100%; padding: .5rem .75rem;
+            background: transparent; border: none; color: var(--text-secondary); cursor: pointer;
+            font-size: .8rem; border-radius: 6px; transition: all .2s ease;
+        }
+        .quick-action:hover { background: rgba(99,102,241,.1); color: var(--text-primary); }
+        .card-action-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: .25rem; }
+        .card-action-btn:hover { color: var(--text-primary); }
+        .leader-actions { border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; display: flex; gap: .5rem; }
+        .decline-action { background: rgba(239,68,68,.1) !important; color: var(--danger) !important; border: 1px solid var(--danger) !important; }
+        .decline-action:hover { background: rgba(239,68,68,.2) !important; }
+
+        /* ── Empty States ── */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 1rem; color: var(--text-secondary); min-height: 300px; }
+        .empty-illustration { font-size: 3rem; color: var(--text-secondary); opacity: .5; margin-bottom: 1rem; }
+        .empty-message { font-size: 1.125rem; font-weight: 500; color: var(--text-primary); margin-bottom: .5rem; }
+        .empty-submessage { margin-bottom: 1rem; }
+        .commit-example { background: rgba(30,41,59,.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; font-family: 'Monaco','Menlo','Ubuntu Mono',monospace; }
+        .commit-example code { color: var(--neon-cyan); font-size: .875rem; }
+
+        /* ── Real-time Info ── */
+        .realtime-info { background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .info-section h4 { color: var(--text-primary); margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+        .info-section p { color: var(--text-secondary); font-size: .875rem; }
+        .commit-examples { display: flex; flex-direction: column; gap: .75rem; }
+        .example { background: rgba(15,23,42,.5); border: 1px solid var(--border-color); border-radius: 8px; padding: .75rem 1rem; }
+        .example strong { color: var(--text-primary); font-size: .8rem; display: block; margin-bottom: .25rem; }
+        .example code { color: var(--neon-cyan); font-size: .8rem; }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: .75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600;
+            text-decoration: none; display: inline-flex; align-items: center; gap: .5rem;
+            transition: all .3s ease; cursor: pointer; font-size: .875rem;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+        .btn-sm { padding: .5rem .75rem; font-size: .8rem; }
+        .btn-primary { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); color: white; border: 1px solid var(--indigo); }
+        .btn-primary:hover { box-shadow: 0 8px 24px rgba(99,102,241,.4); }
+        .btn-secondary { background: rgba(100,116,139,.2); color: var(--text-primary); border: 1px solid rgba(148,163,184,.3); }
+        .btn-secondary:hover { background: rgba(100,116,139,.4); }
+        .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: white; border: 1px solid var(--success); }
+        .btn-success:hover { box-shadow: 0 8px 24px rgba(16,185,129,.4); }
+        .btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-outline:hover { background: rgba(30,41,59,.5); border-color: var(--neon-cyan); }
+
+        /* ── Forms (dark theme) ── */
+        .form-control {
+            width: 100%; padding: .75rem; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: .875rem; background: rgba(15,23,42,.7); color: var(--text-primary);
+            backdrop-filter: blur(20px); transition: all .3s ease;
+        }
+        .form-control::placeholder { color: var(--text-secondary); opacity: .7; }
+        .form-control:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+        .form-label { display: block; margin-bottom: .5rem; font-size: .875rem; font-weight: 500; color: var(--text-primary); }
+
+        /* ── Badge ── */
+        .badge { display: inline-block; padding: .375rem .75rem; font-size: .75rem; font-weight: 600; line-height: 1; border-radius: 6px; text-transform: uppercase; letter-spacing: .025em; }
+        .badge-primary { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); color: white; }
+        .priority-badge { padding: .25rem .5rem; border-radius: 12px; font-size: .7rem; font-weight: 600; }
+        .priority-low { background: rgba(16,185,129,.15); color: var(--success); }
+        .priority-medium { background: rgba(245,158,11,.15); color: var(--warning); }
+        .priority-high { background: rgba(239,68,68,.15); color: var(--danger); }
+        .priority-critical { background: rgba(239,68,68,.25); color: #f87171; }
+
+        /* ── Notifications ── */
+        .kanban-notification {
+            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 1rem 1.5rem; box-shadow: 0 12px 32px rgba(0,0,0,.4);
+            transform: translateX(400px); transition: transform .3s ease;
+            display: flex; align-items: center; gap: .75rem; min-width: 300px; color: var(--text-primary);
+        }
+        .kanban-notification.show { transform: translateX(0); }
+        .kanban-notification.success { border-left: 4px solid var(--success); }
+        .kanban-notification.success i { color: var(--success); }
+        .kanban-notification.error { border-left: 4px solid var(--danger); }
+        .kanban-notification.error i { color: var(--danger); }
+
+        /* ── Side Panels (dark theme) ── */
+        .side-panel {
+            position: fixed; top: 0; right: -420px; width: 420px; height: 100vh;
+            background: var(--slate-900); border-left: 1px solid var(--border-color);
+            box-shadow: -4px 0 24px rgba(0,0,0,.5); transition: right .3s ease;
+            z-index: 1000; overflow-y: auto; color: var(--text-primary);
+        }
+        .side-panel.open { right: 0; }
+        .side-panel-header {
+            padding: 1.5rem; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15,23,42,.5); position: sticky; top: 0; z-index: 1;
+        }
+        .side-panel-header h3 { color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: .5rem; }
+        .side-panel-content { padding: 1.5rem; }
+        .close-panel { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); transition: color .3s ease; }
+        .close-panel:hover { color: var(--text-primary); }
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); z-index: 999; opacity: 0; visibility: hidden; transition: all .3s ease; }
+        .overlay.show { opacity: 1; visibility: visible; }
+
+        /* Side panel internal overrides for dark theme */
+        .side-panel .backlog-stats,
+        .side-panel .sprint-info-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        .side-panel .backlog-stats span,
+        .side-panel .stats-row span { color: var(--text-secondary); }
+        .side-panel .stats-row span:last-child { color: var(--text-primary); font-weight: 600; }
+        .side-panel .sprint-info-card h4 { color: var(--text-primary); }
+        .side-panel .sprint-info-card p { color: var(--text-secondary); }
+        .side-panel .metric-card { background: rgba(15,23,42,.5); border: 1px solid var(--border-color); border-radius: 6px; padding: .75rem; text-align: center; }
+        .side-panel .metric-card div:first-child { color: var(--neon-cyan); }
+        .side-panel .metric-card div:last-child { color: var(--text-secondary); font-size: .75rem; }
+        .side-panel select,
+        .side-panel input[type="text"],
+        .side-panel input[type="date"],
+        .side-panel textarea {
+            background: rgba(15,23,42,.7); color: var(--text-primary); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: .75rem; font-size: .95rem; width: 100%;
+        }
+        .side-panel select:focus,
+        .side-panel input:focus,
+        .side-panel textarea:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+        .side-panel label { color: var(--text-primary); }
+
+        /* Backlog items in side panel */
+        .backlog-item {
+            background: rgba(15,23,42,.5); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 1rem; margin-bottom: .75rem; cursor: grab; transition: all .2s ease;
+        }
+        .backlog-item:hover { border-color: var(--neon-cyan); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+        .backlog-item.selected { border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(99,102,241,.2); }
+        .backlog-item-title { font-weight: 600; color: var(--text-primary); }
+
+        /* Timeline in side panel */
+        .side-panel .timeline-filters { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+        .side-panel .timeline-filters h4 { color: var(--text-primary); }
+        .side-panel .timeline-filters label { color: var(--text-primary); }
+        .side-panel .timeline-stats { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: white; }
+        .timeline-item { display: flex; margin-bottom: 1.5rem; position: relative; padding-left: 3rem; }
+        .timeline-item::before { content: ''; position: absolute; left: 1rem; top: 0; bottom: -1.5rem; width: 2px; background: var(--border-color); }
+        .timeline-item:last-child::before { bottom: 1rem; }
+        .timeline-avatar {
+            position: absolute; left: .25rem; top: .25rem; width: 1.5rem; height: 1.5rem;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: .7rem; font-weight: 600; z-index: 1;
+        }
+        .timeline-content { flex: 1; background: var(--card-bg); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); }
+        .timeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+        .timeline-user { font-weight: 600; color: var(--text-primary); }
+        .timeline-time { font-size: .8rem; color: var(--text-secondary); }
+        .timeline-action { color: var(--text-secondary); font-size: .9rem; }
+        .timeline-action-icon { display: inline-block; width: 1.2rem; height: 1.2rem; border-radius: 3px; text-align: center; line-height: 1.2rem; font-size: .7rem; margin-right: .5rem; color: white; }
+        .timeline-empty { text-align: center; color: var(--text-secondary); padding: 3rem 1rem; }
+        .timeline-empty h3 { color: var(--text-primary); }
+
+        /* ── Modals (dark theme) ── */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.6); display: flex; justify-content: center; align-items: center;
+            z-index: 9999; backdrop-filter: blur(4px);
+        }
+        .modal-content.jira-modal {
+            background: var(--slate-800); border: 1px solid var(--border-color);
+            border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.5);
+            max-height: 90vh; overflow-y: auto; color: var(--text-primary);
+        }
+        .modal-content .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.5rem; border-bottom: 1px solid var(--border-color);
+        }
+        .modal-content .modal-header h3 { color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: .5rem; }
+        .modal-content .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+        .modal-content .close-modal:hover { color: var(--text-primary); }
+        .modal-content form { padding: 1.5rem; }
+        .modal-content .form-group { margin-bottom: 1.5rem; }
+        .modal-content .form-group label { display: block; margin-bottom: .5rem; font-weight: 600; color: var(--text-primary); }
+        .modal-content .form-group input,
+        .modal-content .form-group select,
+        .modal-content .form-group textarea {
+            width: 100%; padding: .75rem; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: .95rem; background: rgba(15,23,42,.7); color: var(--text-primary);
+        }
+        .modal-content .form-group input:focus,
+        .modal-content .form-group select:focus,
+        .modal-content .form-group textarea:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+        .modal-content .form-row { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+        .modal-content .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+        .jira-btn { background: linear-gradient(135deg, var(--indigo), var(--soft-violet)); border: none; border-radius: 8px; padding: .75rem 1.5rem; font-weight: 600; color: white; transition: all .2s ease; }
+        .jira-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,.4); }
+
+        /* ── Spinner ── */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .kanban-board { grid-template-columns: 1fr; gap: 1rem; }
+            .project-header { padding: 1.5rem; flex-direction: column; align-items: flex-start; }
+            .project-stats { width: 100%; justify-content: space-between; }
+            .sprint-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .side-panel { width: 90%; right: -90%; }
+            .realtime-info { grid-template-columns: 1fr; }
+            .modal-content.jira-modal { width: 90% !important; margin: 1rem; }
+            .modal-content .form-row { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 480px) {
+            .project-stats { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .action-btn { padding: .5rem 1rem; font-size: .8rem; }
+            .task-card { padding: 1rem; }
+        }
+    </style>
+
+    <!-- Side Panels -->
+    <div class="overlay" id="overlay" onclick="closePanels()"></div>
+
+    <!-- Product Backlog Panel -->
+    <div class="side-panel" id="backlogPanel">
+        <div class="side-panel-header">
+            <h3><i class="fas fa-list-alt"></i> Product Backlog</h3>
+            <button class="close-panel" onclick="closePanels()">×</button>
+        </div>
+        <div class="side-panel-content">
+            <div class="panel-actions" style="margin-bottom: 1.5rem;">
+                <button class="btn btn-primary jira-btn" onclick="openBacklogItemModal()" style="width: 100%;">
+                    <i class="fas fa-plus"></i> Create Issue
+                </button>
+            </div>
+            
+            <!-- Backlog Statistics -->
+            <div class="backlog-stats" style="margin-bottom: 1.5rem;">
+                <div class="stats-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Total Issues:</span>
+                    <span id="totalBacklogItems">0</span>
+                </div>
+                <div class="stats-row" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Story Points:</span>
+                    <span id="totalStoryPoints">0</span>
+                </div>
+                <div class="stats-row" style="display: flex; justify-content: space-between;">
+                    <span>Ready for Sprint:</span>
+                    <span id="readyForSprint" style="color: var(--success);">0</span>
+                </div>
+            </div>
+
+            <div id="backlogItems">
+                <div style="text-align: center; color: #6b7280; padding: 2rem;">
+                    <i class="fas fa-list-alt" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>Loading backlog items...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sprint Management Panel -->
+    <div class="side-panel" id="sprintPanel">
+        <div class="side-panel-header">
+            <h3><i class="fas fa-sync-alt"></i> Sprint Management</h3>
+            <button class="close-panel" onclick="closePanels()">×</button>
+        </div>
+        <div class="side-panel-content">
+            <div class="sprint-selector" style="margin-bottom: 1.5rem;">
+                <label for="sprintSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Active Sprint:</label>
+                <select id="sprintSelect">
+                    <option value="">No Sprint Selected</option>
+                </select>
+            </div>
+            
+            <div class="panel-actions" style="margin-bottom: 1.5rem;">
+                <button class="btn btn-primary jira-btn" onclick="openSprintModal()" style="width: 100%; margin-bottom: 0.75rem;">
+                    <i class="fas fa-plus"></i> Create Sprint
+                </button>
+                <button class="btn btn-success jira-btn" onclick="startCurrentSprint()" style="width: 100%; margin-bottom: 0.75rem;">
+                    <i class="fas fa-play"></i> Start Sprint
+                </button>
+                <button class="btn btn-secondary jira-btn" onclick="completeSprint()" style="width: 100%;">
+                    <i class="fas fa-flag-checkered"></i> Complete Sprint
+                </button>
+            </div>
+
+            <div id="sprintDetails">
+                <div id="sprintDetailsContent" style="display: none;">
+                    <div class="sprint-info-card">
+                        <h4 id="currentSprintName" style="margin: 0 0 0.5rem 0;">Sprint Name</h4>
+                        <p id="currentSprintGoal" style="margin: 0 0 1rem 0; font-size: 0.9rem;">Sprint Goal</p>
+                        
+                        <div class="sprint-progress" style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.9rem; font-weight: 600;">Progress</span>
+                                <span id="sprintProgressText" style="font-size: 0.9rem;">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="sprintProgressBar" class="progress-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="sprint-metrics" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="metric-card">
+                                <div id="sprintTotalTasks" style="font-size: 1.2rem; font-weight: 700;">0</div>
+                                <div>Total Tasks</div>
+                            </div>
+                            <div class="metric-card">
+                                <div id="sprintCompletedTasks" style="font-size: 1.2rem; font-weight: 700;">0</div>
+                                <div>Completed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="noSprintSelected" style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-rocket" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5; display: block; color: var(--text-secondary);"></i>
+                    <p style="color: var(--text-secondary);">Select or create a sprint to get started</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Panel -->
+    <div class="side-panel" id="timelinePanel">
+        <div class="side-panel-header">
+            <h3><i class="fas fa-history"></i> Activity Timeline</h3>
+            <button class="close-panel" onclick="closePanels()">×</button>
+        </div>
+        <div class="side-panel-content">
+            <!-- Jira-like Timeline Filters -->
+            <div class="timeline-filters" style="margin-bottom: 1.5rem;">
+                <div class="filter-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <h4 style="margin: 0; font-size: 0.95rem;">
+                        <i class="fas fa-filter" style="margin-right: 0.5rem; color: var(--neon-cyan);"></i>
+                        Filters
+                    </h4>
+                    <button class="btn btn-sm btn-outline" onclick="clearTimelineFilters()">Clear</button>
+                </div>
+                
+                <div class="filter-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Activity Type</label>
+                    <select id="timelineActionFilter" onchange="applyTimelineFilters()">
+                        <option value="">All Activities</option>
+                        <option value="TASK_CREATED">Task Created</option>
+                        <option value="STATUS_CHANGED">Status Changed</option>
+                        <option value="ASSIGNED">Assignment</option>
+                        <option value="PRIORITY_CHANGED">Priority Changed</option>
+                        <option value="SPRINT_CHANGED">Sprint Changed</option>
+                        <option value="COMMENT_ADDED">Comment Added</option>
+                    </select>
+                </div>
+                
+                <div class="date-range-group">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Date Range</label>
+                    <div class="date-range" style="display: flex; gap: 0.5rem;">
+                        <input type="date" id="timelineStartDate" onchange="applyTimelineFilters()">
+                        <input type="date" id="timelineEndDate" onchange="applyTimelineFilters()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline Statistics -->
+            <div class="timeline-stats" style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 1rem 0; font-size: 0.95rem; display: flex; align-items: center;">
+                    <i class="fas fa-chart-line" style="margin-right: 0.5rem;"></i>
+                    Activity Overview (Last 30 days)
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div style="text-align: center;">
+                        <div id="totalActivities" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">0</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Total Events</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div id="todayActivities" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">0</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Today's Activity</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline Content -->
+            <div id="timelineContent">
+                <div style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+                    <div style="width: 2rem; height: 2rem; border: 3px solid var(--border-color); border-top: 3px solid var(--neon-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                    <p style="margin: 0; font-size: 0.95rem;">Loading activity timeline...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // Global variables
+        const projectId = /*[[${project.id}]]*/ 1;
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+
+        let currentSprint = null;
+        let backlogItems = [];
+        let sprints = [];
+
+        // Initialize enhanced Kanban features
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSprintData();
+            loadBacklogData();
+            initializeDragAndDrop();
+        });
+
+        // Panel Management
+        function openBacklogPanel() {
+            document.getElementById('backlogPanel').classList.add('open');
+            document.getElementById('overlay').classList.add('show');
+            loadBacklogData();
+        }
+
+        function openSprintPanel() {
+            document.getElementById('sprintPanel').classList.add('open');
+            document.getElementById('overlay').classList.add('show');
+            loadSprintData();
+        }
+
+        function openTimelinePanel() {
+            document.getElementById('timelinePanel').classList.add('open');
+            document.getElementById('overlay').classList.add('show');
+            loadTimelineData();
+        }
+
+        function closePanels() {
+            document.querySelectorAll('.side-panel').forEach(panel => panel.classList.remove('open'));
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // Sprint Management
+        function loadSprintData() {
+            fetch(`/api/v1/sprints/project/${projectId}`, {
+                headers: { [csrfHeader]: csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                sprints = data.content || [];
+                updateSprintSelector();
+                updateCurrentSprintDisplay();
+            })
+            .catch(error => console.error('Error loading sprints:', error));
+        }
+
+        function updateSprintSelector() {
+            const select = document.getElementById('sprintSelect');
+            select.innerHTML = '<option value="">No Sprint Selected</option>';
+            
+            sprints.forEach(sprint => {
+                const option = document.createElement('option');
+                option.value = sprint.id;
+                option.textContent = sprint.name;
+                if (sprint.status === 'ACTIVE') {
+                    option.selected = true;
+                    currentSprint = sprint;
+                }
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', function() {
+                const selectedSprintId = this.value;
+                currentSprint = sprints.find(s => s.id == selectedSprintId) || null;
+                updateCurrentSprintDisplay();
+            });
+        }
+
+        function updateCurrentSprintDisplay() {
+            const detailsContent = document.getElementById('sprintDetailsContent');
+            const noSprintDiv = document.getElementById('noSprintSelected');
+            
+            if (currentSprint) {
+                // Show sprint details
+                detailsContent.style.display = 'block';
+                noSprintDiv.style.display = 'none';
+                
+                document.getElementById('currentSprintName').textContent = currentSprint.name;
+                document.getElementById('currentSprintGoal').textContent = currentSprint.sprintGoal || 'No specific goal defined';
+                
+                // Update progress with real data
+                updateSprintProgress(currentSprint);
+            } else {
+                // Show no sprint selected message
+                detailsContent.style.display = 'none';
+                noSprintDiv.style.display = 'block';
+            }
+        }
+
+        function updateSprintProgress(sprint) {
+            // Calculate progress from actual task counts on the board
+            const allCards = document.querySelectorAll('.task-card');
+            const doneCards = document.querySelectorAll('#doneColumn .task-card, [data-status="DONE"] .task-card');
+            const totalPoints = allCards.length;
+            const completedPoints = doneCards.length;
+            const progress = totalPoints > 0 ? Math.round((completedPoints / totalPoints) * 100) : 0;
+
+            document.getElementById('sprintProgressBar').style.width = progress + '%';
+            document.getElementById('sprintProgressText').textContent = progress + '%';
+            document.getElementById('totalStoryPoints').textContent = totalPoints;
+            document.getElementById('completedPoints').textContent = completedPoints;
+            
+            // Calculate remaining days
+            if (sprint.endDate) {
+                const endDate = new Date(sprint.endDate);
+                const today = new Date();
+                const diffTime = endDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                document.getElementById('remainingDays').textContent = Math.max(0, diffDays);
+            }
+        }
+
+        // Backlog Management
+        function loadBacklogData() {
+            fetch(`/api/backlog/project/${projectId}?page=0&size=50`, {
+                headers: { [csrfHeader]: csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                backlogItems = data.content || [];
+                displayBacklogItems();
+            })
+            .catch(error => {
+                console.error('Error loading backlog:', error);
+                document.getElementById('backlogItems').innerHTML = 
+                    '<p style="text-align: center; color: var(--text-secondary);">Failed to load backlog items</p>';
+            });
+        }
+
+        function displayBacklogItems() {
+            const container = document.getElementById('backlogItems');
+            
+            if (backlogItems.length === 0) {
+                container.innerHTML = `
+                    <div class="backlog-empty" style="text-align: center; color: var(--text-secondary); padding: 3rem 1rem;">
+                        <div style="width: 3rem; height: 3rem; margin: 0 auto 1rem; background: var(--slate-700); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-list-alt" style="font-size: 1.2rem; color: var(--text-secondary);"></i>
+                        </div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">Product Backlog is Empty</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Create your first issue to start building your product backlog.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Update statistics
+            updateBacklogStats(backlogItems);
+
+            const itemsHtml = backlogItems.map(item => {
+                const safeTitle = (item.title || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                const rawDesc = item.description || '';
+                const safeDesc = rawDesc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                const truncDesc = safeDesc.length > 100 ? safeDesc.substring(0, 100) + '...' : safeDesc;
+                return `
+                <div class="backlog-item" draggable="true" data-item-id="${item.id}" onclick="selectBacklogItem(${item.id})">
+                    <div class="backlog-item-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <div class="issue-type-icon" style="width: 1.5rem; height: 1.5rem; background: var(--indigo); border-radius: 3px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 600;">
+                            ${getIssueTypeIcon(item.issueType || 'TASK')}
+                        </div>
+                        <div class="backlog-item-title" style="flex: 1; font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">${safeTitle}</div>
+                        <div class="story-points-badge" style="background: var(--slate-700); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                            ${item.storyPoints} SP
+                        </div>
+                    </div>
+                    
+                    ${rawDesc ? `
+                        <div class="backlog-item-description" style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.75rem; line-height: 1.4;">
+                            ${truncDesc}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="backlog-item-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="backlog-item-meta" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="priority-badge priority-${(item.priorityLevel || 'MEDIUM').toLowerCase()}">${getPriorityIcon(item.priorityLevel || 'MEDIUM')} ${(item.priorityLevel || 'Medium').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>
+                            <span class="status-badge" style="background: rgba(6, 182, 212, 0.15); color: var(--neon-cyan); padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">
+                                ${(item.backlogStatus || 'TODO').replace('_', ' ')}
+                            </span>
+                        </div>
+                        <div class="backlog-actions" style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-sm" onclick="editBacklogItem(${item.id}); event.stopPropagation();" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: var(--slate-700); color: var(--text-secondary); border: 1px solid var(--border-color);">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="assignToCurrentSprint(${item.id}); event.stopPropagation();" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" ${!currentSprint ? 'disabled' : ''}>
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+
+            container.innerHTML = itemsHtml;
+        }
+
+        // Helper Functions for Backlog
+        function getIssueTypeIcon(issueType) {
+            const icons = {
+                'STORY': '📖',
+                'TASK': '✓',
+                'BUG': '🐛',
+                'EPIC': '🎯'
+            };
+            return icons[issueType] || '📋';
+        }
+
+        function getPriorityIcon(priority) {
+            const icons = {
+                'LOW': '🟢',
+                'MEDIUM': '🟡',
+                'HIGH': '🟠',
+                'CRITICAL': '🔴'
+            };
+            return icons[priority] || '🟡';
+        }
+
+        function updateBacklogStats(items) {
+            const totalItems = items.length;
+            const totalPoints = items.reduce((sum, item) => sum + (item.storyPoints || 0), 0);
+            const readyItems = items.filter(item => 
+                (item.backlogStatus === 'READY' || item.priorityLevel === 'HIGH' || item.priorityLevel === 'CRITICAL')
+            ).length;
+
+            document.getElementById('totalBacklogItems').textContent = totalItems;
+            document.getElementById('totalStoryPoints').textContent = totalPoints;
+            document.getElementById('readyForSprint').textContent = readyItems;
+        }
+
+        function selectBacklogItem(itemId) {
+            // Remove previous selection
+            document.querySelectorAll('.backlog-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Add selection to clicked item
+            const selectedItem = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+        }
+
+        function editBacklogItem(itemId) {
+            // TODO: Open edit modal for backlog item
+            showNotification('Edit functionality coming soon!', 'info');
+        }
+
+        // Sprint Actions
+        // Enhanced Sprint Management Functions
+        function createSprint() {
+            openSprintModal();
+        }
+
+        function startCurrentSprint() {
+            if (!currentSprint) {
+                showNotification('Please select a sprint first', 'error');
+                return;
+            }
+
+            if (currentSprint.status === 'ACTIVE') {
+                showNotification('Sprint is already active', 'error');
+                return;
+            }
+
+            fetch(`/api/v1/sprints/${currentSprint.id}/start`, {
+                method: 'PUT',
+                headers: { [csrfHeader]: csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadSprintData();
+                showNotification('Sprint started successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error starting sprint:', error);
+                showNotification('Failed to start sprint', 'error');
+            });
+        }
+
+        function completeSprint() {
+            if (!currentSprint) {
+                showNotification('Please select a sprint first', 'error');
+                return;
+            }
+
+            if (currentSprint.status !== 'ACTIVE') {
+                showNotification('Only active sprints can be completed', 'error');
+                return;
+            }
+
+            if (confirm(`Complete sprint "${currentSprint.name}"? This will move incomplete tasks back to the backlog.`)) {
+                fetch(`/api/v1/sprints/${currentSprint.id}/complete`, {
+                    method: 'PUT',
+                    headers: { [csrfHeader]: csrfToken }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadSprintData();
+                    showNotification('Sprint completed successfully!', 'success');
+                })
+                .catch(error => {
+                    console.error('Error completing sprint:', error);
+                    showNotification('Failed to complete sprint', 'error');
+                });
+            }
+        }
+
+        // Legacy functions for backward compatibility
+        function createNewSprint() {
+            openSprintModal();
+        }
+
+        // Modal Management Functions
+        function openBacklogItemModal() {
+            document.getElementById('createBacklogModal').style.display = 'flex';
+        }
+
+        function openSprintModal() {
+            // Set default dates (today + 14 days)
+            const today = new Date();
+            const endDate = new Date(today);
+            endDate.setDate(today.getDate() + 14);
+            
+            document.getElementById('sprintStartDate').value = today.toISOString().split('T')[0];
+            document.getElementById('sprintEndDate').value = endDate.toISOString().split('T')[0];
+            
+            document.getElementById('createSprintModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            // Reset forms
+            if (modalId === 'createBacklogModal') {
+                document.getElementById('backlogForm').reset();
+            } else if (modalId === 'createSprintModal') {
+                document.getElementById('sprintForm').reset();
+            }
+        }
+
+        // Enhanced Form Submission Functions
+        function submitBacklogForm(event) {
+            event.preventDefault();
+            
+            const itemData = {
+                title: document.getElementById('backlogTitle').value,
+                description: document.getElementById('backlogDescription').value || '',
+                priorityLevel: document.getElementById('backlogPriority').value,
+                storyPoints: parseInt(document.getElementById('backlogStoryPoints').value),
+                issueType: document.getElementById('backlogType').value
+            };
+
+            fetch(`/api/backlog/project/${projectId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify(itemData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                closeModal('createBacklogModal');
+                loadBacklogData();
+                showNotification('Issue created successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error creating backlog item:', error);
+                showNotification('Failed to create issue', 'error');
+            });
+        }
+
+        function submitSprintForm(event) {
+            event.preventDefault();
+            
+            const startDateValue = document.getElementById('sprintStartDate').value;
+            const endDateValue = document.getElementById('sprintEndDate').value;
+            
+            // Convert date strings to datetime strings with default times
+            const startDateTime = startDateValue ? `${startDateValue}T09:00:00` : null;
+            const endDateTime = endDateValue ? `${endDateValue}T17:00:00` : null;
+            
+            const sprintData = {
+                name: document.getElementById('sprintName').value,
+                sprintGoal: document.getElementById('sprintGoal').value || '',
+                startDate: startDateTime,
+                endDate: endDateTime,
+                projectId: projectId
+            };
+
+            fetch(`/api/v1/sprints/project/${projectId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify(sprintData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                closeModal('createSprintModal');
+                loadSprintData();
+                showNotification('Sprint created successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error creating sprint:', error);
+                showNotification('Failed to create sprint', 'error');
+            });
+        }
+
+        // Legacy function for backward compatibility
+        function createBacklogItem() {
+            openBacklogItemModal();
+        }
+
+        function assignToCurrentSprint(backlogItemId) {
+            if (!currentSprint) {
+                showNotification('Please select an active sprint first', 'error');
+                return;
+            }
+
+            fetch(`/api/backlog/${backlogItemId}/assign-sprint`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({ sprintId: currentSprint.id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadBacklogData();
+                showNotification('Item assigned to sprint successfully!', 'success');
+                // Refresh the kanban board to show new task
+                setTimeout(() => location.reload(), 1000);
+            })
+            .catch(error => {
+                console.error('Error assigning to sprint:', error);
+                showNotification('Failed to assign to sprint', 'error');
+            });
+        }
+
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Enhanced drag and drop for backlog items
+        function initializeDragAndDrop() {
+            // Add drag listeners to backlog items
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('backlog-item')) {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        type: 'backlog-item',
+                        itemId: e.target.dataset.itemId
+                    }));
+                }
+            });
+
+            // Allow dropping backlog items on kanban columns
+            document.querySelectorAll('.task-list').forEach(column => {
+                column.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+
+                column.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    
+                    if (data.type === 'backlog-item') {
+                        // Convert backlog item to task
+                        convertBacklogItemToTask(data.itemId, this.dataset.status);
+                    }
+                });
+            });
+        }
+
+        function convertBacklogItemToTask(backlogItemId, status) {
+            // This would create a task from the backlog item
+            fetch(`/api/backlog/${backlogItemId}/convert-to-task`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification('Backlog item converted to task!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            })
+            .catch(error => {
+                console.error('Error converting backlog item:', error);
+                showNotification('Failed to convert backlog item', 'error');
+            });
+        }
+
+        // Timeline Management
+        function loadTimelineData() {
+            const actionType = document.getElementById('timelineActionFilter').value;
+            const startDate = document.getElementById('timelineStartDate').value;
+            const endDate = document.getElementById('timelineEndDate').value;
+
+            let url = `/api/timeline/project/${projectId}?size=50`;
+            const params = new URLSearchParams();
+            
+            if (actionType) params.append('actionType', actionType);
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            
+            if (params.toString()) {
+                url += '&' + params.toString();
+            }
+
+            fetch(url, {
+                headers: { [csrfHeader]: csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayTimeline(data.content || []);
+                updateTimelineStats();
+            })
+            .catch(error => {
+                console.error('Error loading timeline:', error);
+                document.getElementById('timelineContent').innerHTML = 
+                    '<div style="text-align: center; color: #ef4444; padding: 2rem;"><p>Failed to load timeline</p></div>';
+            });
+        }
+
+        function displayTimeline(activities) {
+            const container = document.getElementById('timelineContent');
+            
+            if (activities.length === 0) {
+                container.innerHTML = `
+                    <div class="timeline-empty" style="text-align: center; color: var(--text-secondary); padding: 3rem 1rem;">
+                        <div style="width: 4rem; height: 4rem; margin: 0 auto 1.5rem; background: var(--slate-700); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-history" style="font-size: 1.5rem; color: var(--text-secondary);"></i>
+                        </div>
+                        <h3 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">No Activity Yet</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">When team members take actions on this project, you'll see them here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group activities by date for better organization
+            const groupedActivities = groupActivitiesByDate(activities);
+            let timeline = '';
+
+            Object.keys(groupedActivities).forEach(date => {
+                const dateActivities = groupedActivities[date];
+                timeline += `
+                    <div class="timeline-date-group" style="margin-bottom: 2rem;">
+                        <div class="timeline-date-header" style="display: flex; align-items: center; margin-bottom: 1rem; padding: 0 1rem;">
+                            <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+                            <span style="padding: 0 1rem; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">${formatDate(date)}</span>
+                            <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+                        </div>
+                        ${dateActivities.map(activity => createJiraTimelineItem(activity)).join('')}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = timeline;
+        }
+
+        function createJiraTimelineItem(activity) {
+            const actionIcon = getActionIcon(activity.actionType);
+            const actionColor = getActivityColor(activity.actionType);
+            const userInitials = activity.user?.nickname ? activity.user.nickname.substring(0, 2).toUpperCase() : 'UN';
+            
+            return `
+                <div class="timeline-item">
+                    <div class="timeline-avatar" style="background: ${actionColor};">
+                        ${userInitials}
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div class="timeline-user-info">
+                                <span class="timeline-user">${activity.user?.nickname || 'Unknown'}</span>
+                                <span class="timeline-action-icon ${actionColor.replace('#', 'action-')}" style="background: ${actionColor};">${actionIcon}</span>
+                                <span class="timeline-action">${formatActionDescription(activity)}</span>
+                            </div>
+                            <span class="timeline-time">${formatTimeAgo(activity.timestamp)}</span>
+                        </div>
+                        
+                        ${activity.description ? `
+                            <div class="timeline-description" style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+                                ${activity.description}
+                            </div>
+                        ` : ''}
+                        
+                        ${activity.task ? `
+                            <div class="timeline-task-link" style="margin-top: 0.75rem; padding: 0.75rem; background: var(--slate-800); border-radius: 6px; border-left: 3px solid ${actionColor};">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-tasks" style="color: ${actionColor}; font-size: 0.9rem;"></i>
+                                    <span style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${activity.task.title}</span>
+                                </div>
+                                ${activity.task.assignedUser ? `
+                                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                                        <i class="fas fa-user"></i> Assigned to ${activity.task.assignedUser.nickname}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        ${activity.oldValue && activity.newValue ? `
+                            <div class="timeline-change-details" style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary); background: var(--slate-800); padding: 0.5rem; border-radius: 4px;">
+                                <strong>From:</strong> <span style="color: #dc2626;">${activity.oldValue}</span> 
+                                <strong>To:</strong> <span style="color: #059669;">${activity.newValue}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function groupActivitiesByDate(activities) {
+            return activities.reduce((groups, activity) => {
+                const date = new Date(activity.timestamp).toISOString().split('T')[0];
+                if (!groups[date]) {
+                    groups[date] = [];
+                }
+                groups[date].push(activity);
+                return groups;
+            }, {});
+        }
+
+        function getActionIcon(actionType) {
+            const icons = {
+                'TASK_CREATED': '📝',
+                'STATUS_CHANGED': '🔄',
+                'ASSIGNED': '👤',
+                'PRIORITY_CHANGED': '⚡',
+                'SPRINT_CHANGED': '🏃‍♂️',
+                'FIELD_UPDATED': '✏️',
+                'COMMENT_ADDED': '💬',
+                'TIME_LOGGED': '⏰',
+                'DELETED': '🗑️',
+                'UPDATED': '📝'
+            };
+            return icons[actionType] || '📋';
+        }
+
+        function formatActionDescription(activity) {
+            const descriptions = {
+                'TASK_CREATED': 'created task',
+                'STATUS_CHANGED': 'changed status',
+                'ASSIGNED': 'assigned task',
+                'PRIORITY_CHANGED': 'updated priority',
+                'SPRINT_CHANGED': 'moved to sprint',
+                'FIELD_UPDATED': 'updated field',
+                'COMMENT_ADDED': 'added comment',
+                'TIME_LOGGED': 'logged time',
+                'DELETED': 'deleted item',
+                'UPDATED': 'made changes'
+            };
+            return descriptions[activity.actionType] || 'performed action';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (dateString === today.toISOString().split('T')[0]) {
+                return 'Today';
+            } else if (dateString === yesterday.toISOString().split('T')[0]) {
+                return 'Yesterday';
+            } else {
+                return date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            }
+        }
+
+        function getActivityColor(actionType) {
+            const colors = {
+                'TASK_CREATED': '#10b981',
+                'STATUS_CHANGED': '#3b82f6', 
+                'ASSIGNED': '#8b5cf6',
+                'PRIORITY_CHANGED': '#f59e0b',
+                'SPRINT_CHANGED': '#ef4444',
+                'FIELD_UPDATED': '#6b7280',
+                'COMMENT_ADDED': '#06b6d4',
+                'TIME_LOGGED': '#84cc16'
+            };
+            return colors[actionType] || '#6b7280';
+        }
+
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const past = new Date(timestamp);
+            const diffMs = now - past;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return past.toLocaleDateString();
+        }
+
+        function updateTimelineStats() {
+            fetch(`/api/timeline/stats/project/${projectId}?days=30`, {
+                headers: { [csrfHeader]: csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalActivities').textContent = 
+                    Object.values(data.activityByDay || {}).reduce((sum, count) => sum + count, 0);
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('todayActivities').textContent = 
+                    data.activityByDay?.[today] || 0;
+            })
+            .catch(error => console.error('Error loading timeline stats:', error));
+        }
+
+        function applyTimelineFilters() {
+            loadTimelineData();
+        }
+
+        function clearTimelineFilters() {
+            document.getElementById('timelineActionFilter').value = '';
+            document.getElementById('timelineStartDate').value = '';
+            document.getElementById('timelineEndDate').value = '';
+            loadTimelineData();
+        }
+    </script>
+
+    <!-- Create Sprint Modal -->
+    <div id="createSprintModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content jira-modal" style="width: 500px;">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-rocket" style="color: var(--neon-cyan);"></i>
+                    Create Sprint
+                </h3>
+                <button class="close-modal" onclick="closeModal('createSprintModal')">&times;</button>
+            </div>
+            <form id="sprintForm" onsubmit="submitSprintForm(event)">
+                <div class="form-group">
+                    <label for="sprintName">Sprint Name *</label>
+                    <input type="text" id="sprintName" name="sprintName" required placeholder="e.g., Sprint 1, Feature Development Sprint">
+                </div>
+                <div class="form-group">
+                    <label for="sprintGoal">Sprint Goal</label>
+                    <textarea id="sprintGoal" name="sprintGoal" rows="3" placeholder="What do you want to achieve in this sprint?"></textarea>
+                </div>
+                <div class="form-row" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label for="sprintStartDate">Start Date</label>
+                        <input type="date" id="sprintStartDate" name="sprintStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="sprintEndDate">End Date</label>
+                        <input type="date" id="sprintEndDate" name="sprintEndDate">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createSprintModal')">Cancel</button>
+                    <button type="submit" class="btn jira-btn"><i class="fas fa-rocket"></i> Create Sprint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Backlog Item Modal -->
+    <div id="createBacklogModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content jira-modal" style="width: 600px;">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-plus-circle" style="color: var(--neon-cyan);"></i>
+                    Create Issue
+                </h3>
+                <button class="close-modal" onclick="closeModal('createBacklogModal')">&times;</button>
+            </div>
+            <form id="backlogForm" onsubmit="submitBacklogForm(event)">
+                <div class="form-group">
+                    <label for="backlogTitle">Summary *</label>
+                    <input type="text" id="backlogTitle" name="backlogTitle" required placeholder="Brief description of the issue">
+                </div>
+                <div class="form-group">
+                    <label for="backlogDescription">Description</label>
+                    <textarea id="backlogDescription" name="backlogDescription" rows="4" placeholder="Detailed description of the work to be done..."></textarea>
+                </div>
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label for="backlogPriority">Priority</label>
+                        <select id="backlogPriority" name="backlogPriority">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="backlogStoryPoints">Story Points</label>
+                        <select id="backlogStoryPoints" name="backlogStoryPoints">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="5">5</option>
+                            <option value="8">8</option>
+                            <option value="13">13</option>
+                            <option value="21">21</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="backlogType">Issue Type</label>
+                        <select id="backlogType" name="backlogType">
+                            <option value="STORY">Story</option>
+                            <option value="TASK">Task</option>
+                            <option value="BUG">Bug</option>
+                            <option value="EPIC">Epic</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createBacklogModal')">Cancel</button>
+                    <button type="submit" class="btn jira-btn"><i class="fas fa-plus"></i> Create Issue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

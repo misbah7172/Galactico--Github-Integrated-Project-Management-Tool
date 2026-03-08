@@ -23,4 +23,4 @@ COPY . .
 EXPOSE 5000 5005
 
 # Development startup command with hot reload
-CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"]
+CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dserver.address=0.0.0.0"]

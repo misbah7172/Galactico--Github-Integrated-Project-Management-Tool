@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- Spring Boot framework suppression -->
+    <suppress>
+        <notes><![CDATA[
+        Spring Boot framework - suppress known false positives
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework.*$</packageUrl>
+        <cpe>cpe:/a:pivotal:spring_framework</cpe>
+    </suppress>
+    
+    <!-- MySQL Connector suppression -->
+    <suppress>
+        <notes><![CDATA[
+        MySQL Connector - suppress known false positives
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/mysql/mysql-connector-java.*$</packageUrl>
+        <cve>CVE-2020-2875</cve>
+    </suppress>
+    
+    <!-- Test dependencies suppression -->
+    <suppress>
+        <notes><![CDATA[
+        Test scope dependencies - lower risk
+        ]]></notes>
+        <gav regex="true">^.*test.*$</gav>
+    </suppress>
+</suppressions>

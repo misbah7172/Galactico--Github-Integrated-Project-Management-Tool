@@ -56,13 +56,7 @@
             <version>42.7.2</version>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>8.0.33</version>
-            <scope>runtime</scope>
-        </dependency>
-        
+
         <!-- Thymeleaf Templates -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -101,6 +95,16 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         
+        <!-- Caching -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- Email Support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

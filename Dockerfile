@@ -9,16 +9,13 @@ RUN mvn dependency:go-offline -B
 
 # Copy source code and build
 COPY src ./src
-RUN mvn clean package -DskipTests -Pprod
+RUN mvn clean package -DskipTests
 
 # Runtime stage
 FROM amazoncorretto:17-alpine3.18
 
-# Install useful tools
-RUN apk add --no-cache \
-    curl \
-    bash \
-    tzdata
+# Install curl for health checks
+RUN apk add --no-cache curl bash tzdata
 
 # Create non-root user
 RUN addgroup -g 1001 autotrack && \
@@ -37,7 +34,7 @@ RUN chown -R autotrack:autotrack /app
 USER autotrack
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/actuator/health || exit 1
 
 # Expose port
@@ -46,5 +43,5 @@ EXPOSE 5000
 # Set JVM options for containerized environment
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
-# Run application
+# Run the application
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

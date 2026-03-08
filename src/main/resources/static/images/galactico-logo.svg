@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <!-- Background circle for contrast -->
+  <circle cx="60" cy="60" r="58" fill="#000000" stroke="#333" stroke-width="4"/>
+  
+  <!-- Top node (gray) -->
+  <rect x="45" y="25" width="30" height="30" rx="8" fill="#666666"/>
+  
+  <!-- Bottom left node (green) -->
+  <rect x="20" y="70" width="30" height="30" rx="8" fill="#1a7f64"/>
+  
+  <!-- Bottom right node (teal) -->
+  <rect x="70" y="70" width="30" height="30" rx="8" fill="#0e7490"/>
+  
+  <!-- Connections -->
+  <line x1="60" y1="55" x2="35" y2="70" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <line x1="60" y1="55" x2="85" y2="70" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <line x1="50" y1="85" x2="70" y2="85" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,218 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '16'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Generate changelog
+      id: changelog
+      uses: metcalfc/changelog-generator@v4.1.0
+      with:
+        myToken: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: AutoTrack ${{ github.ref }}
+        body: |
+          ## What's Changed
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Installation
+          
+          ### Docker
+          ```bash
+          docker pull ghcr.io/misbah7172/autotrack-smart-github-integrated-project-management-tool:${{ github.ref_name }}
+          ```
+          
+          ### JAR File
+          Download the JAR file from the assets below and run with:
+          ```bash
+          java -jar autotrack-${{ github.ref_name }}.jar
+          ```
+          
+          ### VS Code Extension
+          Install from the VS Code Marketplace or download the VSIX file from the assets below.
+          
+          ## Documentation
+          - [Installation Guide](https://github.com/misbah7172/AutoTrack-Smart-GitHub-Integrated-Project-Management-Tool#quick-start-guide)
+          - [User Guide](https://github.com/misbah7172/AutoTrack-Smart-GitHub-Integrated-Project-Management-Tool#user-guide)
+          - [API Documentation](https://autotrack.dev/docs/api)
+        draft: false
+        prerelease: false
+
+  build-and-upload-assets:
+    name: Build and Upload Release Assets
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build JAR
+      run: mvn clean package -DskipTests -Pprod
+
+    - name: Rename JAR
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        mv target/autotrack-*.jar target/autotrack-${VERSION}.jar
+
+    - name: Upload JAR Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: target/autotrack-${{ github.ref_name }}.jar
+        asset_name: autotrack-${{ github.ref_name }}.jar
+        asset_content_type: application/java-archive
+
+    - name: Set up Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: Extension/package-lock.json
+
+    - name: Build VS Code Extension
+      working-directory: ./Extension
+      run: |
+        npm ci
+        npm install -g @vscode/vsce
+        vsce package
+
+    - name: Upload Extension Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: Extension/autotrack-${{ github.ref_name }}.vsix
+        asset_name: autotrack-${{ github.ref_name }}.vsix
+        asset_content_type: application/zip
+
+    - name: Generate checksums
+      run: |
+        cd target
+        sha256sum autotrack-${{ github.ref_name }}.jar > checksums.txt
+        cd ../Extension
+        sha256sum autotrack-${{ github.ref_name }}.vsix >> ../target/checksums.txt
+
+    - name: Upload Checksums
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: target/checksums.txt
+        asset_name: checksums.txt
+        asset_content_type: text/plain
+
+  publish-docker:
+    name: Publish Docker Image
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build application
+      run: mvn clean package -DskipTests -Pprod
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        labels: |
+          org.opencontainers.image.title=AutoTrack
+          org.opencontainers.image.description=Smart GitHub Integrated Project Management Tool
+          org.opencontainers.image.version=${{ steps.version.outputs.VERSION }}
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [create-release, build-and-upload-assets, publish-docker]
+    if: always()
+
+    steps:
+    - name: Notify Slack
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#autotrack-releases'
+        text: |
+          🚀 AutoTrack Release ${{ github.ref_name }} is now available!
+          
+          📦 Assets:
+          • JAR file
+          • VS Code Extension (VSIX)
+          • Docker Image: `ghcr.io/misbah7172/autotrack-smart-github-integrated-project-management-tool:${{ github.ref_name }}`
+          
+          📋 Release Notes: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
