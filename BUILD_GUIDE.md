@@ -895,7 +895,7 @@ The kanban board (`kanban.html`) is the most complex page with:
 | GET    | `/api/auth/token-display` | Token display page after OAuth     |
 | GET    | `/api/auth/me`            | Validate token, get user info      |
 | POST   | `/api/auth/logout`        | Revoke extension token             |
-| GET    | `/api/auth/sessions`      | Get active extension sessions      |
+| GET    | `/api/auth/sessions`      | G--et active extension sessions      |
 
 ### User Dashboard API (Extension)
 | Method | Path                      | Description                    |

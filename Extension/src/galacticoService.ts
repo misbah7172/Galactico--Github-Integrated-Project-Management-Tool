@@ -140,11 +140,14 @@ export class GalacticoService {
      */
     public async performGalacticoCommit(): Promise<boolean> {
         try {
-            // Ensure user is authenticated
-            const userInfo = await this.githubAuth.getUserInfoIfAuthenticated();
+            // Ensure user is authenticated — auto-trigger auth if needed
+            let userInfo = await this.githubAuth.getUserInfoIfAuthenticated();
             if (!userInfo) {
-                vscode.window.showErrorMessage('Please authenticate with GitHub first.');
-                return false;
+                userInfo = await this.githubAuth.authenticateAndGetUserInfo();
+                if (!userInfo) {
+                    vscode.window.showErrorMessage('GitHub authentication is required for Galactico Commit.');
+                    return false;
+                }
             }
 
             // Check if task is selected
@@ -341,10 +344,13 @@ export class GalacticoService {
      */
     public async viewCommitStatus(): Promise<void> {
         try {
-            const userInfo = await this.githubAuth.getUserInfoIfAuthenticated();
+            let userInfo = await this.githubAuth.getUserInfoIfAuthenticated();
             if (!userInfo) {
-                vscode.window.showErrorMessage('Please authenticate with GitHub first.');
-                return;
+                userInfo = await this.githubAuth.authenticateAndGetUserInfo();
+                if (!userInfo) {
+                    vscode.window.showErrorMessage('GitHub authentication is required.');
+                    return;
+                }
             }
 
             // Open Galactico dashboard in VS Code's simple browser
