@@ -1,0 +1,262 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Create static site
+        run: |
+          mkdir -p _site
+          
+          # Convert README.md to HTML landing page
+          cat > _site/index.html << 'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Galactico - GitHub-Integrated Project Management Tool</title>
+            <style>
+              :root {
+                --bg-primary: #0d1117;
+                --bg-secondary: #161b22;
+                --bg-tertiary: #21262d;
+                --text-primary: #f0f6fc;
+                --text-secondary: #8b949e;
+                --accent: #58a6ff;
+                --accent-hover: #79c0ff;
+                --green: #3fb950;
+                --border: #30363d;
+              }
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                line-height: 1.6;
+              }
+              .hero {
+                text-align: center;
+                padding: 80px 20px 60px;
+                background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1f35 50%, var(--bg-primary) 100%);
+                border-bottom: 1px solid var(--border);
+              }
+              .hero h1 {
+                font-size: 3rem;
+                margin-bottom: 16px;
+                background: linear-gradient(135deg, var(--accent), var(--green));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              }
+              .hero p {
+                font-size: 1.25rem;
+                color: var(--text-secondary);
+                max-width: 700px;
+                margin: 0 auto 32px;
+              }
+              .badges {
+                display: flex;
+                gap: 8px;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-bottom: 32px;
+              }
+              .badges img { height: 22px; }
+              .btn-group {
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+                flex-wrap: wrap;
+              }
+              .btn {
+                display: inline-block;
+                padding: 12px 28px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 1rem;
+                transition: all 0.2s;
+              }
+              .btn-primary {
+                background: var(--accent);
+                color: var(--bg-primary);
+              }
+              .btn-primary:hover { background: var(--accent-hover); }
+              .btn-secondary {
+                background: var(--bg-tertiary);
+                color: var(--text-primary);
+                border: 1px solid var(--border);
+              }
+              .btn-secondary:hover { background: var(--border); }
+              .features {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 60px 20px;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 24px;
+              }
+              .feature-card {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 28px;
+                transition: border-color 0.2s;
+              }
+              .feature-card:hover { border-color: var(--accent); }
+              .feature-card h3 {
+                font-size: 1.1rem;
+                margin-bottom: 8px;
+                color: var(--accent);
+              }
+              .feature-card p { color: var(--text-secondary); font-size: 0.95rem; }
+              .tech-section {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 40px 20px 60px;
+              }
+              .tech-section h2 {
+                text-align: center;
+                margin-bottom: 32px;
+                font-size: 1.75rem;
+              }
+              .tech-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                justify-content: center;
+              }
+              .tech-tag {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+              }
+              footer {
+                text-align: center;
+                padding: 40px 20px;
+                border-top: 1px solid var(--border);
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+              }
+              footer a { color: var(--accent); text-decoration: none; }
+              footer a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <div class="hero">
+              <h1>Galactico</h1>
+              <p>A full-stack project management platform with tight GitHub integration. Tasks update automatically from commits, and the VS Code extension keeps developers in flow.</p>
+              <div class="badges">
+                <img src="https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen.svg" alt="Spring Boot">
+                <img src="https://img.shields.io/badge/Java-17+-blue.svg" alt="Java">
+                <img src="https://img.shields.io/badge/PostgreSQL-16-blue.svg" alt="PostgreSQL">
+                <img src="https://img.shields.io/badge/Docker-Compose-2496ED.svg" alt="Docker">
+                <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+              </div>
+              <div class="btn-group">
+                <a href="https://galactico-app.azurewebsites.net" class="btn btn-primary">Live Demo</a>
+                <a href="https://github.com/misbah7172/Galactico--Github-Integrated-Project-Management-Tool" class="btn btn-secondary">View on GitHub</a>
+              </div>
+            </div>
+            <div class="features">
+              <div class="feature-card">
+                <h3>Kanban Board</h3>
+                <p>Drag-and-drop task management with sprint integration and real-time status updates.</p>
+              </div>
+              <div class="feature-card">
+                <h3>Sprint Management</h3>
+                <p>Scrum-style sprint planning with backlog, story points, and progress tracking.</p>
+              </div>
+              <div class="feature-card">
+                <h3>Commit Tracking</h3>
+                <p>Automatic task status updates parsed from Git commit messages. No manual updates needed.</p>
+              </div>
+              <div class="feature-card">
+                <h3>GitHub OAuth2</h3>
+                <p>Secure login via GitHub — no separate passwords. Full GitHub integration out of the box.</p>
+              </div>
+              <div class="feature-card">
+                <h3>Team Management</h3>
+                <p>Role-based access (Team Lead / Member), invitations, and team collaboration tools.</p>
+              </div>
+              <div class="feature-card">
+                <h3>VS Code Extension</h3>
+                <p>Commit with task references, sync task status, and manage sprints without leaving your editor.</p>
+              </div>
+              <div class="feature-card">
+                <h3>CI/CD Generator</h3>
+                <p>Generate GitHub Actions pipelines for Node.js, Python, Java, React, and Docker projects.</p>
+              </div>
+              <div class="feature-card">
+                <h3>Analytics</h3>
+                <p>Contributor stats, commit frequency, language breakdown, and activity timelines per project.</p>
+              </div>
+              <div class="feature-card">
+                <h3>Azure Deployment</h3>
+                <p>Production-ready with Docker containerization and automated Azure App Service deployment.</p>
+              </div>
+            </div>
+            <div class="tech-section">
+              <h2>Technology Stack</h2>
+              <div class="tech-grid">
+                <span class="tech-tag">Spring Boot 3.1.5</span>
+                <span class="tech-tag">Java 17</span>
+                <span class="tech-tag">PostgreSQL 16</span>
+                <span class="tech-tag">Thymeleaf</span>
+                <span class="tech-tag">Spring Security</span>
+                <span class="tech-tag">GitHub OAuth2</span>
+                <span class="tech-tag">Hibernate 6</span>
+                <span class="tech-tag">Caffeine Cache</span>
+                <span class="tech-tag">Docker Compose</span>
+                <span class="tech-tag">Maven</span>
+                <span class="tech-tag">TypeScript</span>
+                <span class="tech-tag">VS Code Extension API</span>
+                <span class="tech-tag">Azure App Service</span>
+                <span class="tech-tag">GitHub Actions CI/CD</span>
+              </div>
+            </div>
+            <footer>
+              <p>MIT License &middot; Built by <a href="https://github.com/misbah7172">misbah7172</a></p>
+            </footer>
+          </body>
+          </html>
+          HTMLEOF
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
