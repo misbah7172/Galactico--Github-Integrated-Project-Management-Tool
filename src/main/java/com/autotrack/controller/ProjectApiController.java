@@ -24,11 +24,14 @@ public class ProjectApiController {
     
     private final ProjectService projectService;
     private final UserService userService;
+    private final com.autotrack.service.GitHubService gitHubService;
     private final RestTemplate restTemplate;
 
-    public ProjectApiController(ProjectService projectService, UserService userService) {
+    public ProjectApiController(ProjectService projectService, UserService userService,
+                               com.autotrack.service.GitHubService gitHubService) {
         this.projectService = projectService;
         this.userService = userService;
+        this.gitHubService = gitHubService;
         this.restTemplate = new RestTemplate();
     }
 
@@ -119,5 +122,61 @@ public class ProjectApiController {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ── Webhook Management Endpoints ─────────────────────────────────
+
+    @PostMapping("/{projectId}/webhook/setup")
+    public ResponseEntity<Map<String, Object>> setupWebhook(
+            @PathVariable Long projectId,
+            HttpServletRequest request) {
+        try {
+            Project project = projectService.getProjectById(projectId);
+            String baseUrl = getBaseUrl(request);
+            Map<String, Object> result = gitHubService.registerWebhook(project, baseUrl);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("success", false, "message", "Error: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{projectId}/webhook/status")
+    public ResponseEntity<Map<String, Object>> getWebhookStatus(
+            @PathVariable Long projectId,
+            HttpServletRequest request) {
+        try {
+            Project project = projectService.getProjectById(projectId);
+            String baseUrl = getBaseUrl(request);
+            Map<String, Object> status = gitHubService.getWebhookStatus(project, baseUrl);
+            return ResponseEntity.ok(status);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("configured", false, "message", "Error: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{projectId}/webhook")
+    public ResponseEntity<Map<String, Object>> deleteWebhook(
+            @PathVariable Long projectId,
+            HttpServletRequest request) {
+        try {
+            Project project = projectService.getProjectById(projectId);
+            String baseUrl = getBaseUrl(request);
+            Map<String, Object> result = gitHubService.deleteWebhook(project, baseUrl);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("success", false, "message", "Error: " + e.getMessage()));
+        }
+    }
+
+    private String getBaseUrl(HttpServletRequest request) {
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (scheme == null) scheme = request.getScheme();
+        String host = request.getHeader("X-Forwarded-Host");
+        if (host == null) host = request.getServerName();
+        int port = request.getServerPort();
+        if ("https".equals(scheme) && port == 443 || "http".equals(scheme) && port == 80) {
+            return scheme + "://" + host;
+        }
+        return scheme + "://" + host + ":" + port;
     }
 }

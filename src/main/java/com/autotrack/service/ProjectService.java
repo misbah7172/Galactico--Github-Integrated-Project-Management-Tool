@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,19 +31,24 @@ import java.util.Set;
 @Service
 public class ProjectService {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ProjectService.class);
+
     private final ProjectRepository projectRepository;
     private final ProjectTeamHistoryRepository projectTeamHistoryRepository;
     private final TeamRepository teamRepository;
     private final TeamService teamService;
+    private final GitHubService gitHubService;
 
     public ProjectService(ProjectRepository projectRepository, 
                          ProjectTeamHistoryRepository projectTeamHistoryRepository,
                          TeamRepository teamRepository, 
-                         TeamService teamService) {
+                         TeamService teamService,
+                         GitHubService gitHubService) {
         this.projectRepository = projectRepository;
         this.projectTeamHistoryRepository = projectTeamHistoryRepository;
         this.teamRepository = teamRepository;
         this.teamService = teamService;
+        this.gitHubService = gitHubService;
     }
 
     /**
@@ -114,7 +120,24 @@ public class ProjectService {
                 .team(team)
                 .build();
         
-        return projectRepository.save(project);
+        Project saved = projectRepository.save(project);
+
+        // Auto-register webhook on GitHub if access token is provided
+        if (saved.getGitHubAccessToken() != null && !saved.getGitHubAccessToken().isEmpty()) {
+            try {
+                String baseUrl = "https://galactico-app.azurewebsites.net";
+                Map<String, Object> result = gitHubService.registerWebhook(saved, baseUrl);
+                if (Boolean.TRUE.equals(result.get("success"))) {
+                    logger.info("Auto-registered webhook for project '{}'", saved.getName());
+                } else {
+                    logger.warn("Could not auto-register webhook for '{}': {}", saved.getName(), result.get("message"));
+                }
+            } catch (Exception e) {
+                logger.warn("Webhook auto-registration failed for '{}': {}", saved.getName(), e.getMessage());
+            }
+        }
+
+        return saved;
     }
 
     /**

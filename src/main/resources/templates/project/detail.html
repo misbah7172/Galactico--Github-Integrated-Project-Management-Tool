@@ -803,39 +803,84 @@
                     </div>
                 </div>
                 
-                <!-- Webhook Information -->
+                <!-- Webhook Configuration -->
                 <div th:if="${#authorization.expression('hasAuthority(''TEAM_LEAD'')')}" style="margin-top: 2rem;">
                     <h3 style="color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--neon-cyan);">
                             <path d="M9 12l2 2 4-4"></path>
                             <path d="M21 12c.552 0 1-.448 1-1V8a2 2 0 0 0-2-2h-1.382l-.724-1.447A1 1 0 0 0 17 4H7a1 1 0 0 0-.894.553L5.382 6H4a2 2 0 0 0-2 2v3c0 .552.448 1 1 1"></path>
                         </svg>
-                        GitHub Webhook Setup
+                        GitHub Webhook
+                        <span id="webhookStatusBadge" style="font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 1rem; margin-left: 0.5rem; display: none;"></span>
                     </h3>
-                    <p>To enable automatic task tracking from your GitHub commits, set up a webhook with these details:</p>
-                    <table class="table">
-                        <tr>
-                            <th>Payload URL:</th>
-                            <td th:text="${'https://' + #httpServletRequest.serverName + '/webhook/github'}">
-                                https://your-domain.com/webhook/github
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Content Type:</th>
-                            <td>application/json</td>
-                        </tr>
-                        <tr>
-                            <th>Secret:</th>
-                            <td th:text="${project.webhookSecret}">secret</td>
-                        </tr>
-                        <tr>
-                            <th>Events:</th>
-                            <td>Just the push event</td>
-                        </tr>
-                    </table>
-                    <p>
-                        <strong>Note:</strong> Set up the webhook in your GitHub repository settings under "Webhooks".
-                    </p>
+
+                    <!-- Webhook Status Display -->
+                    <div id="webhookStatusArea" style="margin-bottom: 1.5rem;">
+                        <div id="webhookLoading" style="color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            Checking webhook status...
+                        </div>
+
+                        <!-- Not Configured State -->
+                        <div id="webhookNotConfigured" style="display: none;">
+                            <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
+                                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                    <strong style="color: #ffc107;">Webhook not configured.</strong> 
+                                    Click below to automatically register a GitHub webhook for this repository. This enables real-time commit tracking and CI/CD status updates.
+                                </p>
+                                <button id="btnSetupWebhook" class="btn btn-success" onclick="setupWebhook()" style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 5v14M5 12h14"></path>
+                                    </svg>
+                                    Setup Webhook Automatically
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Configured State -->
+                        <div id="webhookConfigured" style="display: none;">
+                            <div style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 0.75rem; padding: 1.25rem;">
+                                <table class="table" style="margin-bottom: 1rem;">
+                                    <tr>
+                                        <th style="width: 140px;">Status:</th>
+                                        <td><span id="webhookActive" style="color: #00ff88; font-weight: 600;"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Events:</th>
+                                        <td id="webhookEvents" style="color: var(--text-secondary);"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Last Response:</th>
+                                        <td id="webhookLastResponse" style="color: var(--text-secondary);"></td>
+                                    </tr>
+                                </table>
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteWebhook()" id="btnDeleteWebhook" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                        Remove Webhook
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="checkWebhookStatus()" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                        </svg>
+                                        Refresh Status
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Error State -->
+                        <div id="webhookError" style="display: none;">
+                            <div style="background: rgba(255, 71, 87, 0.1); border: 1px solid rgba(255, 71, 87, 0.3); border-radius: 0.75rem; padding: 1.25rem;">
+                                <p id="webhookErrorMsg" style="color: #ff4757; margin-bottom: 1rem;"></p>
+                                <button class="btn btn-warning btn-sm" onclick="setupWebhook()">Retry Setup</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Recent Tasks -->
@@ -1018,14 +1063,15 @@
     
     <!-- JavaScript for Project Management -->
     <script>
-        // Load commit statistics on page load
+        const projectId = /*[[${project.id}]]*/ 1;
+
+        // Load commit statistics and webhook status on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadCommitStatistics();
+            checkWebhookStatus();
         });
         
         function loadCommitStatistics() {
-            const projectId = /*[[${project.id}]]*/ 1;
-            
             fetch(`/api/commit-stats/project/${projectId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -1045,7 +1091,102 @@
             document.getElementById('impactScore').textContent = stats.impactScore || 0;
         }
         
-        function confirmDeleteProject(projectId, projectName) {
+        // --- Webhook Management ---
+        function checkWebhookStatus() {
+            const loading = document.getElementById('webhookLoading');
+            const notConfigured = document.getElementById('webhookNotConfigured');
+            const configured = document.getElementById('webhookConfigured');
+            const errorDiv = document.getElementById('webhookError');
+            const badge = document.getElementById('webhookStatusBadge');
+
+            if (!loading) return; // not a TEAM_LEAD view
+
+            loading.style.display = 'flex';
+            notConfigured.style.display = 'none';
+            configured.style.display = 'none';
+            errorDiv.style.display = 'none';
+            badge.style.display = 'none';
+
+            fetch(`/api/projects/${projectId}/webhook/status`)
+                .then(r => r.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    if (data.configured) {
+                        configured.style.display = 'block';
+                        document.getElementById('webhookActive').textContent = data.active ? 'Active' : 'Inactive';
+                        document.getElementById('webhookEvents').textContent = (data.events || []).join(', ');
+                        const lr = data.lastResponse;
+                        document.getElementById('webhookLastResponse').textContent =
+                            lr ? `${lr.code} ${lr.status} — ${lr.message || ''}` : 'No deliveries yet';
+                        badge.textContent = data.active ? 'Active' : 'Inactive';
+                        badge.style.display = 'inline-block';
+                        badge.style.background = data.active ? 'rgba(0,255,136,0.15)' : 'rgba(255,193,7,0.15)';
+                        badge.style.color = data.active ? '#00ff88' : '#ffc107';
+                    } else {
+                        notConfigured.style.display = 'block';
+                        badge.textContent = 'Not Configured';
+                        badge.style.display = 'inline-block';
+                        badge.style.background = 'rgba(255,193,7,0.15)';
+                        badge.style.color = '#ffc107';
+                    }
+                })
+                .catch(() => {
+                    loading.style.display = 'none';
+                    notConfigured.style.display = 'block';
+                });
+        }
+
+        function setupWebhook() {
+            const btn = document.getElementById('btnSetupWebhook');
+            if (btn) { btn.disabled = true; btn.textContent = 'Setting up...'; }
+
+            fetch(`/api/projects/${projectId}/webhook/setup`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        checkWebhookStatus();
+                    } else {
+                        showWebhookError(data.message || 'Failed to set up webhook.');
+                        if (btn) { btn.disabled = false; btn.textContent = 'Setup Webhook Automatically'; }
+                    }
+                })
+                .catch(() => {
+                    showWebhookError('Network error. Please try again.');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Setup Webhook Automatically'; }
+                });
+        }
+
+        function deleteWebhook() {
+            if (!confirm('Remove the GitHub webhook for this project? You can re-add it anytime.')) return;
+            const btn = document.getElementById('btnDeleteWebhook');
+            if (btn) { btn.disabled = true; }
+
+            fetch(`/api/projects/${projectId}/webhook`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        checkWebhookStatus();
+                    } else {
+                        showWebhookError(data.message || 'Failed to remove webhook.');
+                        if (btn) { btn.disabled = false; }
+                    }
+                })
+                .catch(() => {
+                    showWebhookError('Network error. Please try again.');
+                    if (btn) { btn.disabled = false; }
+                });
+        }
+
+        function showWebhookError(msg) {
+            const errorDiv = document.getElementById('webhookError');
+            const errorMsg = document.getElementById('webhookErrorMsg');
+            if (errorDiv && errorMsg) {
+                errorMsg.textContent = msg;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function confirmDeleteProject(pId, projectName) {
             if (confirm(`Are you sure you want to delete the project "${projectName}"?\n\nThis action cannot be undone. All tasks and commits associated with this project will be removed.`)) {
                 // Create form to delete project
                 const form = document.createElement('form');
