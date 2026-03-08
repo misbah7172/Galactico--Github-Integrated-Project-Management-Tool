@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Entity representing a team.
@@ -36,10 +38,10 @@ public class Team {
         joinColumns = @JoinColumn(name = "team_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private List<User> members = new ArrayList<>();
+    private Set<User> members = new HashSet<>();
     
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Project> projects = new ArrayList<>();
+    private Set<Project> projects = new HashSet<>();
     
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -58,14 +60,14 @@ public class Team {
     // Constructors
     public Team() {}
 
-    public Team(Long id, String name, String description, String githubOrganizationUrl, User owner, List<User> members, List<Project> projects, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Team(Long id, String name, String description, String githubOrganizationUrl, User owner, Set<User> members, Set<Project> projects, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.githubOrganizationUrl = githubOrganizationUrl;
         this.owner = owner;
-        this.members = members != null ? members : new ArrayList<>();
-        this.projects = projects != null ? projects : new ArrayList<>();
+        this.members = members != null ? members : new HashSet<>();
+        this.projects = projects != null ? projects : new HashSet<>();
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -86,11 +88,11 @@ public class Team {
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
 
-    public List<User> getMembers() { return members; }
-    public void setMembers(List<User> members) { this.members = members; }
+    public Set<User> getMembers() { return members; }
+    public void setMembers(Set<User> members) { this.members = members; }
 
-    public List<Project> getProjects() { return projects; }
-    public void setProjects(List<Project> projects) { this.projects = projects; }
+    public Set<Project> getProjects() { return projects; }
+    public void setProjects(Set<Project> projects) { this.projects = projects; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -132,8 +134,8 @@ public class Team {
         private String description;
         private String githubOrganizationUrl;
         private User owner;
-        private List<User> members = new ArrayList<>();
-        private List<Project> projects = new ArrayList<>();
+        private Set<User> members = new HashSet<>();
+        private Set<Project> projects = new HashSet<>();
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
@@ -142,8 +144,8 @@ public class Team {
         public TeamBuilder description(String description) { this.description = description; return this; }
         public TeamBuilder githubOrganizationUrl(String githubOrganizationUrl) { this.githubOrganizationUrl = githubOrganizationUrl; return this; }
         public TeamBuilder owner(User owner) { this.owner = owner; return this; }
-        public TeamBuilder members(List<User> members) { this.members = members; return this; }
-        public TeamBuilder projects(List<Project> projects) { this.projects = projects; return this; }
+        public TeamBuilder members(Set<User> members) { this.members = members; return this; }
+        public TeamBuilder projects(Set<Project> projects) { this.projects = projects; return this; }
         public TeamBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public TeamBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 

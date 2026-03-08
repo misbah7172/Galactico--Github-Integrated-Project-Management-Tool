@@ -12,6 +12,8 @@ import com.autotrack.model.Commit;
 import com.autotrack.repository.ProjectRepository;
 import com.autotrack.repository.ProjectTeamHistoryRepository;
 import com.autotrack.repository.TeamRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +55,7 @@ public class ProjectService {
     /**
      * Get projects for a user.
      */
+    @Cacheable(value = "userProjects", key = "#user.id")
     public List<Project> getProjectsByUser(User user) {
         // Get projects owned by the user
         List<Project> ownedProjects = projectRepository.findByOwner(user.getId());
@@ -243,11 +246,7 @@ public class ProjectService {
      * Get projects by team member.
      */
     public List<Project> getProjectsByTeamMember(User user) {
-        List<Project> teamProjects = new ArrayList<>();
-        for (Team team : user.getTeams()) {
-            teamProjects.addAll(projectRepository.findByTeam(team));
-        }
-        return teamProjects;
+        return projectRepository.findProjectsByTeamMember(user);
     }
 
     /**

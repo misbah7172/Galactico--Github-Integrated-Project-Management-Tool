@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { GitHubAuthService } from './githubAuth';
+import { GalacticoAuthService } from './galacticoAuthService';
 import { ExtensionConfig } from './config';
 
 /**
@@ -34,8 +35,16 @@ export interface CommitData {
 export class GalacticoService {
     private readonly GALACTICO_BASE_URL = ExtensionConfig.getBaseUrl();
     private selectedTask: TaskInfo | null = null;
+    private galacticoAuth: GalacticoAuthService | null = null;
 
     constructor(private githubAuth: GitHubAuthService) {}
+
+    /**
+     * Set the Galactico auth service for authenticated API calls
+     */
+    public setGalacticoAuth(auth: GalacticoAuthService): void {
+        this.galacticoAuth = auth;
+    }
 
     /**
      * Set the selected task for commits
@@ -57,13 +66,19 @@ export class GalacticoService {
      */
     public async selectTask(): Promise<TaskInfo | null> {
         try {
-            // Fetch tasks from Galactico API
-            const response = await fetch(`${this.GALACTICO_BASE_URL}/api/tasks/my-tasks`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+            let response: Response;
+
+            // Use Galactico auth if available, otherwise fall back to unauthenticated request
+            if (this.galacticoAuth) {
+                response = await this.galacticoAuth.makeAuthenticatedRequest('/api/user/tasks');
+            } else {
+                response = await fetch(`${this.GALACTICO_BASE_URL}/api/user/tasks`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch tasks: ${response.status}`);

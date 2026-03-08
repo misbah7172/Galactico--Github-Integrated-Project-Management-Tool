@@ -40,15 +40,16 @@ public class ProfileController {
     @GetMapping
     public String showProfile(Model model, @AuthenticationPrincipal OAuth2User principal) {
         User user = userService.getCurrentUser(principal);
+        var teams = teamService.getTeamsByUser(user);
+        var projects = projectService.getProjectsByUser(user);
         
-        // Get user statistics
         model.addAttribute("user", user);
-        model.addAttribute("teams", teamService.getTeamsByUser(user));
-        model.addAttribute("projects", projectService.getProjectsByUser(user));
-        model.addAttribute("teamCount", teamService.getTeamsByUser(user).size());
-        model.addAttribute("projectCount", projectService.getProjectsByUser(user).size());
+        model.addAttribute("teams", teams);
+        model.addAttribute("projects", projects);
+        model.addAttribute("teamCount", teams.size());
+        model.addAttribute("projectCount", projects.size());
         model.addAttribute("taskCount", taskService.getTasksByAssignee(user.getId()).size());
-        model.addAttribute("commitCount", 0); // Will be implemented with GitHub webhook integration
+        model.addAttribute("commitCount", 0);
         
         return "profile";
     }

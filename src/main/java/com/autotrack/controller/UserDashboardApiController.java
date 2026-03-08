@@ -1,8 +1,10 @@
 package com.autotrack.controller;
 
+import com.autotrack.model.Project;
 import com.autotrack.model.Task;
 import com.autotrack.model.User;
 import com.autotrack.service.TaskService;
+import com.autotrack.service.ProjectService;
 import com.autotrack.service.UserService;
 import com.autotrack.service.CommitReviewService;
 import com.autotrack.service.ExtensionAuthService;
@@ -26,6 +28,9 @@ public class UserDashboardApiController {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private ProjectService projectService;
 
     @Autowired
     private UserService userService;
@@ -124,6 +129,41 @@ public class UserDashboardApiController {
             contributions.put("rejectedCommits", commitStats.getRejectedCount());
 
             return ResponseEntity.ok(contributions);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get projects for the authenticated user (owned + team member projects).
+     */
+    @GetMapping("/projects")
+    public ResponseEntity<List<Map<String, Object>>> getUserProjects(@RequestHeader("Authorization") String authHeader) {
+        try {
+            User user = authService.authenticateUser(authHeader);
+            if (user == null) {
+                return ResponseEntity.status(401).build();
+            }
+
+            var projects = projectService.getProjectsByUser(user);
+
+            List<Map<String, Object>> projectData = projects.stream().map(project -> {
+                Map<String, Object> projectMap = new HashMap<>();
+                projectMap.put("id", project.getId());
+                projectMap.put("name", project.getName());
+                projectMap.put("description", project.getGitHubRepoUrl() != null ? project.getGitHubRepoUrl() : "");
+                if (project.getTeam() != null) {
+                    Map<String, Object> teamMap = new HashMap<>();
+                    teamMap.put("id", project.getTeam().getId());
+                    teamMap.put("name", project.getTeam().getName());
+                    projectMap.put("team", teamMap);
+                }
+                return projectMap;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(projectData);
 
         } catch (Exception e) {
             e.printStackTrace();

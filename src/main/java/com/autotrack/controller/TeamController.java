@@ -109,9 +109,9 @@ public class TeamController {
         teamDTO.setDescription(team.getDescription());
         teamDTO.setGithubOrganizationUrl(team.getGithubOrganizationUrl());
         
-        List<Long> memberIds = team.getMembers().stream()
+        List<Long> memberIds = new java.util.ArrayList<>(team.getMembers().stream()
                 .map(User::getId)
-                .toList();
+                .toList());
         teamDTO.setMemberIds(memberIds);
         
         model.addAttribute("teamDTO", teamDTO);

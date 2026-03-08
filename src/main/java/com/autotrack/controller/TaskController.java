@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -79,10 +80,10 @@ public class TaskController {
      * Show task creation form.
      */
     @GetMapping("/create")
-    @PreAuthorize("hasAuthority('TEAM_LEAD')")
+    @PreAuthorize("hasRole('TEAM_LEAD')")
     public String showCreateForm(@RequestParam Long projectId, Model model) {
         Project project = projectService.getProjectById(projectId);
-        List<User> teamMembers = project.getTeam().getMembers();
+        List<User> teamMembers = new ArrayList<>(project.getTeam().getMembers());
         
         model.addAttribute("taskDTO", new TaskDTO());
         model.addAttribute("project", project);
@@ -96,7 +97,7 @@ public class TaskController {
      * Process task creation.
      */
     @PostMapping("/create")
-    @PreAuthorize("hasAuthority('TEAM_LEAD')")
+    @PreAuthorize("hasRole('TEAM_LEAD')")
     public String createTask(@Valid @ModelAttribute("taskDTO") TaskDTO taskDTO,
                             BindingResult result,
                             RedirectAttributes redirectAttributes,
@@ -104,7 +105,7 @@ public class TaskController {
         
         if (result.hasErrors()) {
             Project project = projectService.getProjectById(taskDTO.getProjectId());
-            List<User> teamMembers = project.getTeam().getMembers();
+            List<User> teamMembers = new ArrayList<>(project.getTeam().getMembers());
             
             model.addAttribute("project", project);
             model.addAttribute("teamMembers", teamMembers);
@@ -120,7 +121,7 @@ public class TaskController {
             return "redirect:/tasks/project/" + taskDTO.getProjectId();
         } catch (Exception e) {
             Project project = projectService.getProjectById(taskDTO.getProjectId());
-            List<User> teamMembers = project.getTeam().getMembers();
+            List<User> teamMembers = new ArrayList<>(project.getTeam().getMembers());
             
             model.addAttribute("errorMessage", "Error creating task: " + e.getMessage());
             model.addAttribute("project", project);
@@ -238,7 +239,7 @@ public class TaskController {
      * Decline task commit (Team Leader only).
      */
     @PostMapping("/api/tasks/{id}/decline")
-    @PreAuthorize("hasAuthority('TEAM_LEAD')")
+    @PreAuthorize("hasRole('TEAM_LEAD')")
     @ResponseBody
     public String declineTask(@PathVariable Long id, 
                              @RequestBody(required = false) String requestBody,
@@ -267,7 +268,7 @@ public class TaskController {
      * Delete task.
      */
     @PostMapping("/{id}/delete")
-    @PreAuthorize("hasAuthority('TEAM_LEAD')")
+    @PreAuthorize("hasRole('TEAM_LEAD')")
     public String deleteTask(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Task task = taskService.getTaskById(id);
         Long projectId = task.getProject().getId();

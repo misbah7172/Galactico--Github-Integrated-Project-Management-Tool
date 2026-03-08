@@ -3,12 +3,14 @@ package com.autotrack.service;
 import com.autotrack.dto.TeamDTO;
 import com.autotrack.model.*;
 import com.autotrack.repository.*;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +51,7 @@ public class TeamService {
     /**
      * Get teams for a user.
      */
+    @Transactional(readOnly = true)
     public List<Team> getTeamsByUser(User user) {
         return teamRepository.findTeamsByUser(user);
     }
@@ -56,8 +59,9 @@ public class TeamService {
     /**
      * Get a team by ID.
      */
+    @Transactional(readOnly = true)
     public Team getTeamById(Long id) {
-        return teamRepository.findById(id)
+        return teamRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Team not found with ID: " + id));
     }
 
@@ -93,14 +97,15 @@ public class TeamService {
      * Create a new team.
      */
     @Transactional
+    @CacheEvict(value = {"teams", "userTeams"}, allEntries = true)
     public Team createTeam(TeamDTO teamDTO, User creator) {
         // Get members if any are specified
-        List<User> members = teamDTO.getMemberIds() != null ? 
+        Set<User> members = teamDTO.getMemberIds() != null ? 
                 teamDTO.getMemberIds().stream()
                     .map(id -> userRepository.findById(id)
                             .orElseThrow(() -> new RuntimeException("User not found with ID: " + id)))
-                    .collect(Collectors.toList()) : 
-                new ArrayList<>();
+                    .collect(Collectors.toSet()) : 
+                new java.util.HashSet<>();
         
         // Make sure creator is in the team
         if (!members.contains(creator)) {
@@ -131,14 +136,15 @@ public class TeamService {
      * Update an existing team.
      */
     @Transactional
+    @CacheEvict(value = {"teams", "userTeams"}, allEntries = true)
     public Team updateTeam(Long id, TeamDTO teamDTO) {
         Team existingTeam = getTeamById(id);
         
         // Get members
-        List<User> members = teamDTO.getMemberIds().stream()
+        Set<User> members = teamDTO.getMemberIds().stream()
                 .map(memberId -> userRepository.findById(memberId)
                         .orElseThrow(() -> new RuntimeException("User not found with ID: " + memberId)))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
         
         // Update team
         existingTeam.setName(teamDTO.getName());
@@ -153,6 +159,7 @@ public class TeamService {
      * Delete a team and all its projects.
      */
     @Transactional
+    @CacheEvict(value = {"teams", "userTeams", "projects", "userProjects"}, allEntries = true)
     public void deleteTeam(Long id) {
         Team team = getTeamById(id);
         

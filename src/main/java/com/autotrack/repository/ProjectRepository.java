@@ -35,6 +35,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p WHERE p.team = :team AND p.owner = :createdBy AND p.deletedAt IS NULL")
     List<Project> findByTeamAndCreatedByAndDeletedAtIsNull(@Param("team") Team team, @Param("createdBy") User createdBy);
     
+    // Find projects where the user is a team member (via team_members join table)
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.team t JOIN t.members m WHERE m = :user AND p.deletedAt IS NULL")
+    List<Project> findProjectsByTeamMember(@Param("user") User user);
+
     // Legacy methods for backward compatibility (now filter deleted)
     default List<Project> findByTeam(Team team) {
         return findByTeamAndDeletedAtIsNull(team);

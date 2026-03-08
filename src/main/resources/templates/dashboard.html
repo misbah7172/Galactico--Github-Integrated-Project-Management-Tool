@@ -287,9 +287,13 @@
                 <div th:unless="${#lists.isEmpty(projects)}" class="item-grid">
                     <div th:each="project : ${projects}" class="item-card">
                         <h3 class="item-name" th:text="${project.name}">Project Name</h3>
-                        <div class="item-meta">
+                        <div th:if="${project.team != null}" class="item-meta">
                             <i class="fas fa-users"></i>
                             <span th:text="${project.team.name}">Team Name</span>
+                        </div>
+                        <div th:if="${project.team == null}" class="item-meta">
+                            <i class="fas fa-user"></i>
+                            <span>Personal Project</span>
                         </div>
                         <div class="item-meta" style="margin-bottom: 1rem;">
                             <i class="fab fa-github"></i>

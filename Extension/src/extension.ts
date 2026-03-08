@@ -151,6 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
     const githubAuthService = new GitHubAuthService();
     const galacticoAuthService = new GalacticoAuthService(context);
     const galacticoService = new GalacticoService(githubAuthService);
+    galacticoService.setGalacticoAuth(galacticoAuthService);
     const dashboardService = new DashboardService(context, galacticoAuthService);
     const cicdService = new CICDService(context, galacticoAuthService);
     const autoTrackCommitService = new AutoTrackCommitService(githubAuthService);

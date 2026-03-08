@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Commit Review - Galactico</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -984,14 +986,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let currentUser = /*[[${currentUser}]]*/ '';
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
         
         function approveCommit(commitId) {
             if (confirm('Are you sure you want to approve this commit?')) {
+                const headers = { 'Content-Type': 'application/json' };
+                headers[csrfHeader] = csrfToken;
                 fetch('/api/commits/review', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: headers,
                     body: JSON.stringify({
                         commitId: commitId,
                         status: 'APPROVED',
@@ -1026,11 +1030,11 @@
                 return;
             }
             
+            const rejectHeaders = { 'Content-Type': 'application/json' };
+            rejectHeaders[csrfHeader] = csrfToken;
             fetch('/api/commits/review', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: rejectHeaders,
                 body: JSON.stringify({
                     commitId: parseInt(commitId),
                     status: 'REJECTED',

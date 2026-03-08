@@ -23,6 +23,11 @@ public class CustomErrorController implements org.springframework.boot.web.servl
 
         if (status != null) {
             int statusCode = Integer.parseInt(status.toString());
+
+            // Don't render error page for non-error status codes
+            if (statusCode >= 200 && statusCode < 400) {
+                return "redirect:/dashboard";
+            }
             
             switch (statusCode) {
                 case 403:
