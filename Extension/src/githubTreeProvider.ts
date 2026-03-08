@@ -92,6 +92,7 @@ export class GitHubTreeDataProvider implements vscode.TreeDataProvider<GitHubTre
 
     private getToolsChildren(): Promise<GitHubTreeItem[]> {
         return Promise.resolve([
+            this.makeItem('Smart Terminal', 'githubAuthExtension.openSmartTerminal', 'Auto-format git commits', 'terminal'),
             this.makeItem('Select Task', 'githubAuthExtension.selectTask', 'Pick task for commit', 'list-selection'),
             this.makeItem('Galactico Commit', 'githubAuthExtension.galacticoCommit', 'Commit linked to task', 'git-commit'),
             this.makeItem('View Contributions', 'githubAuthExtension.openContributions', 'Contribution analytics', 'group'),

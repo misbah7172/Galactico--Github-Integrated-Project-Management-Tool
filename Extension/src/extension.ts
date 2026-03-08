@@ -7,6 +7,7 @@ import { GalacticoAuthService } from './galacticoAuthService';
 import { CICDService } from './cicdService';
 import { AutoTrackCommitService } from './autoTrackCommitService';
 import { ExtensionConfig } from './config';
+import { createGalacticoTerminal } from './galacticoTerminal';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -1015,6 +1016,11 @@ export function activate(context: vscode.ExtensionContext) {
         await autoTrackCommitService.createAutoTrackCommit();
     });
 
+    // Register Galactico Smart Terminal command
+    const openSmartTerminalCommand = vscode.commands.registerCommand('githubAuthExtension.openSmartTerminal', () => {
+        createGalacticoTerminal(githubAuthService, galacticoAuthService);
+    });
+
     // Add all commands to context subscriptions for proper cleanup
     context.subscriptions.push(
         startAuthCommand,
@@ -1043,6 +1049,7 @@ export function activate(context: vscode.ExtensionContext) {
         gitAutoToRepoCommand,
         createRepoCommand,
         autoTrackCreateCommitCommand,
+        openSmartTerminalCommand,
         treeView
     );
 }

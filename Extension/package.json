@@ -45,6 +45,7 @@
     "onCommand:githubAuthExtension.gitPushToRepo",
     "onCommand:githubAuthExtension.gitAutoToRepo",
     "onCommand:githubAuthExtension.autoTrackCreateCommit",
+    "onCommand:githubAuthExtension.openSmartTerminal",
     "onView:githubAuthView"
   ],
   "main": "./out/extension.js",
@@ -75,6 +76,7 @@
       { "command": "githubAuthExtension.gitPushToRepo", "title": "Push to Repository", "icon": "$(cloud-upload)" },
       { "command": "githubAuthExtension.gitAutoToRepo", "title": "Auto Push to Repo", "icon": "$(rocket)" },
       { "command": "githubAuthExtension.autoTrackCreateCommit", "title": "AutoTrack Create Commit", "icon": "$(git-commit)" },
+      { "command": "githubAuthExtension.openSmartTerminal", "title": "Open Galactico Smart Terminal", "icon": "$(terminal)" },
       { "command": "githubAuthView.openItem", "title": "Open View Item", "icon": "$(eye)" }
     ],
     "viewsContainers": {
