@@ -90,6 +90,7 @@ extension-api-test.*
 # Documentation exports
 *.pdf
 *.html
+!src/main/resources/templates/**/*.html
 
 # Query files
 query

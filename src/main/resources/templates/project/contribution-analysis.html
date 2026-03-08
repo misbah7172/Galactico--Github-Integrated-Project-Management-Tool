@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Contribution Analysis - Galactico</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1e293b 50%, var(--midnight-blue) 100%) !important;
+            min-height: 100vh !important;
+            color: var(--text-primary) !important;
+            line-height: 1.6 !important;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .ca-container {
+            max-width: 1300px; margin: 0 auto; padding: 2rem 1.5rem;
+            position: relative; z-index: 1;
+        }
+
+        /* ── Header ─────────────────────────────────────────────── */
+        .ca-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2rem; background: var(--card-bg);
+            backdrop-filter: blur(20px); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .ca-title {
+            font-size: 2.2rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-cyan) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .ca-subtitle { color: var(--text-secondary); font-size: 1rem; margin-top: 0.25rem; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.25rem; background: transparent; color: var(--text-secondary);
+            text-decoration: none; border: 2px solid var(--border-color);
+            border-radius: 12px; font-weight: 500; transition: all 0.3s ease;
+        }
+        .back-btn:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); transform: translateY(-2px); text-decoration: none; }
+
+        /* ── Tab Navigation ─────────────────────────────────────── */
+        .ca-tabs {
+            display: flex; gap: 0.5rem; margin-bottom: 2rem;
+            background: var(--card-bg); border-radius: 16px; padding: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .ca-tab {
+            flex: 1; padding: 0.875rem 1.5rem; border: none; border-radius: 12px;
+            background: transparent; color: var(--text-secondary); font-weight: 500;
+            font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .ca-tab:hover { background: rgba(99,102,241,0.1); color: var(--text-primary); }
+        .ca-tab.active {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+
+        /* ── Tab Panels ─────────────────────────────────────────── */
+        .ca-panel { display: none; }
+        .ca-panel.active { display: block; }
+
+        /* ── Contributor Cards (percentage overview) ─────────────── */
+        .contributors-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem; margin-bottom: 2rem;
+        }
+        .contributor-card {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 1.5rem; cursor: pointer; transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .contributor-card:hover {
+            transform: translateY(-4px); border-color: var(--neon-cyan);
+            box-shadow: 0 15px 35px rgba(6,182,212,0.15);
+        }
+        .contributor-card .percentage-bar {
+            position: absolute; bottom: 0; left: 0; height: 4px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--indigo));
+            border-radius: 0 0 16px 16px; transition: width 1s ease;
+        }
+        .contributor-name { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .contributor-email { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; }
+        .contribution-percentage {
+            font-size: 2.5rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--indigo));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .contribution-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+        .contributor-stats-mini {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+            font-size: 0.8rem; color: var(--text-secondary);
+        }
+        .contributor-stats-mini span { display: flex; align-items: center; gap: 0.3rem; }
+        .click-hint {
+            font-size: 0.75rem; color: rgba(99,102,241,0.6);
+            margin-top: 0.75rem; text-align: center;
+        }
+
+        /* ── Detail Modal / Panel ───────────────────────────────── */
+        .detail-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+            z-index: 1000; overflow-y: auto; padding: 2rem;
+        }
+        .detail-overlay.active { display: flex; justify-content: center; align-items: flex-start; }
+        .detail-panel {
+            background: linear-gradient(135deg, #1e293b 0%, var(--midnight-blue) 100%);
+            border: 1px solid var(--border-color); border-radius: 20px;
+            max-width: 900px; width: 100%; padding: 2rem;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            margin-top: 2rem; margin-bottom: 2rem;
+        }
+        .detail-close {
+            float: right; background: none; border: none; color: var(--text-secondary);
+            font-size: 1.5rem; cursor: pointer; transition: color 0.2s;
+        }
+        .detail-close:hover { color: var(--danger-color); }
+        .detail-header { margin-bottom: 2rem; }
+        .detail-name { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); }
+        .detail-email { color: var(--text-secondary); font-size: 0.9rem; }
+
+        .detail-stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        .detail-stat {
+            text-align: center; padding: 1rem; border-radius: 12px;
+            background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.15);
+        }
+        .detail-stat-value { font-size: 1.5rem; font-weight: 700; }
+        .detail-stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+        .detail-section {
+            margin-bottom: 2rem; background: rgba(15,23,42,0.5);
+            border-radius: 16px; padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .detail-section-title {
+            font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .detail-section-title i { color: var(--neon-cyan); }
+
+        /* Code elements bar chart */
+        .code-element-bar {
+            display: flex; align-items: center; gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .code-element-label { width: 90px; font-size: 0.85rem; color: var(--text-secondary); text-align: right; }
+        .code-element-track {
+            flex: 1; height: 24px; background: rgba(99,102,241,0.1);
+            border-radius: 6px; overflow: hidden; position: relative;
+        }
+        .code-element-fill {
+            height: 100%; border-radius: 6px; transition: width 1s ease;
+            display: flex; align-items: center; padding-left: 8px;
+            font-size: 0.75rem; font-weight: 600; color: white;
+        }
+        .code-element-count { font-size: 0.8rem; color: var(--text-secondary); min-width: 55px; }
+
+        /* ── Commit Size Rankings ────────────────────────────────── */
+        .ranking-card {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .ranking-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem;
+        }
+        .ranking-name { font-size: 1.1rem; font-weight: 600; }
+        .ranking-avg {
+            font-size: 0.85rem; padding: 0.3rem 0.75rem; border-radius: 20px;
+            background: rgba(99,102,241,0.15); color: var(--indigo);
+        }
+        .commit-extremes {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+        }
+        .extreme-card {
+            padding: 1rem; border-radius: 12px;
+        }
+        .extreme-card.biggest {
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+        }
+        .extreme-card.smallest {
+            background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+        }
+        .extreme-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .extreme-card.biggest .extreme-label { color: var(--danger-color); }
+        .extreme-card.smallest .extreme-label { color: var(--success-color); }
+        .extreme-size { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .extreme-msg { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .extreme-date { font-size: 0.7rem; color: rgba(203,213,225,0.5); margin-top: 0.25rem; }
+
+        .size-dist-bar {
+            display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 0.75rem;
+        }
+        .size-dist-bar > div { transition: width 0.5s ease; }
+        .size-small { background: var(--info-color); }
+        .size-medium { background: var(--success-color); }
+        .size-large { background: var(--warning-color); }
+        .size-huge { background: var(--danger-color); }
+        .size-legend {
+            display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.7rem;
+            color: var(--text-secondary); flex-wrap: wrap;
+        }
+        .size-legend span { display: flex; align-items: center; gap: 0.3rem; }
+        .size-legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* ── Project-wide highlights ────────────────────────── */
+        .project-highlights {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;
+        }
+        .highlight-card {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem;
+        }
+        .highlight-card.biggest { border-color: rgba(239,68,68,0.3); }
+        .highlight-card.smallest { border-color: rgba(34,197,94,0.3); }
+        .highlight-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .highlight-card.biggest .highlight-title { color: var(--danger-color); }
+        .highlight-card.smallest .highlight-title { color: var(--success-color); }
+
+        /* ── Loading / Empty ────────────────────────────────────── */
+        .loading-state {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.75rem; padding: 3rem; color: var(--text-secondary);
+        }
+        .spinner {
+            width: 24px; height: 24px; border: 3px solid var(--border-color);
+            border-top: 3px solid var(--neon-cyan); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .empty-state {
+            text-align: center; padding: 4rem 2rem; color: var(--text-secondary);
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+
+        /* ── Commit list in detail ──────────────────────────── */
+        .commit-list { max-height: 350px; overflow-y: auto; }
+        .commit-list::-webkit-scrollbar { width: 6px; }
+        .commit-list::-webkit-scrollbar-track { background: rgba(99,102,241,0.05); border-radius: 3px; }
+        .commit-list::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+        .commit-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 1rem; border-bottom: 1px solid rgba(99,102,241,0.1);
+            transition: background 0.2s;
+        }
+        .commit-item:hover { background: rgba(6,182,212,0.05); }
+        .commit-msg { font-size: 0.85rem; color: var(--text-primary); flex: 1;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 1rem; }
+        .commit-size-badge {
+            font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 12px; font-weight: 600;
+            white-space: nowrap;
+        }
+        .commit-size-badge.Small { background: rgba(6,182,212,0.15); color: var(--info-color); }
+        .commit-size-badge.Medium { background: rgba(34,197,94,0.15); color: var(--success-color); }
+        .commit-size-badge.Large { background: rgba(245,158,11,0.15); color: var(--warning-color); }
+        .commit-size-badge.Huge { background: rgba(239,68,68,0.15); color: var(--danger-color); }
+
+        /* ── Responsive ─────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .ca-container { padding: 1rem; }
+            .ca-header { flex-direction: column; gap: 1rem; text-align: center; }
+            .ca-title { font-size: 1.6rem; }
+            .ca-tabs { flex-direction: column; }
+            .contributors-grid { grid-template-columns: 1fr; }
+            .commit-extremes { grid-template-columns: 1fr; }
+            .project-highlights { grid-template-columns: 1fr; }
+            .detail-stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="ca-container">
+        <!-- Header -->
+        <div class="ca-header" th:data-project-id="${project != null ? project.id : ''}">
+            <div>
+                <h1 class="ca-title">
+                    <i class="fas fa-brain" style="color: var(--neon-cyan);"></i>
+                    Contribution Analysis
+                </h1>
+                <p class="ca-subtitle" th:if="${project}">
+                    <i class="fas fa-folder" style="color: var(--neon-cyan);"></i>
+                    <span th:text="${project.name}">Project Name</span>
+                    &mdash; AI-powered code contribution breakdown
+                </p>
+            </div>
+            <div style="display:flex;gap:0.75rem;">
+                <a th:href="@{/projects/{id}/analytics(id=${project.id})}" class="back-btn">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+                <a href="/projects" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Projects
+                </a>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="ca-tabs">
+            <button class="ca-tab active" data-tab="overview">
+                <i class="fas fa-chart-pie"></i> Contribution Overview
+            </button>
+            <button class="ca-tab" data-tab="commit-sizes">
+                <i class="fas fa-weight-hanging"></i> Commit Size Rankings
+            </button>
+        </div>
+
+        <!-- ═══ Tab 1: Contribution Overview ═══ -->
+        <div class="ca-panel active" id="panel-overview">
+            <div id="contributorsContainer" class="contributors-grid">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <span>Analyzing contributions...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Tab 2: Commit Size Rankings ═══ -->
+        <div class="ca-panel" id="panel-commit-sizes">
+            <div id="projectHighlights" class="project-highlights" style="display:none;"></div>
+            <div id="rankingsContainer">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <span>Loading commit size data...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Detail Overlay (shown when clicking a contributor card) ═══ -->
+    <div class="detail-overlay" id="detailOverlay">
+        <div class="detail-panel">
+            <button class="detail-close" id="detailClose">&times;</button>
+            <div class="detail-header">
+                <div class="detail-name" id="detailName">-</div>
+                <div class="detail-email" id="detailEmail">-</div>
+            </div>
+
+            <div class="detail-stats-grid" id="detailStats"></div>
+
+            <!-- Code Element Breakdown -->
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    <i class="fas fa-code"></i> Code Element Breakdown (AI Estimated)
+                </div>
+                <div id="codeElementsChart"></div>
+            </div>
+
+            <!-- Language Breakdown -->
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    <i class="fas fa-language"></i> Language Breakdown
+                </div>
+                <div style="height:250px;">
+                    <canvas id="languageChart"></canvas>
+                </div>
+            </div>
+
+            <!-- All Commits sorted by size -->
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    <i class="fas fa-list-ol"></i> All Commits (sorted by size)
+                </div>
+                <div class="commit-list" id="commitList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProjectId = null;
+        let languageChartInstance = null;
+
+        // ── Init ────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.querySelector('[data-project-id]');
+            if (header) currentProjectId = header.getAttribute('data-project-id');
+            if (!currentProjectId) {
+                const parts = window.location.pathname.split('/');
+                const idx = parts.indexOf('projects');
+                if (idx >= 0) currentProjectId = parts[idx + 1];
+            }
+            if (currentProjectId) {
+                loadContributionOverview();
+                loadCommitSizeRankings();
+            }
+
+            // Tab switching
+            document.querySelectorAll('.ca-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.ca-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.ca-panel').forEach(p => p.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+                });
+            });
+
+            // Detail overlay close
+            document.getElementById('detailClose').addEventListener('click', closeDetail);
+            document.getElementById('detailOverlay').addEventListener('click', e => {
+                if (e.target === e.currentTarget) closeDetail();
+            });
+        });
+
+        // ── Load Contribution Overview ─────────────────────────
+        function loadContributionOverview() {
+            fetch('/api/analytics/' + currentProjectId + '/contribution-analysis')
+                .then(r => r.json())
+                .then(data => renderContributorCards(data))
+                .catch(() => {
+                    document.getElementById('contributorsContainer').innerHTML =
+                        '<div class="empty-state"><i class="fas fa-chart-pie"></i><p>No contribution data available yet.</p></div>';
+                });
+        }
+
+        function renderContributorCards(data) {
+            const container = document.getElementById('contributorsContainer');
+            if (!data.contributors || data.contributors.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No contributors found. Commits will appear here after GitHub webhook pushes.</p></div>';
+                return;
+            }
+
+            const colors = ['#06b6d4','#6366f1','#8b5cf6','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6'];
+            container.innerHTML = data.contributors.map((c, i) => `
+                <div class="contributor-card" onclick="openDetail('${encodeURIComponent(c.email)}')">
+                    <div class="contributor-name">${escapeHtml(c.name)}</div>
+                    <div class="contributor-email">${escapeHtml(c.email)}</div>
+                    <div class="contribution-percentage">${c.contributionPercentage}%</div>
+                    <div class="contribution-label">contribution</div>
+                    <div class="contributor-stats-mini">
+                        <span><i class="fas fa-code-commit" style="color:${colors[i % colors.length]}"></i> ${c.totalCommits} commits</span>
+                        <span><i class="fas fa-plus" style="color:var(--success-color)"></i> +${formatNum(c.linesAdded)}</span>
+                        <span><i class="fas fa-file" style="color:var(--info-color)"></i> ${c.filesChanged} files</span>
+                        <span><i class="fas fa-minus" style="color:var(--danger-color)"></i> -${formatNum(c.linesDeleted)}</span>
+                    </div>
+                    <div class="click-hint"><i class="fas fa-hand-pointer"></i> Click for detailed breakdown</div>
+                    <div class="percentage-bar" style="width:${c.contributionPercentage}%"></div>
+                </div>
+            `).join('');
+        }
+
+        // ── Open Contributor Detail ───────────────────────────
+        function openDetail(emailEncoded) {
+            const overlay = document.getElementById('detailOverlay');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Show loading
+            document.getElementById('detailName').textContent = 'Loading...';
+            document.getElementById('detailEmail').textContent = '';
+            document.getElementById('detailStats').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+            document.getElementById('codeElementsChart').innerHTML = '';
+            document.getElementById('commitList').innerHTML = '';
+
+            fetch('/api/analytics/' + currentProjectId + '/contributor-detail?email=' + emailEncoded)
+                .then(r => r.json())
+                .then(data => renderDetail(data))
+                .catch(() => {
+                    document.getElementById('detailName').textContent = 'Error loading data';
+                });
+        }
+
+        function closeDetail() {
+            document.getElementById('detailOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+            if (languageChartInstance) { languageChartInstance.destroy(); languageChartInstance = null; }
+        }
+
+        function renderDetail(data) {
+            document.getElementById('detailName').textContent = data.name || 'Unknown';
+            document.getElementById('detailEmail').textContent = data.email || '';
+
+            // Stats grid
+            const stats = [
+                { label: 'Commits', value: data.totalCommits, color: 'var(--neon-cyan)' },
+                { label: 'Lines Added', value: formatNum(data.linesAdded), color: 'var(--success-color)' },
+                { label: 'Lines Modified', value: formatNum(data.linesModified), color: 'var(--warning-color)' },
+                { label: 'Lines Deleted', value: formatNum(data.linesDeleted), color: 'var(--danger-color)' },
+                { label: 'Files Changed', value: data.filesChanged, color: 'var(--info-color)' },
+                { label: 'Avg Commit Size', value: data.avgCommitSize, color: 'var(--soft-violet)' },
+                { label: 'Productivity', value: data.productivityScore, color: 'var(--neon-cyan)' },
+                { label: 'Code Quality', value: data.codeQualityScore + '%', color: 'var(--success-color)' }
+            ];
+            document.getElementById('detailStats').innerHTML = stats.map(s => `
+                <div class="detail-stat">
+                    <div class="detail-stat-value" style="color:${s.color}">${s.value}</div>
+                    <div class="detail-stat-label">${s.label}</div>
+                </div>
+            `).join('');
+
+            // Code elements
+            renderCodeElements(data.codeElements);
+
+            // Language chart
+            renderLanguageChart(data.languageBreakdown);
+
+            // Commit list
+            renderCommitList(data.commits);
+        }
+
+        function renderCodeElements(elements) {
+            const container = document.getElementById('codeElementsChart');
+            if (!elements || !elements.percentages) {
+                container.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;">No file-level data available for analysis.</p>';
+                return;
+            }
+
+            const items = [
+                { key: 'functions', label: 'Functions', color: '#6366f1', icon: 'fas fa-cube' },
+                { key: 'variables', label: 'Variables', color: '#06b6d4', icon: 'fas fa-font' },
+                { key: 'comments', label: 'Comments', color: '#22c55e', icon: 'fas fa-comment-dots' },
+                { key: 'imports', label: 'Imports', color: '#f59e0b', icon: 'fas fa-file-import' },
+                { key: 'classes', label: 'Classes', color: '#8b5cf6', icon: 'fas fa-sitemap' },
+                { key: 'other', label: 'Other', color: '#64748b', icon: 'fas fa-ellipsis-h' }
+            ];
+
+            const maxPct = Math.max(...items.map(i => elements.percentages[i.key] || 0), 1);
+
+            container.innerHTML = `
+                <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">
+                    Estimated from ${formatNum(elements.totalLinesAnalyzed)} lines analyzed across file types
+                </p>
+            ` + items.map(item => {
+                const pct = elements.percentages[item.key] || 0;
+                const count = elements[item.key] || 0;
+                const barWidth = maxPct > 0 ? (pct / maxPct) * 100 : 0;
+                return `
+                    <div class="code-element-bar">
+                        <div class="code-element-label"><i class="${item.icon}" style="color:${item.color};margin-right:4px;"></i>${item.label}</div>
+                        <div class="code-element-track">
+                            <div class="code-element-fill" style="width:${barWidth}%;background:${item.color};">${pct}%</div>
+                        </div>
+                        <div class="code-element-count">${formatNum(count)} lines</div>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderLanguageChart(breakdown) {
+            if (languageChartInstance) { languageChartInstance.destroy(); languageChartInstance = null; }
+            if (!breakdown || Object.keys(breakdown).length === 0) return;
+
+            const labels = Object.keys(breakdown);
+            const values = labels.map(l => breakdown[l].lines);
+            const colors = ['#06b6d4','#6366f1','#8b5cf6','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#64748b','#a855f7'];
+
+            const ctx = document.getElementById('languageChart').getContext('2d');
+            languageChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.map((l, i) => l + ' (' + (breakdown[l].percentage) + '%)'),
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#f8fafc', padding: 12, font: { size: 12 } } }
+                    }
+                }
+            });
+        }
+
+        function renderCommitList(commits) {
+            const container = document.getElementById('commitList');
+            if (!commits || commits.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary);padding:1rem;">No commits found.</p>';
+                return;
+            }
+            container.innerHTML = commits.map(c => `
+                <div class="commit-item">
+                    <div class="commit-msg" title="${escapeHtml(c.message)}">
+                        ${c.url ? '<a href="' + c.url + '" target="_blank" rel="noopener" style="color:var(--text-primary);text-decoration:none;">' + escapeHtml(c.message) + '</a>' : escapeHtml(c.message)}
+                    </div>
+                    <span class="commit-size-badge ${c.sizeCategory}">
+                        ${c.totalSize} lines &middot; ${c.sizeCategory}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // ── Load Commit Size Rankings ─────────────────────────
+        function loadCommitSizeRankings() {
+            fetch('/api/analytics/' + currentProjectId + '/commit-size-rankings')
+                .then(r => r.json())
+                .then(data => renderRankings(data))
+                .catch(() => {
+                    document.getElementById('rankingsContainer').innerHTML =
+                        '<div class="empty-state"><i class="fas fa-weight-hanging"></i><p>No commit data available.</p></div>';
+                });
+        }
+
+        function renderRankings(data) {
+            // Project highlights
+            const highlights = document.getElementById('projectHighlights');
+            if (data.projectBiggestCommit && data.projectSmallestCommit) {
+                highlights.style.display = 'grid';
+                highlights.innerHTML = `
+                    <div class="highlight-card biggest">
+                        <div class="highlight-title"><i class="fas fa-arrow-up"></i> Project's Biggest Commit</div>
+                        ${renderExtremeInline(data.projectBiggestCommit, 'biggest')}
+                    </div>
+                    <div class="highlight-card smallest">
+                        <div class="highlight-title"><i class="fas fa-arrow-down"></i> Project's Smallest Commit</div>
+                        ${renderExtremeInline(data.projectSmallestCommit, 'smallest')}
+                    </div>
+                `;
+            }
+
+            // Per-user rankings
+            const container = document.getElementById('rankingsContainer');
+            if (!data.rankings || data.rankings.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No contributor data.</p></div>';
+                return;
+            }
+
+            container.innerHTML = data.rankings.map(user => {
+                const dist = user.sizeDistribution;
+                const total = (dist.small || 0) + (dist.medium || 0) + (dist.large || 0) + (dist.huge || 0);
+                const pctSmall = total > 0 ? (dist.small / total * 100) : 0;
+                const pctMedium = total > 0 ? (dist.medium / total * 100) : 0;
+                const pctLarge = total > 0 ? (dist.large / total * 100) : 0;
+                const pctHuge = total > 0 ? (dist.huge / total * 100) : 0;
+
+                return `
+                    <div class="ranking-card">
+                        <div class="ranking-header">
+                            <div class="ranking-name"><i class="fas fa-user" style="color:var(--neon-cyan);margin-right:0.5rem;"></i>${escapeHtml(user.name)}</div>
+                            <div class="ranking-avg">Avg: ${user.avgCommitSize} lines &middot; ${user.totalCommits} commits</div>
+                        </div>
+                        <div class="commit-extremes">
+                            <div class="extreme-card biggest">
+                                <div class="extreme-label"><i class="fas fa-arrow-up"></i> Biggest Commit</div>
+                                <div class="extreme-size">${user.biggestCommit.totalSize} lines</div>
+                                <div class="extreme-msg" title="${escapeHtml(user.biggestCommit.message)}">${escapeHtml(user.biggestCommit.message)}</div>
+                                <div class="extreme-date">${formatDate(user.biggestCommit.date)}</div>
+                            </div>
+                            <div class="extreme-card smallest">
+                                <div class="extreme-label"><i class="fas fa-arrow-down"></i> Smallest Commit</div>
+                                <div class="extreme-size">${user.smallestCommit.totalSize} lines</div>
+                                <div class="extreme-msg" title="${escapeHtml(user.smallestCommit.message)}">${escapeHtml(user.smallestCommit.message)}</div>
+                                <div class="extreme-date">${formatDate(user.smallestCommit.date)}</div>
+                            </div>
+                        </div>
+                        <div class="size-dist-bar">
+                            <div class="size-small" style="width:${pctSmall}%" title="Small: ${dist.small}"></div>
+                            <div class="size-medium" style="width:${pctMedium}%" title="Medium: ${dist.medium}"></div>
+                            <div class="size-large" style="width:${pctLarge}%" title="Large: ${dist.large}"></div>
+                            <div class="size-huge" style="width:${pctHuge}%" title="Huge: ${dist.huge}"></div>
+                        </div>
+                        <div class="size-legend">
+                            <span><span class="dot" style="background:var(--info-color)"></span> Small (≤10): ${dist.small}</span>
+                            <span><span class="dot" style="background:var(--success-color)"></span> Medium (11-50): ${dist.medium}</span>
+                            <span><span class="dot" style="background:var(--warning-color)"></span> Large (51-200): ${dist.large}</span>
+                            <span><span class="dot" style="background:var(--danger-color)"></span> Huge (200+): ${dist.huge}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderExtremeInline(commit, type) {
+            return `
+                <div style="display:flex;align-items:center;gap:1rem;">
+                    <div class="extreme-size">${commit.totalSize} lines</div>
+                    <div style="flex:1;">
+                        <div class="extreme-msg" style="white-space:normal;">${escapeHtml(commit.message)}</div>
+                        <div class="extreme-date">by ${escapeHtml(commit.author)} &middot; ${formatDate(commit.date)}</div>
+                    </div>
+                </div>`;
+        }
+
+        // ── Utilities ──────────────────────────────────────────
+        function formatNum(n) {
+            if (n == null) return '0';
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch { return dateStr; }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+    </script>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

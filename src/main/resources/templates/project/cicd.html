@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Configuration - [[${project.name}]] | Galactico</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container" style="padding-top: 2rem;">
+        <main>
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-cogs text-primary"></i>
+                            CI/CD Pipeline Configuration
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a th:href="@{/projects}">Projects</a></li>
+                                <li class="breadcrumb-item"><a th:href="@{/projects/{id}(id=${project.id})}" th:text="${project.name}">Project</a></li>
+                                <li class="breadcrumb-item active">CI/CD Configuration</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Success/Error Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- GitHub Success Message with Actions Link -->
+                <div th:if="${githubSuccess}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fab fa-github fa-2x me-3"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">🚀 Pipeline Pushed to GitHub Actions!</h6>
+                            <p class="mb-2">Your CI/CD pipeline has been successfully created in your GitHub repository.</p>
+                            <div class="d-flex gap-2">
+                                <a th:href="${project.gitHubRepoUrl + '/actions'}" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-external-link-alt me-1"></i>
+                                    View GitHub Actions
+                                </a>
+                                <a th:href="${project.gitHubRepoUrl + '/blob/main/.github/workflows/ci.yml'}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-file-code me-1"></i>
+                                    View Workflow File
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- GitHub Warning Message -->
+                <div th:if="${githubWarning}" class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">⚠️ GitHub Push Failed</h6>
+                            <p class="mb-2">Pipeline was generated locally but could not be pushed to GitHub.</p>
+                            <a th:href="@{/projects/{id}/settings(id=${project.id})}" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-cog me-1"></i>
+                                Check GitHub Settings
+                            </a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Local Only Message -->
+                <div th:if="${localOnly}" class="alert alert-info alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-laptop fa-2x me-3"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">💾 Pipeline Saved Locally</h6>
+                            <p class="mb-2">Pipeline was generated and saved locally. Connect your GitHub repository to enable automatic push to GitHub Actions.</p>
+                            <a th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-sm btn-outline-primary">
+                                <i class="fab fa-github me-1"></i>
+                                Connect GitHub Repository
+                            </a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- CI/CD Configuration Info -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-info-circle"></i>
+                                    About CI/CD Pipeline Generation
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2">The CI/CD pipeline generator creates automated GitHub Actions workflows tailored to your project type and deployment strategy.</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Supported Project Types:</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fab fa-node-js text-success"></i> Node.js</li>
+                                            <li><i class="fab fa-python text-info"></i> Python</li>
+                                            <li><i class="fab fa-react text-primary"></i> React</li>
+                                            <li><i class="fab fa-docker text-primary"></i> Docker</li>
+                                            <li><i class="fab fa-java text-warning"></i> Java</li>
+                                            <li><i class="fas fa-cog"></i> Custom</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Deploy Strategies:</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-times text-muted"></i> None (Test & Build only)</li>
+                                            <li><i class="fas fa-flask text-info"></i> Staging Environment</li>
+                                            <li><i class="fas fa-rocket text-success"></i> Production</li>
+                                            <li><i class="fab fa-docker text-primary"></i> Docker Registry</li>
+                                            <li><i class="fab fa-aws text-warning"></i> AWS Lambda</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <!-- Multi-Language CI/CD Option -->
+                <div class="alert alert-info mt-3" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-rocket fa-2x me-3 text-primary"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">🌟 New: Multi-Language CI/CD Configuration</h6>
+                            <p class="mb-2">Configure sophisticated CI/CD pipelines for complex projects with multiple programming languages, microservices, or full-stack architectures.</p>
+                            <a th:href="@{/projects/{id}/cicd/multi-language(id=${project.id})}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-magic"></i> Configure Multi-Language Pipeline
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing Configuration Status -->
+                <div th:if="${existingConfig}" class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-info-circle"></i>
+                                    Current CI/CD Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Project Type:</strong><br>
+                                        <span class="badge bg-primary" th:text="${existingConfig.projectType}"></span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Deploy Strategy:</strong><br>
+                                        <span class="badge bg-success" th:text="${existingConfig.deployStrategy}"></span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Generated:</strong><br>
+                                        <small th:text="${#temporals.format(existingConfig.generatedAt, 'MMM dd, yyyy HH:mm')}"></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Status:</strong><br>
+                                        <span class="badge bg-warning" th:if="${existingConfig.lastPipelineStatus == null}">Never Run</span>
+                                        <span class="badge bg-success" th:if="${existingConfig.lastPipelineStatus == 'success'}">Success</span>
+                                        <span class="badge bg-danger" th:if="${existingConfig.lastPipelineStatus == 'failure'}">Failed</span>
+                                        <span class="badge bg-info" th:if="${existingConfig.lastPipelineStatus == 'running'}">Running</span>
+                                    </div>
+                                </div>
+                                <!-- GitHub Repository Information -->
+                                <div class="row mt-3" th:if="${githubRepository != null}">
+                                    <div class="col-12">
+                                        <div class="border-start border-4 border-primary ps-3">
+                                            <h6 class="mb-2"><i class="fab fa-github"></i> GitHub Repository</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <strong>Repository:</strong>
+                                                    <a th:href="${githubRepository['html_url']}" target="_blank" class="text-decoration-none">
+                                                        <span th:text="${githubRepository['full_name']}"></span>
+                                                        <i class="fas fa-external-link-alt small"></i>
+                                                    </a>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <strong>GitHub Actions:</strong>
+                                                    <a th:href="${githubRepository['html_url'] + '/actions'}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-play-circle"></i> View Actions
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Generated Files -->
+                                <div class="row mt-3" th:if="${existingConfig.githubPipelinePath != null or existingConfig.localPipelinePath != null}">
+                                    <div class="col-12">
+                                        <strong>Generated Files:</strong>
+                                        <ul class="list-unstyled mt-2">
+                                            <li th:if="${existingConfig.githubPipelinePath != null}" class="mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fab fa-github me-2"></i>
+                                                    <div>
+                                                        <a th:href="${existingConfig.githubPipelinePath}" target="_blank" class="text-decoration-none">
+                                                            GitHub Workflow
+                                                            <i class="fas fa-external-link-alt small"></i>
+                                                        </a>
+                                                        <br>
+                                                        <small class="text-muted">Deployed to .github/workflows/ci.yml</small>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            <li th:if="${existingConfig.localPipelinePath != null}">
+                                                <i class="fas fa-file-code me-2"></i>
+                                                Local Pipeline: <code th:text="${existingConfig.localPipelinePath}"></code>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CI/CD Configuration Form -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span th:text="${existingConfig != null ? 'Update CI/CD Pipeline' : 'Create CI/CD Pipeline'}"></span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form th:action="@{/projects/{projectId}/cicd(projectId=${project.id})}" 
+                                      th:object="${cicdConfigDTO}" method="post" onsubmit="console.log('Form submitted:', this);">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <!-- Auto-populate project name from current project -->
+                                    <input type="hidden" th:field="*{projectName}" />
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="projectType" class="form-label">
+                                                <i class="fas fa-layer-group"></i>
+                                                Project Type *
+                                            </label>
+                                            <select class="form-select" id="projectType" th:field="*{projectType}" 
+                                                    onchange="updateFormBasedOnType()" required>
+                                                <option value="">Select project type...</option>
+                                                <option value="node">Node.js</option>
+                                                <option value="python">Python</option>
+                                                <option value="react">React</option>
+                                                <option value="docker">Docker</option>
+                                                <option value="java">Java</option>
+                                                <option value="custom">Custom</option>
+                                            </select>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('projectType')}" 
+                                                 th:errors="*{projectType}"></div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <label for="deployStrategy" class="form-label">
+                                                <i class="fas fa-rocket"></i>
+                                                Deploy Strategy *
+                                            </label>
+                                            <select class="form-select" id="deployStrategy" th:field="*{deployStrategy}" required>
+                                                <option value="">Select deploy strategy...</option>
+                                                <option value="none">None (Test & Build only)</option>
+                                                <option value="staging">Staging Environment</option>
+                                                <option value="production">Production</option>
+                                                <option value="docker">Docker Registry</option>
+                                                <option value="aws-lambda">AWS Lambda</option>
+                                            </select>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('deployStrategy')}" 
+                                                 th:errors="*{deployStrategy}"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="testCommand" class="form-label">
+                                                <i class="fas fa-flask"></i>
+                                                Test Command
+                                            </label>
+                                            <input type="text" class="form-control" id="testCommand" 
+                                                   th:field="*{testCommand}" placeholder="e.g., npm test, pytest, mvn test">
+                                            <div class="form-text">Leave empty to use default test command for project type</div>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('testCommand')}" 
+                                                 th:errors="*{testCommand}"></div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <label for="buildCommand" class="form-label">
+                                                <i class="fas fa-hammer"></i>
+                                                Build Command
+                                            </label>
+                                            <input type="text" class="form-control" id="buildCommand" 
+                                                   th:field="*{buildCommand}" placeholder="e.g., npm run build, python setup.py build">
+                                            <div class="form-text">Leave empty to use default build command for project type</div>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('buildCommand')}" 
+                                                 th:errors="*{buildCommand}"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Default Commands Preview -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                <h6><i class="fas fa-info-circle"></i> Default Commands Preview:</h6>
+                                                <div id="defaultCommandsPreview">
+                                                    <em>Select a project type to see default commands</em>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- GitHub Integration Status -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="card" th:classappend="${project.gitHubAccessToken != null and project.gitHubAccessToken != '' ? 'border-success' : 'border-warning'}">
+                                                <div class="card-header" th:classappend="${project.gitHubAccessToken != null and project.gitHubAccessToken != '' ? 'bg-success-subtle' : 'bg-warning-subtle'}">
+                                                    <h6 class="mb-0">
+                                                        <i class="fab fa-github"></i>
+                                                        GitHub Integration Status
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div th:if="${project.gitHubAccessToken != null and project.gitHubAccessToken != ''}">
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                                            <strong>GitHub Connected</strong>
+                                                        </div>
+                                                        <p class="mb-2">
+                                                            <small>
+                                                                <i class="fas fa-link me-1"></i>
+                                                                Repository: <a th:href="${project.gitHubRepoUrl}" target="_blank" th:text="${project.gitHubRepoUrl}"></a>
+                                                            </small>
+                                                        </p>
+                                                        <div class="alert alert-info mb-3">
+                                                            <i class="fas fa-rocket me-2"></i>
+                                                            <strong>Pipeline will be automatically pushed to GitHub Actions!</strong>
+                                                            <br>
+                                                            <small>The generated CI/CD pipeline will be saved as <code>.github/workflows/ci.yml</code> in your repository.</small>
+                                                        </div>
+                                                        <!-- GitHub Management Actions -->
+                                                        <div class="d-flex gap-2 flex-wrap">
+                                                            <a th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-sm btn-outline-secondary">
+                                                                <i class="fas fa-cog me-1"></i>
+                                                                Manage GitHub Settings
+                                                            </a>
+                                                            <a th:href="${project.gitHubRepoUrl + '/actions'}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                <i class="fab fa-github me-1"></i>
+                                                                View GitHub Actions
+                                                            </a>
+                                                            <a th:href="${project.gitHubRepoUrl + '/settings/secrets/actions'}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                                <i class="fas fa-key me-1"></i>
+                                                                Repository Secrets
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <div th:unless="${project.gitHubAccessToken != null and project.gitHubAccessToken != ''}">
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                                            <strong>GitHub Not Connected</strong>
+                                                        </div>
+                                                        <p class="mb-2">
+                                                            <small>Pipeline will be generated locally only. To push directly to GitHub Actions, connect your repository first.</small>
+                                                        </p>
+                                                        <a th:href="@{/projects/{id}/edit(id=${project.id})}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fab fa-github me-1"></i>
+                                                            Connect GitHub Repository
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Secrets Information -->
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <div class="alert alert-warning">
+                                                <h6><i class="fas fa-key"></i> Required GitHub Secrets</h6>
+                                                <p class="mb-2">For deployment strategies other than "none", you'll need to configure these secrets in your GitHub repository:</p>
+                                                <div id="requiredSecrets">
+                                                    <!-- Will be populated by JavaScript based on deploy strategy -->
+                                                </div>
+                                                <small>
+                                                    <strong>Note:</strong> Add these secrets in your GitHub repository settings under 
+                                                    <code>Settings > Secrets and variables > Actions</code>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i th:class="${project.gitHubAccessToken != null and project.gitHubAccessToken != '' ? 'fab fa-github' : 'fas fa-save'}"></i>
+                                                <span th:if="${existingConfig != null}">
+                                                    <span th:text="${project.gitHubAccessToken != null and project.gitHubAccessToken != '' ? 'Update & Push to GitHub' : 'Update Pipeline'}"></span>
+                                                </span>
+                                                <span th:unless="${existingConfig != null}">
+                                                    <span th:text="${project.gitHubAccessToken != null and project.gitHubAccessToken != '' ? 'Generate & Push to GitHub' : 'Generate Pipeline'}"></span>
+                                                </span>
+                                            </button>
+                                            <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary">
+                                                <i class="fas fa-arrow-left"></i>
+                                                Back to Project
+                                            </a>
+                                        </div>
+                                        <div th:if="${existingConfig}">
+                                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                                <i class="fas fa-trash"></i>
+                                                Delete Pipeline
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </main>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" th:if="${existingConfig}">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete CI/CD Pipeline</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the CI/CD pipeline configuration for this project?</p>
+                    <p><strong>Note:</strong> This will not delete the actual GitHub workflow files, only the Galactico configuration.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form th:action="@{/projects/{projectId}/cicd/delete(projectId=${project.id})}" method="post" style="display: inline;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Default commands for each project type
+        const defaultCommands = {
+            'node': {
+                test: 'npm test',
+                build: 'npm run build',
+                secrets: ['DOCKERHUB_USERNAME', 'DOCKERHUB_TOKEN', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']
+            },
+            'python': {
+                test: 'pytest',
+                build: 'python setup.py build',
+                secrets: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'LAMBDA_FUNCTION_NAME']
+            },
+            'react': {
+                test: 'npm test',
+                build: 'npm run build',
+                secrets: ['AWS_S3_BUCKET', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']
+            },
+            'docker': {
+                test: 'docker run --rm test-image npm test',
+                build: 'docker build -t app .',
+                secrets: ['DOCKERHUB_USERNAME', 'DOCKERHUB_TOKEN', 'DOCKER_HOST']
+            },
+            'java': {
+                test: 'mvn clean test',
+                build: 'mvn clean package -DskipTests',
+                secrets: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']
+            },
+            'custom': {
+                test: 'No default (specify your own)',
+                build: 'No default (specify your own)',
+                secrets: []
+            }
+        };
+
+        const deploySecrets = {
+            'staging': ['STAGING_URL', 'STAGING_TOKEN'],
+            'production': ['PRODUCTION_URL', 'PRODUCTION_TOKEN'],
+            'docker': ['DOCKERHUB_USERNAME', 'DOCKERHUB_TOKEN', 'DOCKER_HOST'],
+            'aws-lambda': ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION', 'LAMBDA_FUNCTION_NAME']
+        };
+
+        function updateFormBasedOnType() {
+            const projectType = document.getElementById('projectType').value;
+            const deployStrategy = document.getElementById('deployStrategy').value;
+            
+            updateDefaultCommandsPreview(projectType);
+            updateRequiredSecrets(projectType, deployStrategy);
+        }
+
+        function updateDefaultCommandsPreview(projectType) {
+            const previewDiv = document.getElementById('defaultCommandsPreview');
+            
+            if (!projectType || !defaultCommands[projectType]) {
+                previewDiv.innerHTML = '<em>Select a project type to see default commands</em>';
+                return;
+            }
+
+            const commands = defaultCommands[projectType];
+            previewDiv.innerHTML = `
+                <strong>Test:</strong> <code>${commands.test}</code><br>
+                <strong>Build:</strong> <code>${commands.build}</code>
+            `;
+        }
+
+        function updateRequiredSecrets(projectType, deployStrategy) {
+            const secretsDiv = document.getElementById('requiredSecrets');
+            let secrets = [];
+
+            // Add project-specific secrets
+            if (projectType && defaultCommands[projectType]) {
+                secrets = [...defaultCommands[projectType].secrets];
+            }
+
+            // Add deploy-specific secrets
+            if (deployStrategy && deploySecrets[deployStrategy]) {
+                secrets = [...new Set([...secrets, ...deploySecrets[deployStrategy]])];
+            }
+
+            if (secrets.length === 0) {
+                secretsDiv.innerHTML = '<em>No additional secrets required for selected configuration</em>';
+            } else {
+                secretsDiv.innerHTML = secrets.map(secret => `<code>${secret}</code>`).join(', ');
+            }
+        }
+
+        // Initialize form on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, initializing form...');
+            updateFormBasedOnType();
+            
+            // Add event listener for deploy strategy changes
+            document.getElementById('deployStrategy').addEventListener('change', updateFormBasedOnType);
+            
+            // Debug form values
+            const projectType = document.getElementById('projectType').value;
+            const deployStrategy = document.getElementById('deployStrategy').value;
+            console.log('Initial form values:', { projectType, deployStrategy });
+        });
+    </script>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

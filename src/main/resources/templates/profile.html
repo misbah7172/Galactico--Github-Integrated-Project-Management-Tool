@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Galactico</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* Profile Hero */
+        .profile-hero {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 120px;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            opacity: 0.15;
+        }
+
+        .profile-avatar-section { position: relative; z-index: 1; flex-shrink: 0; }
+
+        .profile-avatar img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 4px solid var(--indigo);
+            object-fit: cover;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+        }
+
+        .profile-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            justify-content: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-indicator.online {
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.5); }
+            50% { opacity: 0.7; box-shadow: 0 0 16px rgba(34, 197, 94, 0.8); }
+        }
+
+        .profile-info { flex: 1; position: relative; z-index: 1; }
+
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .profile-email {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .profile-github {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .profile-github svg { color: var(--text-secondary); stroke: var(--text-secondary); }
+
+        .profile-github a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .profile-github a:hover { color: var(--indigo); }
+
+        .profile-roles { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-primary {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+        }
+
+        .badge-secondary {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--neon-cyan);
+            border: 1px solid var(--border-color);
+        }
+
+        .profile-actions { position: relative; z-index: 1; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            border: 1px solid var(--indigo);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+        .btn-icon { width: 16px; height: 16px; }
+
+        /* Stats Grid */
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border-color: var(--neon-cyan);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-icon svg { color: white; stroke: white; }
+
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        /* Sections */
+        .profile-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .section-title {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section-title svg { stroke: var(--neon-cyan); }
+
+        .section-content { padding: 1.25rem 1.5rem; }
+
+        /* List items */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .list-item:last-child { border-bottom: none; }
+
+        .item-title {
+            margin: 0 0 4px;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .item-subtitle {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .item-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: var(--success);
+        }
+
+        .item-meta svg { stroke: var(--success); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
+
+        .empty-title {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Settings */
+        .setting-item {
+            padding: 1.25rem 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .setting-item:last-child { border-bottom: none; }
+
+        .setting-title {
+            margin: 0 0 6px;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .setting-description {
+            margin: 0 0 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .setting-description strong { color: var(--neon-cyan); }
+
+        .code-example { margin-top: 8px; }
+
+        .code-example code {
+            display: inline-block;
+            background: rgba(15, 23, 42, 0.7);
+            color: var(--neon-cyan);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.82rem;
+            border-left: 3px solid var(--indigo);
+        }
+
+        .status-keywords { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
+        .keyword-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .keyword-badge.todo {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .keyword-badge.progress {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .keyword-badge.done {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .profile-hero {
+                flex-direction: column;
+                text-align: center;
+                padding: 2rem 1.5rem;
+                gap: 1.5rem;
+            }
+            .profile-name { font-size: 1.5rem; }
+            .profile-github { justify-content: center; }
+            .profile-roles { justify-content: center; }
+            .profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .profile-sections { grid-template-columns: 1fr; }
+            .list-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .profile-stats-grid { grid-template-columns: 1fr; }
+            .container { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="profile-hero">
+            <div class="profile-avatar-section">
+                <div class="profile-avatar">
+                    <img th:src="${user.avatarUrl}" th:alt="${user.nickname}" 
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxjaXJjbGUgY3g9IjUwIiBjeT0iMzciIHI9IjE4IiBmaWxsPSIjOWNhM2FmIi8+CjxwYXRoIGQ9Im0yMyA3NGMwLTE1IDEyLTI3IDI3LTI3czI3IDEyIDI3IDI3djEwaC01NHoiIGZpbGw9IiM5Y2EzYWYiLz4KPC9zdmc+'" />
+                    <div class="profile-status">
+                        <div class="status-indicator online"></div>
+                        <span>Online</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-info">
+                <h1 class="profile-name" th:text="${user.nickname}">Nickname</h1>
+                <p class="profile-email" th:text="${user.email}">user@example.com</p>
+                <div class="profile-github">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+                    </svg>
+                    <a th:href="'https://github.com/' + ${user.nickname}" target="_blank" th:text="'@' + ${user.nickname}">@username</a>
+                </div>
+                <div class="profile-roles">
+                    <span th:each="role : ${user.roles}" 
+                          th:class="${role.name() == 'TEAM_LEAD' ? 'badge badge-primary' : 'badge badge-secondary'}" 
+                          th:text="${role.name() == 'TEAM_LEAD' ? 'Team Lead' : 'Member'}">Role</span>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <a th:href="@{/teams/create}" class="btn btn-primary">
+                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14m-7-7h14"/>
+                    </svg>
+                    Create Team
+                </a>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <div class="profile-stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" th:text="${teamCount}">0</div>
+                        <div class="stat-label">Teams</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" th:text="${projectCount}">0</div>
+                        <div class="stat-label">Projects</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" th:text="${taskCount}">0</div>
+                        <div class="stat-label">Tasks Assigned</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="4"/>
+                            <line x1="1.05" y1="12" x2="7" y2="12"/>
+                            <line x1="17.01" y1="12" x2="22.96" y2="12"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" th:text="${commitCount}">0</div>
+                        <div class="stat-label">Commits Tracked</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-sections">
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            My Teams
+                        </h3>
+                        <a th:href="@{/teams}" class="btn btn-secondary btn-sm">View All</a>
+                    </div>
+                    <div class="section-content">
+                        <div th:if="${teams.empty}" class="empty-state">
+                            <div class="empty-icon">&#x1F465;</div>
+                            <h4 class="empty-title">No teams yet</h4>
+                            <p class="empty-description">Join or create a team to start collaborating</p>
+                            <a th:href="@{/teams/create}" class="btn btn-primary btn-sm">Create Team</a>
+                        </div>
+                        <div th:unless="${teams.empty}">
+                            <div th:each="team : ${teams}" class="list-item">
+                                <div class="item-info">
+                                    <h4 class="item-title" th:text="${team.name}">Team Name</h4>
+                                    <p class="item-subtitle" th:text="${#lists.size(team.members)} + ' members'">0 members</p>
+                                </div>
+                                <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary btn-sm">View</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                            </svg>
+                            Recent Projects
+                        </h3>
+                        <a th:href="@{/projects}" class="btn btn-secondary btn-sm">View All</a>
+                    </div>
+                    <div class="section-content">
+                        <div th:if="${projects.empty}" class="empty-state">
+                            <div class="empty-icon">&#x1F680;</div>
+                            <h4 class="empty-title">No projects yet</h4>
+                            <p class="empty-description">Create your first project to start tracking tasks</p>
+                        </div>
+                        <div th:unless="${projects.empty}">
+                            <div th:each="project : ${projects}" class="list-item">
+                                <div class="item-info">
+                                    <h4 class="item-title" th:text="${project.name}">Project Name</h4>
+                                    <p class="item-subtitle" th:if="${project.team != null}" th:text="${project.team.name}">Team Name</p>
+                                    <p class="item-subtitle" th:if="${project.team == null}">Personal Project</p>
+                                    <div class="item-meta">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="4"/>
+                                            <line x1="1.05" y1="12" x2="7" y2="12"/>
+                                            <line x1="17.01" y1="12" x2="22.96" y2="12"/>
+                                        </svg>
+                                        <span>Auto-tracking commits</span>
+                                    </div>
+                                </div>
+                                <a th:href="@{/projects/{id}(id=${project.id})}" class="btn btn-secondary btn-sm">View</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card" style="grid-column: 1 / -1;">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                            </svg>
+                            Galactico Settings
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="setting-item">
+                            <h4 class="setting-title">Commit Message Format</h4>
+                            <p class="setting-description">How your commits should be formatted for automatic task tracking</p>
+                            <div class="code-example">
+                                <code>"Feature01 : task description -> YourNickname -> status"</code>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <h4 class="setting-title">Your Username in Commits</h4>
+                            <p class="setting-description">Use this exact username in commit messages: <strong th:text="${user.nickname}">nickname</strong></p>
+                            <div class="code-example">
+                                <code>Example: "Feature01 : login page -> <span th:text="${user.nickname}">nickname</span> -> todo"</code>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <h4 class="setting-title">Task Status Keywords</h4>
+                            <p class="setting-description">Use these status keywords in commits:</p>
+                            <div class="status-keywords">
+                                <span class="keyword-badge todo">todo</span>
+                                <span class="keyword-badge progress">in-progress</span>
+                                <span class="keyword-badge done">done</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

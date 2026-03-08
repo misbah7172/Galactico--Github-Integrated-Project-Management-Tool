@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Chat - AutoTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%) !important;
+            color: var(--text-primary) !important;
+            min-height: 100vh !important;
+            line-height: 1.6 !important;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .page-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+            gap: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-description {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 41, 59, 1);
+            border-color: var(--indigo);
+        }
+
+        .chat-container {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            position: relative !important;
+            height: 100% !important;
+        }
+
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--indigo), var(--soft-violet));
+            z-index: 1;
+        }
+
+        .chat-messages {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 1.5rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+            background: transparent !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: var(--indigo) transparent !important;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--indigo);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--soft-violet);
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        .message-other {
+            align-items: flex-start;
+        }
+
+        .message-own {
+            align-items: flex-end;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-own .message-header {
+            flex-direction: row-reverse;
+        }
+
+        .message-author {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .author-avatar,
+        .author-avatar-placeholder {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--slate-700);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.8rem;
+            border: 2px solid var(--border-color);
+        }
+
+        .author-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .author-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .message-content-wrapper {
+            max-width: 70%;
+            min-width: 200px;
+        }
+
+        .message-content {
+            padding: 1rem 1.25rem;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message-own .message-content {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+        }
+
+        .no-messages {
+            text-align: center !important;
+            padding: 4rem 2rem !important;
+            color: var(--text-secondary) !important;
+            background: transparent !important;
+            border-radius: 16px !important;
+            margin: 2rem auto !important;
+            max-width: 400px !important;
+        }
+
+        .no-messages-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--slate-700), var(--slate-600));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: var(--text-secondary);
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .no-messages h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .no-messages p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .chat-input-container {
+            padding: 1.5rem !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: rgba(15, 23, 42, 0.5) !important;
+            flex-shrink: 0;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 44px;
+            max-height: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: var(--indigo);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .message-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-button {
+            padding: 0.875rem 1.25rem;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            min-width: 52px;
+            height: 44px;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                height: calc(100vh - 80px);
+                min-height: 500px;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .page-header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .message-content-wrapper {
+                max-width: 85%;
+            }
+
+            .chat-messages {
+                padding: 1rem !important;
+            }
+
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .send-button {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container">
+        <div class="page-header">
+            <div class="page-header-content">
+                <div>
+                    <h1 class="page-title">
+                        <i class="fas fa-comments"></i> Team Chat
+                    </h1>
+                    <p class="page-description">Collaborate and communicate with your team members</p>
+                </div>
+                <a th:href="@{/teams/{id}(id=${teamId})}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Team
+                </a>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div th:if="${messages} and not ${#lists.isEmpty(messages)}">
+                    <div class="message" th:each="message : ${messages}" 
+                         th:classappend="${message.sender.id == currentUser.id} ? 'message-own' : 'message-other'"
+                         th:data-message-id="${message.id}">
+                        <div class="message-header">
+                            <div class="message-author">
+                                <img th:if="${message.sender.avatarUrl}" 
+                                     th:src="${message.sender.avatarUrl}" 
+                                     th:alt="${message.sender.nickname}"
+                                     class="author-avatar">
+                                <div th:unless="${message.sender.avatarUrl}" 
+                                     class="author-avatar-placeholder"
+                                     th:text="${#strings.substring(message.sender.nickname, 0, 1).toUpperCase()}">M</div>
+                                <span class="author-name" th:text="${message.sender.nickname}">User</span>
+                            </div>
+                            <div class="message-time" th:text="${#temporals.format(message.createdAt, 'MMM dd, yyyy HH:mm')}">Oct 18, 2025 15:00</div>
+                        </div>
+                        <div class="message-content-wrapper">
+                            <div class="message-content" th:text="${message.content}">Hello team!</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div th:if="${messages} == null or ${#lists.isEmpty(messages)}" class="no-messages">
+                    <div class="no-messages-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>No messages yet</h3>
+                    <p>Start the conversation by sending the first message!</p>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <form id="messageForm" class="chat-input-form">
+                    <div class="input-group">
+                        <textarea id="messageContent" 
+                                  placeholder="Type your message..." 
+                                  rows="2" 
+                                  required
+                                  class="message-input"></textarea>
+                        <button type="submit" class="send-button" id="sendButton">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        const teamId = [[${teamId}]];
+        const currentUserId = [[${currentUser.id}]];
+        
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+        
+        function resizeChatContainer() {
+            const chatContainer = document.querySelector('.chat-container');
+            const container = document.querySelector('.container');
+            const pageHeader = document.querySelector('.page-header');
+            
+            if (chatContainer && container && pageHeader) {
+                const containerHeight = container.offsetHeight;
+                const headerHeight = pageHeader.offsetHeight;
+                const availableHeight = containerHeight - headerHeight - 32;
+                
+                chatContainer.style.height = Math.max(availableHeight, 400) + 'px';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            resizeChatContainer();
+            scrollToBottom();
+        });
+        
+        window.addEventListener('resize', resizeChatContainer);
+        
+        setTimeout(() => {
+            resizeChatContainer();
+            scrollToBottom();
+        }, 100);
+
+        document.getElementById('messageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const content = document.getElementById('messageContent').value.trim();
+            if (!content) return;
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            
+            fetch(`/teams/${teamId}/messages/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: new URLSearchParams({
+                    content: content
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('messageContent').value = '';
+                    window.location.reload();
+                } else {
+                    alert('Failed to send message');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                alert('Failed to send message');
+            })
+            .finally(() => {
+                sendButton.disabled = false;
+            });
+        });
+
+        document.getElementById('messageContent').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>

@@ -164,6 +164,19 @@ public class ProjectController {
     }
 
     /**
+     * Show contribution analysis page with detailed code element breakdown.
+     */
+    @GetMapping("/{id}/contribution-analysis")
+    public String showContributionAnalysis(@PathVariable Long id, Model model, @AuthenticationPrincipal OAuth2User principal) {
+        User currentUser = userService.getCurrentUser(principal);
+        Project project = projectService.getProjectById(id);
+        
+        model.addAttribute("project", project);
+        model.addAttribute("currentUser", currentUser);
+        return "project/contribution-analysis";
+    }
+
+    /**
      * Show project edit form.
      */
     @GetMapping("/{id}/edit")

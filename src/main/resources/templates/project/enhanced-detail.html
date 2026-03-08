@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${project.name + ' - AutoTrack'}">Project - AutoTrack</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/sprint-backlog.css}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container-fluid">
+        <!-- Project Header with Navigation -->
+        <div class="project-header-enhanced">
+            <div class="project-title-section">
+                <div class="project-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <div class="project-info">
+                    <h1 class="project-name" th:text="${project.name}">Project Name</h1>
+                    <p class="project-description" th:text="${project.description}">Project description</p>
+                </div>
+            </div>
+            
+            <!-- Project Navigation Tabs -->
+            <div class="project-nav-tabs">
+                <button class="nav-tab active" data-tab="overview">
+                    <i class="fas fa-chart-pie"></i>
+                    Overview
+                </button>
+                <button class="nav-tab" data-tab="backlog">
+                    <i class="fas fa-list-alt"></i>
+                    Product Backlog
+                </button>
+                <button class="nav-tab" data-tab="sprints">
+                    <i class="fas fa-clock"></i>
+                    Sprints
+                </button>
+                <button class="nav-tab" data-tab="kanban">
+                    <i class="fas fa-columns"></i>
+                    Kanban Board
+                </button>
+                <button class="nav-tab" data-tab="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-pane active">
+                <div class="overview-grid">
+                    <!-- Project Stats -->
+                    <div class="stats-card">
+                        <h3>Project Statistics</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number" id="totalBacklogItems">0</div>
+                                <div class="stat-label">Backlog Items</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number" id="activeSprints">0</div>
+                                <div class="stat-label">Active Sprints</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number" id="completedSprints">0</div>
+                                <div class="stat-label">Completed Sprints</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number" id="totalStoryPoints">0</div>
+                                <div class="stat-label">Story Points</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Sprint Status -->
+                    <div class="current-sprint-card">
+                        <h3>Current Sprint</h3>
+                        <div id="currentSprintContent">
+                            <p class="no-sprint">No active sprint</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="activity-card">
+                        <h3>Recent Activity</h3>
+                        <div id="recentActivity">
+                            <p class="loading">Loading activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Backlog Tab -->
+            <div id="backlog" class="tab-pane">
+                <div class="backlog-header">
+                    <h2>Product Backlog</h2>
+                    <div class="backlog-actions">
+                        <button class="btn btn-primary" onclick="createBacklogItem()">
+                            <i class="fas fa-plus"></i> Add Backlog Item
+                        </button>
+                        <button class="btn btn-secondary" onclick="bulkActions()">
+                            <i class="fas fa-tasks"></i> Bulk Actions
+                        </button>
+                        <div class="filter-group">
+                            <select id="priorityFilter" onchange="filterBacklog()">
+                                <option value="">All Priorities</option>
+                                <option value="CRITICAL">Critical</option>
+                                <option value="HIGH">High</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="LOW">Low</option>
+                            </select>
+                            <select id="statusFilter" onchange="filterBacklog()">
+                                <option value="">All Status</option>
+                                <option value="PRODUCT_BACKLOG">Product Backlog</option>
+                                <option value="SPRINT_BACKLOG">Sprint Backlog</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="backlog-list">
+                    <div class="backlog-item-header">
+                        <div class="item-title">Title</div>
+                        <div class="item-priority">Priority</div>
+                        <div class="item-points">Story Points</div>
+                        <div class="item-status">Status</div>
+                        <div class="item-assignee">Assignee</div>
+                        <div class="item-actions">Actions</div>
+                    </div>
+                    <div id="backlogItems">
+                        <div class="loading-spinner">Loading backlog items...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sprints Tab -->
+            <div id="sprints" class="tab-pane">
+                <div class="sprints-header">
+                    <h2>Sprint Management</h2>
+                    <div class="sprint-actions">
+                        <button class="btn btn-primary" onclick="createSprint()">
+                            <i class="fas fa-plus"></i> Create Sprint
+                        </button>
+                        <button class="btn btn-success" onclick="planSprint()" id="planSprintBtn" disabled>
+                            <i class="fas fa-calendar"></i> Plan Sprint
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sprints-container">
+                    <!-- Active Sprint -->
+                    <div class="sprint-section">
+                        <h3>Active Sprint</h3>
+                        <div id="activeSprint">
+                            <div class="no-active-sprint">
+                                <i class="fas fa-clock"></i>
+                                <p>No active sprint. Create and start a sprint to begin tracking progress.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Sprints -->
+                    <div class="sprint-section">
+                        <h3>Upcoming Sprints</h3>
+                        <div id="upcomingSprints">
+                            <div class="loading-spinner">Loading upcoming sprints...</div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Sprints -->
+                    <div class="sprint-section">
+                        <h3>Completed Sprints</h3>
+                        <div id="completedSprints">
+                            <div class="loading-spinner">Loading completed sprints...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanban Board Tab -->
+            <div id="kanban" class="tab-pane">
+                <div class="kanban-header">
+                    <h2>Kanban Board</h2>
+                    <div class="kanban-actions">
+                        <button class="btn btn-primary" onclick="createTask()">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                        <a th:href="@{/tasks/project/{id}(id=${project.id})}" class="btn btn-secondary">
+                            <i class="fas fa-external-link-alt"></i> Full Board View
+                        </a>
+                    </div>
+                </div>
+                <div class="kanban-mini">
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <h3>To Do</h3>
+                            <span class="task-count" id="todoCount">0</span>
+                        </div>
+                        <div class="task-list" id="todoTasks">
+                            <div class="loading-spinner">Loading tasks...</div>
+                        </div>
+                    </div>
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <h3>In Progress</h3>
+                            <span class="task-count" id="inProgressCount">0</span>
+                        </div>
+                        <div class="task-list" id="inProgressTasks">
+                            <div class="loading-spinner">Loading tasks...</div>
+                        </div>
+                    </div>
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <h3>Done</h3>
+                            <span class="task-count" id="doneCount">0</span>
+                        </div>
+                        <div class="task-list" id="doneTasks">
+                            <div class="loading-spinner">Loading tasks...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics" class="tab-pane">
+                <div class="analytics-header">
+                    <h2>Project Analytics</h2>
+                    <div class="analytics-actions">
+                        <button class="btn btn-secondary" onclick="exportReport()">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                        <a th:href="@{/projects/{id}/analytics(id=${project.id})}" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Detailed Analytics
+                        </a>
+                    </div>
+                </div>
+                <div class="analytics-grid">
+                    <div class="chart-card">
+                        <h3>Sprint Velocity</h3>
+                        <canvas id="velocityChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Backlog Burndown</h3>
+                        <canvas id="burndownChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Priority Distribution</h3>
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Team Performance</h3>
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Create Backlog Item Modal -->
+    <div id="createBacklogItemModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create Backlog Item</h2>
+            <form id="backlogItemForm">
+                <div class="form-group">
+                    <label for="itemTitle">Title *</label>
+                    <input type="text" id="itemTitle" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemDescription">Description</label>
+                    <textarea id="itemDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemPriority">Priority</label>
+                        <select id="itemPriority" name="priorityLevel">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemStoryPoints">Story Points</label>
+                        <input type="number" id="itemStoryPoints" name="storyPoints" min="1" max="21" value="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="itemAcceptanceCriteria">Acceptance Criteria</label>
+                    <textarea id="itemAcceptanceCriteria" name="acceptanceCriteria" rows="2"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createBacklogItemModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Sprint Modal -->
+    <div id="createSprintModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create Sprint</h2>
+            <form id="sprintForm">
+                <div class="form-group">
+                    <label for="sprintName">Sprint Name *</label>
+                    <input type="text" id="sprintName" name="name" required placeholder="e.g., Sprint 1, UI Enhancement Sprint">
+                </div>
+                <div class="form-group">
+                    <label for="sprintGoal">Sprint Goal</label>
+                    <textarea id="sprintGoal" name="goal" rows="2" placeholder="What should be accomplished in this sprint?"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sprintStartDate">Start Date</label>
+                        <input type="date" id="sprintStartDate" name="startDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="sprintEndDate">End Date</label>
+                        <input type="date" id="sprintEndDate" name="endDate">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createSprintModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Sprint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // Global variables
+        const projectId = /*[[${project.id}]]*/ 1;
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTabs();
+            loadOverviewData();
+            setupEventListeners();
+        });
+
+        // Tab functionality
+        function initializeTabs() {
+            const tabs = document.querySelectorAll('.nav-tab');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    // Remove active class from all tabs and panes
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding pane
+                    this.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                    
+                    // Load data for the active tab
+                    loadTabData(targetTab);
+                });
+            });
+        }
+
+        // Load data based on active tab
+        function loadTabData(tabName) {
+            switch(tabName) {
+                case 'overview':
+                    loadOverviewData();
+                    break;
+                case 'backlog':
+                    loadBacklogData();
+                    break;
+                case 'sprints':
+                    loadSprintsData();
+                    break;
+                case 'kanban':
+                    loadKanbanData();
+                    break;
+                case 'analytics':
+                    loadAnalyticsData();
+                    break;
+            }
+        }
+
+        // Load overview data
+        function loadOverviewData() {
+            // Load project statistics
+            fetch(`/api/v1/backlog/project/${projectId}/analytics`, {
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalBacklogItems').textContent = data.totalItems || 0;
+                document.getElementById('totalStoryPoints').textContent = data.totalStoryPoints || 0;
+            })
+            .catch(error => console.error('Error loading backlog analytics:', error));
+
+            // Load current sprint
+            fetch(`/api/v1/sprints/project/${projectId}/active`, {
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('No active sprint');
+                }
+            })
+            .then(sprint => {
+                displayCurrentSprint(sprint);
+            })
+            .catch(error => {
+                document.getElementById('currentSprintContent').innerHTML = '<p class="no-sprint">No active sprint</p>';
+            });
+        }
+
+        // Load backlog data
+        function loadBacklogData() {
+            fetch(`/api/v1/backlog/project/${projectId}?page=0&size=50`, {
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayBacklogItems(data.content || []);
+            })
+            .catch(error => {
+                console.error('Error loading backlog:', error);
+                document.getElementById('backlogItems').innerHTML = '<p class="error">Failed to load backlog items</p>';
+            });
+        }
+
+        // Display backlog items
+        function displayBacklogItems(items) {
+            const container = document.getElementById('backlogItems');
+            
+            if (items.length === 0) {
+                container.innerHTML = '<div class="no-items"><i class="fas fa-list-alt"></i><p>No backlog items yet. Create your first item to get started!</p></div>';
+                return;
+            }
+
+            const itemsHtml = items.map(item => `
+                <div class="backlog-item" data-id="${item.id}">
+                    <div class="item-title">
+                        <h4>${item.title}</h4>
+                        <p class="item-description">${item.description || ''}</p>
+                    </div>
+                    <div class="item-priority">
+                        <span class="priority-badge priority-${item.priorityLevel.toLowerCase()}">${item.priorityLevel}</span>
+                    </div>
+                    <div class="item-points">${item.storyPoints}</div>
+                    <div class="item-status">
+                        <span class="status-badge status-${item.backlogStatus.toLowerCase().replace('_', '-')}">${item.backlogStatus.replace('_', ' ')}</span>
+                    </div>
+                    <div class="item-assignee">
+                        ${item.assignedTo ? item.assignedTo.nickname : 'Unassigned'}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-sm btn-primary" onclick="editBacklogItem(${item.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="assignToSprint(${item.id})">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteBacklogItem(${item.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = itemsHtml;
+        }
+
+        // Modal functions
+        function createBacklogItem() {
+            document.getElementById('createBacklogItemModal').style.display = 'block';
+        }
+
+        function createSprint() {
+            document.getElementById('createSprintModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Form submissions
+        function setupEventListeners() {
+            // Backlog item form
+            document.getElementById('backlogItemForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const itemData = Object.fromEntries(formData);
+                
+                fetch(`/api/v1/backlog/project/${projectId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify(itemData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    closeModal('createBacklogItemModal');
+                    loadBacklogData();
+                    this.reset();
+                })
+                .catch(error => console.error('Error creating backlog item:', error));
+            });
+
+            // Sprint form
+            document.getElementById('sprintForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const sprintData = Object.fromEntries(formData);
+                
+                fetch(`/api/v1/sprints/project/${projectId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify(sprintData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    closeModal('createSprintModal');
+                    loadSprintsData();
+                    this.reset();
+                })
+                .catch(error => console.error('Error creating sprint:', error));
+            });
+
+            // Close modals when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+        }
+
+        // Placeholder functions for other features
+        function loadSprintsData() {
+            console.log('Loading sprints data...');
+        }
+
+        function loadKanbanData() {
+            console.log('Loading kanban data...');
+        }
+
+        function loadAnalyticsData() {
+            console.log('Loading analytics data...');
+        }
+
+        function displayCurrentSprint(sprint) {
+            document.getElementById('currentSprintContent').innerHTML = `
+                <div class="current-sprint-info">
+                    <h4>${sprint.name}</h4>
+                    <p>${sprint.goal || 'No goal set'}</p>
+                    <div class="sprint-dates">
+                        <span><i class="fas fa-calendar-alt"></i> ${new Date(sprint.startDate).toLocaleDateString()} - ${new Date(sprint.endDate).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterBacklog() {
+            console.log('Filtering backlog...');
+        }
+
+        function assignToSprint(itemId) {
+            console.log('Assigning item to sprint:', itemId);
+        }
+
+        function editBacklogItem(itemId) {
+            console.log('Editing backlog item:', itemId);
+        }
+
+        function deleteBacklogItem(itemId) {
+            if (confirm('Are you sure you want to delete this backlog item?')) {
+                fetch(`/api/v1/backlog/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        loadBacklogData();
+                    }
+                })
+                .catch(error => console.error('Error deleting backlog item:', error));
+            }
+        }
+    </script>
+</body>
+</html>

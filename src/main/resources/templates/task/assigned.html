@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Assigned Tasks - AutoTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container" style="padding-top: 2rem;">
+        <!-- Page Header -->
+        <div class="page-hero">
+            <div class="page-hero-content">
+                <h1 class="page-title">
+                    <i class="fas fa-tasks"></i>
+                    My Assigned Tasks
+                </h1>
+                <p class="page-description">Track and manage all tasks assigned to you</p>
+            </div>
+        </div>
+
+        <!-- Task Statistics -->
+        <div class="tasks-stats-grid">
+            <div class="task-stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-list"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${#lists.size(assignedTasks)}">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+            </div>
+            <div class="task-stat-card todo">
+                <div class="stat-icon">
+                    <i class="fas fa-circle-notch"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${assignedTasks.?[status.name() == 'TODO' or status.name() == 'BACKLOG'].size()}">0</div>
+                    <div class="stat-label">To Do</div>
+                </div>
+            </div>
+            <div class="task-stat-card progress">
+                <div class="stat-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${assignedTasks.?[status.name() == 'IN_PROGRESS'].size()}">0</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+            </div>
+            <div class="task-stat-card completed">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${assignedTasks.?[status.name() == 'DONE'].size()}">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks List -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-content">
+                    <div>
+                        <h2 class="card-title">
+                            <i class="fas fa-clipboard-list"></i>
+                            Your Tasks
+                        </h2>
+                        <p class="card-description">All tasks currently assigned to you</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(assignedTasks)}" class="empty-state-modern">
+                    <div class="empty-icon-modern">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3 class="empty-title-modern">No tasks assigned</h3>
+                    <p class="empty-description-modern">You don't have any tasks assigned yet. Check back later or contact your team lead.</p>
+                    <a th:href="@{/dashboard}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home"></i>
+                        Go to Dashboard
+                    </a>
+                </div>
+                
+                <div th:unless="${#lists.isEmpty(assignedTasks)}">
+                    <!-- Filter Tabs -->
+                    <div class="task-filter-tabs">
+                        <button class="task-tab-btn active" onclick="filterTasks('all')">
+                            <i class="fas fa-list"></i>
+                            All Tasks
+                        </button>
+                        <button class="task-tab-btn" onclick="filterTasks('TODO')">
+                            <i class="fas fa-circle-notch"></i>
+                            To Do
+                        </button>
+                        <button class="task-tab-btn" onclick="filterTasks('IN_PROGRESS')">
+                            <i class="fas fa-play-circle"></i>
+                            In Progress
+                        </button>
+                        <button class="task-tab-btn" onclick="filterTasks('DONE')">
+                            <i class="fas fa-check-circle"></i>
+                            Completed
+                        </button>
+                    </div>
+
+                    <!-- Tasks List -->
+                    <div class="assigned-tasks-list-modern">
+                        <div th:each="task : ${assignedTasks}" 
+                             class="assigned-task-item-modern" 
+                             th:attr="data-status=${task.status.name()}">
+                            
+                            <!-- Task Header Row -->
+                            <div class="task-header-row-modern">
+                                <div class="task-info-left-modern">
+                                    <span class="task-feature-code-modern" th:text="${task.featureCode}">Feature01</span>
+                                    <h3 class="task-title-modern" th:text="${task.title}">Task Title</h3>
+                                </div>
+                                <div class="task-status-badge-modern">
+                                    <span th:if="${task.status.name() == 'BACKLOG'}" class="badge-modern badge-backlog">
+                                        <i class="fas fa-list"></i>
+                                        BACKLOG
+                                    </span>
+                                    <span th:if="${task.status.name() == 'TODO'}" class="badge-modern badge-todo">
+                                        <i class="fas fa-circle-notch"></i>
+                                        TO DO
+                                    </span>
+                                    <span th:if="${task.status.name() == 'IN_PROGRESS'}" class="badge-modern badge-progress">
+                                        <i class="fas fa-play-circle"></i>
+                                        IN PROGRESS
+                                    </span>
+                                    <span th:if="${task.status.name() == 'DONE'}" class="badge-modern badge-completed">
+                                        <i class="fas fa-check-circle"></i>
+                                        COMPLETED
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Task Meta Row -->
+                            <div class="task-meta-row-modern">
+                                <div class="task-project-info-modern">
+                                    <i class="fas fa-folder-open"></i>
+                                    <span th:text="${task.project.name}">Project Name</span>
+                                </div>
+                                <div class="task-updated-info-modern">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Updated <span th:text="${#temporals.format(task.updatedAt, 'MMM dd, yyyy')}">Jan 01, 2024</span></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Task Actions Row -->
+                            <div class="task-actions-row-modern">
+                                <a th:href="@{/tasks/{id}(id=${task.id})}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                    View Details
+                                </a>
+                                <a th:href="@{/tasks/{id}/edit(id=${task.id})}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                    Edit Task
+                                </a>
+                                <a th:href="@{/projects/{id}/kanban(id=${task.project.id})}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-columns"></i>
+                                    Kanban Board
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+        function filterTasks(status) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.task-tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Show/hide tasks based on status
+            document.querySelectorAll('.assigned-task-item-modern').forEach(item => {
+                const taskStatus = item.getAttribute('data-status');
+                let shouldShow = false;
+                
+                if (status === 'all') {
+                    shouldShow = true;
+                } else if (status === 'TODO') {
+                    // Show both TODO and BACKLOG tasks for the TODO filter
+                    shouldShow = (taskStatus === 'TODO' || taskStatus === 'BACKLOG');
+                } else {
+                    shouldShow = (taskStatus === status);
+                }
+                
+                item.style.display = shouldShow ? 'block' : 'none';
+            });
+        }
+    </script>
+
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif !important;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%) !important;
+            color: var(--text-primary) !important;
+            min-height: 100vh !important;
+            line-height: 1.6 !important;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Page Hero Section */
+        .page-hero {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .page-hero-content h1.page-title {
+            color: var(--text-primary);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--neon-cyan), var(--soft-violet));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .page-hero-content .page-description {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            margin: 0;
+        }
+
+        /* Task Statistics Grid */
+        .tasks-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .task-stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .task-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+            border-color: var(--neon-cyan);
+        }
+
+        .task-stat-card.total {
+            border-color: var(--indigo);
+            background: linear-gradient(135deg, var(--card-bg), rgba(99, 102, 241, 0.1));
+        }
+
+        .task-stat-card.todo {
+            border-color: var(--info);
+            background: linear-gradient(135deg, var(--card-bg), rgba(6, 182, 212, 0.1));
+        }
+
+        .task-stat-card.progress {
+            border-color: var(--warning);
+            background: linear-gradient(135deg, var(--card-bg), rgba(245, 158, 11, 0.1));
+        }
+
+        .task-stat-card.completed {
+            border-color: var(--success);
+            background: linear-gradient(135deg, var(--card-bg), rgba(16, 185, 129, 0.1));
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .total .stat-icon {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+        }
+
+        .todo .stat-icon {
+            background: linear-gradient(135deg, var(--info), #0284c7);
+            color: white;
+        }
+
+        .progress .stat-icon {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: white;
+        }
+
+        .completed .stat-icon {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: rgba(99, 102, 241, 0.1);
+            border-bottom: 1px solid var(--border-color);
+            padding: 2rem;
+        }
+
+        .card-header-content h2.card-title {
+            color: var(--neon-cyan);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-header-content .card-description {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        /* Empty State */
+        .empty-state-modern {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon-modern {
+            font-size: 4rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            opacity: 0.5;
+        }
+
+        .empty-title-modern {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .empty-description-modern {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Filter Tabs */
+        .task-filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .task-tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border-color);
+            background: rgba(30, 41, 59, 0.5);
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .task-tab-btn:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--text-primary);
+            border-color: var(--neon-cyan);
+        }
+
+        .task-tab-btn.active {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            border-color: var(--indigo);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Tasks List */
+        .assigned-tasks-list-modern {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .assigned-task-item-modern {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .assigned-task-item-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+            border-color: var(--neon-cyan);
+        }
+
+        .task-header-row-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .task-info-left-modern {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-feature-code-modern {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .task-title-modern {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .task-status-badge-modern {
+            flex-shrink: 0;
+        }
+
+        /* Badge Styles */
+        .badge-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            backdrop-filter: blur(20px);
+        }
+
+        .badge-backlog {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+            border: 1px solid #6b7280;
+        }
+
+        .badge-todo {
+            background: rgba(6, 182, 212, 0.2);
+            color: var(--info);
+            border: 1px solid var(--info);
+        }
+
+        .badge-progress {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .badge-completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .task-meta-row-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .task-project-info-modern,
+        .task-updated-info-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .task-actions-row-modern {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.875rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            border: 1px solid var(--indigo);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(100, 116, 139, 0.2);
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(100, 116, 139, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            border: 1px solid var(--success);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .page-hero {
+                padding: 2rem 1.5rem;
+            }
+
+            .page-hero-content h1.page-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .tasks-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .task-filter-tabs {
+                gap: 0.25rem;
+            }
+
+            .task-tab-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8125rem;
+            }
+
+            .task-header-row-modern {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .task-meta-row-modern {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .task-actions-row-modern {
+                justify-content: stretch;
+                flex-wrap: wrap;
+            }
+
+            .task-actions-row-modern .btn {
+                flex: 1;
+                justify-content: center;
+                min-width: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tasks-stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .assigned-task-item-modern {
+                padding: 1rem;
+            }
+
+            .task-actions-row-modern {
+                flex-direction: column;
+            }
+
+            .task-filter-tabs {
+                flex-direction: column;
+            }
+
+            .task-tab-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+
+    </style>
+</body>
+</html>

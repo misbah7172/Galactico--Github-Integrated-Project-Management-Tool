@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Multi-Language CI/CD Configuration - AutoTrack</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/forms.css}">
+    <style>
+        .multi-lang-config {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .config-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .architecture-selector {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .architecture-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .architecture-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+        }
+        
+        .architecture-card.selected {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+        
+        .language-components {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .component-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .component-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .remove-component {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .add-component-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .deployment-config {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .workflow-preview {
+            background: #f1f3f4;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .workflow-preview pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="multi-lang-config">
+        <div class="config-header">
+            <h1>🚀 Multi-Language CI/CD Configuration</h1>
+            <p>Configure a comprehensive CI/CD pipeline for your multi-language project</p>
+            <p><strong>Project:</strong> <span th:text="${project.name}">Project Name</span></p>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <form id="multiLanguageConfigForm">
+            <!-- Project Architecture Selection -->
+            <div class="architecture-selector">
+                <h3>📐 Select Project Architecture</h3>
+                <p>Choose the architecture type that best describes your project structure</p>
+                
+                <div class="architecture-grid">
+                    <div class="architecture-card" data-type="MONOLITH">
+                        <h4>🏛️ Monolith</h4>
+                        <p>Single application with multiple languages in one repository</p>
+                        <small>Best for: Unified deployment, shared dependencies</small>
+                    </div>
+                    <div class="architecture-card" data-type="MICROSERVICES">
+                        <h4>🔧 Microservices</h4>
+                        <p>Multiple independent services with different languages</p>
+                        <small>Best for: Scalable, independent deployments</small>
+                    </div>
+                    <div class="architecture-card" data-type="FULLSTACK">
+                        <h4>🌐 Full-Stack</h4>
+                        <p>Separate frontend and backend applications</p>
+                        <small>Best for: Web applications, mobile backends</small>
+                    </div>
+                    <div class="architecture-card" data-type="EXTENSION">
+                        <h4>🧩 Extension</h4>
+                        <p>Browser extension or IDE extension project</p>
+                        <small>Best for: Browser/IDE plugins, desktop tools</small>
+                    </div>
+                </div>
+                
+                <input type="hidden" id="projectArchitecture" name="projectArchitecture" required>
+            </div>
+
+            <!-- Language Components Configuration -->
+            <div class="language-components">
+                <h3>💻 Language Components</h3>
+                <p>Add the programming languages and their configurations for your project</p>
+                
+                <div id="componentsContainer">
+                    <!-- Components will be added here dynamically -->
+                </div>
+                
+                <button type="button" class="add-component-btn" onclick="addLanguageComponent()">
+                    ➕ Add Language Component
+                </button>
+            </div>
+
+            <!-- Deployment Configuration -->
+            <div class="deployment-config">
+                <h3>🚀 Deployment Strategy</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deploymentStrategy">Deployment Strategy</label>
+                        <select id="deploymentStrategy" name="deployStrategy" class="form-control" required>
+                            <option value="">Select deployment strategy</option>
+                            <option value="none">No Deployment (Test & Build only)</option>
+                            <option value="staging">Auto Deploy to Staging</option>
+                            <option value="production">Auto Deploy to Production</option>
+                            <option value="docker">Deploy to Docker Registry</option>
+                            <option value="aws-lambda">Deploy to AWS Lambda</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="enableCodeQuality">Code Quality Checks</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enableCodeQuality" name="enableCodeQuality" checked>
+                            <label for="enableCodeQuality">Enable automated code quality checks</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="enableSecurity">Security Scanning</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enableSecurity" name="enableSecurity" checked>
+                            <label for="enableSecurity">Enable security vulnerability scanning</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="enableNotifications">Notifications</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enableNotifications" name="enableNotifications" checked>
+                            <label for="enableNotifications">Enable pipeline notifications</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="text-align: center; margin-top: 30px;">
+                <button type="button" onclick="previewWorkflow()" class="btn-secondary" style="margin-right: 15px;">
+                    👁️ Preview Workflow
+                </button>
+                <button type="submit" class="btn-primary">
+                    🚀 Generate CI/CD Pipeline
+                </button>
+            </div>
+        </form>
+
+        <!-- Workflow Preview Section -->
+        <div id="workflowPreview" class="workflow-preview">
+            <h3>📋 Workflow Preview</h3>
+            <pre id="workflowContent"></pre>
+        </div>
+
+        <!-- Back Link -->
+        <div style="text-align: center; margin-top: 30px;">
+            <a th:href="@{/projects/{id}/cicd(id=${project.id})}" class="btn-secondary">
+                ← Back to CI/CD Configuration
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+        let componentCounter = 0;
+        const supportedLanguages = /*[[${supportedLanguages}]]*/ [];
+        const projectId = /*[[${project.id}]]*/ 1;
+
+        // Architecture selection
+        document.querySelectorAll('.architecture-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.architecture-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('projectArchitecture').value = this.dataset.type;
+            });
+        });
+
+        // Add language component
+        function addLanguageComponent() {
+            componentCounter++;
+            const container = document.getElementById('componentsContainer');
+            
+            const componentHtml = `
+                <div class="component-item" data-component="${componentCounter}">
+                    <div class="component-header">
+                        <h4>Component ${componentCounter}</h4>
+                        <button type="button" class="remove-component" onclick="removeComponent(${componentCounter})">
+                            🗑️ Remove
+                        </button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Programming Language</label>
+                            <select name="components[${componentCounter}].language" class="form-control" required>
+                                <option value="">Select language</option>
+                                <option value="NODE_JS">Node.js</option>
+                                <option value="REACT">React</option>
+                                <option value="TYPESCRIPT">TypeScript</option>
+                                <option value="PYTHON">Python</option>
+                                <option value="JAVA">Java</option>
+                                <option value="SPRING_BOOT">Spring Boot</option>
+                                <option value="PHP">PHP</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Directory Path</label>
+                            <input type="text" name="components[${componentCounter}].directory" class="form-control" 
+                                   placeholder="e.g., ./frontend, ./backend, ./api" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Build Command</label>
+                            <input type="text" name="components[${componentCounter}].buildCommand" class="form-control" 
+                                   placeholder="e.g., npm run build, mvn package">
+                        </div>
+                        <div class="form-group">
+                            <label>Test Command</label>
+                            <input type="text" name="components[${componentCounter}].testCommand" class="form-control" 
+                                   placeholder="e.g., npm test, mvn test">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Language Version</label>
+                            <input type="text" name="components[${componentCounter}].version" class="form-control" 
+                                   placeholder="e.g., 18, 11, 3.9">
+                        </div>
+                        <div class="form-group">
+                            <label>Main Component</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="components[${componentCounter}].mainComponent" 
+                                       id="mainComponent_${componentCounter}">
+                                <label for="mainComponent_${componentCounter}">This is the main component</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Dependencies (one per line)</label>
+                        <textarea name="components[${componentCounter}].dependencies" class="form-control" rows="3" 
+                                  placeholder="e.g.,&#10;express&#10;react&#10;spring-boot-starter-web"></textarea>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', componentHtml);
+        }
+
+        // Remove component
+        function removeComponent(componentId) {
+            const component = document.querySelector(`[data-component="${componentId}"]`);
+            if (component) {
+                component.remove();
+            }
+        }
+
+        // Preview workflow
+        function previewWorkflow() {
+            const formData = collectFormData();
+            if (!validateForm(formData)) {
+                return;
+            }
+            
+            // Show preview section
+            const preview = document.getElementById('workflowPreview');
+            const content = document.getElementById('workflowContent');
+            
+            // Generate preview content (this would ideally call the backend)
+            const previewContent = generateWorkflowPreview(formData);
+            content.textContent = previewContent;
+            preview.style.display = 'block';
+            
+            // Scroll to preview
+            preview.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Collect form data
+        function collectFormData() {
+            const formData = {
+                projectArchitecture: document.getElementById('projectArchitecture').value,
+                deployStrategy: document.getElementById('deploymentStrategy').value,
+                enableCodeQuality: document.getElementById('enableCodeQuality').checked,
+                enableSecurity: document.getElementById('enableSecurity').checked,
+                enableNotifications: document.getElementById('enableNotifications').checked,
+                components: []
+            };
+            
+            // Collect component data
+            document.querySelectorAll('.component-item').forEach(component => {
+                const componentData = {
+                    language: component.querySelector('select[name*="language"]').value,
+                    directory: component.querySelector('input[name*="directory"]').value,
+                    buildCommand: component.querySelector('input[name*="buildCommand"]').value,
+                    testCommand: component.querySelector('input[name*="testCommand"]').value,
+                    version: component.querySelector('input[name*="version"]').value,
+                    mainComponent: component.querySelector('input[name*="mainComponent"]').checked,
+                    dependencies: component.querySelector('textarea[name*="dependencies"]').value.split('\n').filter(d => d.trim())
+                };
+                formData.components.push(componentData);
+            });
+            
+            return formData;
+        }
+
+        // Validate form
+        function validateForm(formData) {
+            if (!formData.projectArchitecture) {
+                showAlert('Please select a project architecture', 'danger');
+                return false;
+            }
+            
+            if (formData.components.length === 0) {
+                showAlert('Please add at least one language component', 'danger');
+                return false;
+            }
+            
+            if (!formData.deployStrategy) {
+                showAlert('Please select a deployment strategy', 'danger');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Generate workflow preview
+        function generateWorkflowPreview(formData) {
+            let workflow = `name: Multi-Language CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:`;
+
+            if (formData.projectArchitecture === 'MONOLITH') {
+                workflow += `
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4`;
+                
+                formData.components.forEach(component => {
+                    workflow += `
+    
+    # ${component.language} setup for ${component.directory}`;
+                    if (component.language === 'NODE_JS' || component.language === 'REACT' || component.language === 'TYPESCRIPT') {
+                        workflow += `
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '${component.version || '18'}'`;
+                    }
+                    if (component.buildCommand) {
+                        workflow += `
+    - run: ${component.buildCommand}
+      working-directory: ${component.directory}`;
+                    }
+                    if (component.testCommand) {
+                        workflow += `
+    - run: ${component.testCommand}
+      working-directory: ${component.directory}`;
+                    }
+                });
+            }
+            
+            return workflow;
+        }
+
+        // Form submission
+        document.getElementById('multiLanguageConfigForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = collectFormData();
+            if (!validateForm(formData)) {
+                return;
+            }
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '⏳ Generating Pipeline...';
+            submitBtn.disabled = true;
+            
+            // Send to backend
+            fetch(`/projects/${projectId}/cicd/multi-language`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    // Optionally redirect or show additional info
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+            
+            // Scroll to alert
+            alertContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize with one component
+        document.addEventListener('DOMContentLoaded', function() {
+            addLanguageComponent();
+        });
+    </script>
+</body>
+</html>

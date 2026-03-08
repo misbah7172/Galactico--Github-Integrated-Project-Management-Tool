@@ -1,6 +1,7 @@
 package com.autotrack.controller;
 
 import com.autotrack.model.Project;
+import com.autotrack.service.CodeContributionAnalysisService;
 import com.autotrack.service.CommitAnalyticsService;
 import com.autotrack.service.ProjectService;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +15,14 @@ import java.util.Map;
 public class AnalyticsController {
 
     private final CommitAnalyticsService commitAnalyticsService;
+    private final CodeContributionAnalysisService codeContributionAnalysisService;
     private final ProjectService projectService;
 
     public AnalyticsController(CommitAnalyticsService commitAnalyticsService,
+                              CodeContributionAnalysisService codeContributionAnalysisService,
                               ProjectService projectService) {
         this.commitAnalyticsService = commitAnalyticsService;
+        this.codeContributionAnalysisService = codeContributionAnalysisService;
         this.projectService = projectService;
     }
 
@@ -146,6 +150,41 @@ public class AnalyticsController {
             Project project = projectService.getProjectById(projectId);
             Map<String, Object> collaboration = commitAnalyticsService.getTeamCollaborationInsights(project);
             return ResponseEntity.ok(collaboration);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/{projectId}/contribution-analysis")
+    public ResponseEntity<Map<String, Object>> getContributionAnalysis(@PathVariable Long projectId) {
+        try {
+            Project project = projectService.getProjectById(projectId);
+            Map<String, Object> analysis = codeContributionAnalysisService.getContributionAnalysis(project);
+            return ResponseEntity.ok(analysis);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/{projectId}/contributor-detail")
+    public ResponseEntity<Map<String, Object>> getContributorDetail(
+            @PathVariable Long projectId,
+            @RequestParam String email) {
+        try {
+            Project project = projectService.getProjectById(projectId);
+            Map<String, Object> detail = codeContributionAnalysisService.getContributorDetail(project, email);
+            return ResponseEntity.ok(detail);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/{projectId}/commit-size-rankings")
+    public ResponseEntity<Map<String, Object>> getCommitSizeRankings(@PathVariable Long projectId) {
+        try {
+            Project project = projectService.getProjectById(projectId);
+            Map<String, Object> rankings = codeContributionAnalysisService.getCommitSizeRankings(project);
+            return ResponseEntity.ok(rankings);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

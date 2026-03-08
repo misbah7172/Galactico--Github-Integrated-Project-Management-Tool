@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams - Galactico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --midnight-blue: #0f172a;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --neon-cyan: #06b6d4;
+            --indigo: #6366f1;
+            --soft-violet: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--midnight-blue) 0%, #1a202c 50%, var(--slate-800) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .page-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .page-hero-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-hero-content h1 i {
+            color: var(--neon-cyan);
+        }
+
+        .page-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 41, 59, 1);
+            border-color: var(--indigo);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--neon-cyan), #0891b2);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .team-card-modern {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--indigo), var(--soft-violet));
+        }
+
+        .team-card-modern:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--indigo);
+        }
+
+        .team-card-header-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .team-name-modern {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .team-member-count-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .team-owner-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .team-members-modern {
+            margin-bottom: 1.5rem;
+        }
+
+        .member-avatars-modern {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .member-avatar-modern {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            background: var(--slate-700);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .member-avatar-modern img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .extra-members {
+            background: linear-gradient(135deg, var(--indigo), var(--soft-violet));
+            color: white;
+            font-size: 0.75rem;
+        }
+
+        .team-stats-modern {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .team-stat-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--indigo));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .stat-value-modern {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-label-modern {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .team-actions-modern {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .empty-state-modern {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-top: 2rem;
+        }
+
+        .empty-icon-modern {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(135deg, var(--slate-700), var(--slate-600));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 2rem;
+        }
+
+        .empty-title-modern {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-description-modern {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .page-hero {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .teams-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .team-stats-modern {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .team-actions-modern {
+                flex-direction: column;
+            }
+
+            .team-actions-modern .btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container" style="padding-top: 2rem;">
+        <!-- Page Header -->
+        <div class="page-hero">
+            <div class="page-hero-content">
+                <h1 class="page-title">
+                    <i class="fas fa-users"></i>
+                    Teams
+                </h1>
+                <p class="page-description">Manage your teams and collaborate with colleagues</p>
+            </div>
+            <div class="page-hero-actions">
+                <a th:href="@{/teams/create}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create Team
+                </a>
+            </div>
+        </div>
+
+        <div class="teams-grid" th:if="${teams} and not ${#lists.isEmpty(teams)}">
+            <div class="team-card-modern" th:each="team : ${teams}">
+                <div class="team-card-header-modern">
+                    <div class="team-info">
+                        <h3 class="team-name-modern" th:text="${team.name}">Team Name</h3>
+                        <div class="team-member-count-modern">
+                            <i class="fas fa-user"></i>
+                            <span th:text="${team.members.size()} + ' members'">5 members</span>
+                        </div>
+                    </div>
+                    <div class="team-owner-badge" th:if="${team.owner.id == currentUser.id}">
+                        <i class="fas fa-crown"></i>
+                        Owner
+                    </div>
+                </div>
+                
+                <div class="team-members-modern" th:if="${team.members != null and !team.members.isEmpty()}">
+                    <div class="member-avatars-modern">
+                        <div class="member-avatar-modern" th:each="member, iterStat : ${team.members}" 
+                             th:if="${iterStat.index < 5}" th:title="${member.nickname}">
+                            <img th:if="${member.avatarUrl}" th:src="${member.avatarUrl}" th:alt="${member.nickname}">
+                            <div th:unless="${member.avatarUrl}" class="avatar-placeholder-modern" 
+                                 th:text="${#strings.substring(member.nickname, 0, 1).toUpperCase()}">M</div>
+                        </div>
+                        <div th:if="${team.members.size() > 5}" class="member-avatar-modern extra-members">
+                            <span th:text="'+' + ${team.members.size() - 5}">+3</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-stats-modern">
+                    <div class="team-stat-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value-modern" th:text="${team.projects.size()}">0</div>
+                            <div class="stat-label-modern">Projects</div>
+                        </div>
+                    </div>
+                    <div class="team-stat-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value-modern" th:text="${team.createdAt != null ? #temporals.format(team.createdAt, 'MMM yyyy') : 'Unknown'}">Jan 2024</div>
+                            <div class="stat-label-modern">Created</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-actions-modern">
+                    <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-eye"></i>
+                        View Details
+                    </a>
+                    
+                    <!-- Show Create Project only for team owners -->
+                    <a th:if="${team.owner.id == currentUser.id}" 
+                       th:href="@{/projects/create?teamId={id}(id=${team.id})}" 
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i>
+                        Create Project
+                    </a>
+                    
+                    <!-- Show Add Members only for team owners -->
+                    <a th:if="${team.owner.id == currentUser.id}" 
+                       th:href="@{/teams/{id}/add-members(id=${team.id})}" 
+                       class="btn btn-success btn-sm">
+                        <i class="fas fa-user-plus"></i>
+                        Add Members
+                    </a>
+                       
+                    <!-- Show team messages for all members -->
+                    <a th:href="@{/teams/{id}/messages(id=${team.id})}" 
+                       class="btn btn-info btn-sm">
+                        <i class="fas fa-comments"></i>
+                        Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state-modern" th:if="${teams} == null or ${#lists.isEmpty(teams)}">
+            <div class="empty-icon-modern">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="empty-title-modern">No teams yet</h3>
+            <p class="empty-description-modern">Create your first team to start collaborating on projects and tracking tasks.</p>
+            <div class="empty-actions-modern">
+                <a th:href="@{/teams/create}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i>
+                    Create Your First Team
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
