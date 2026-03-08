@@ -171,6 +171,7 @@
             transform: translateY(-5px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             border-color: var(--indigo);
+            cursor: pointer;
         }
 
         .project-card-header-modern {
@@ -445,7 +446,8 @@
         </div>
 
         <div class="projects-grid-modern" th:if="${projects} and not ${#lists.isEmpty(projects)}">
-            <div class="project-card-modern" th:each="project : ${projects}">
+            <div class="project-card-modern" th:each="project : ${projects}"
+                 th:onclick="'window.location.href=\'/projects/' + ${project.id} + '\''">
                 <div class="project-card-header-modern">
                     <div class="project-info">
                         <h3 class="project-name-modern" th:text="${project.name}">Project Name</h3>
